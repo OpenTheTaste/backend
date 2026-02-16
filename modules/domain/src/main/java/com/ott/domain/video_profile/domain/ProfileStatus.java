@@ -1,4 +1,4 @@
-package com.ott.domain.videoprofile.domain;
+package com.ott.domain.video_profile.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

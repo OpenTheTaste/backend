@@ -1,4 +1,4 @@
-package com.ott.domain.preferredtag.domain;
+package com.ott.domain.preferred_tag.domain;
 
 import com.ott.domain.common.BaseEntity;
 import com.ott.domain.member.domain.Member;

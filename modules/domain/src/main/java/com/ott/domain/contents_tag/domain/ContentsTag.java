@@ -1,12 +1,9 @@
-package com.ott.domain.ingestjob.domain;
+package com.ott.domain.contents_tag.domain;
 
 import com.ott.domain.common.BaseEntity;
 import com.ott.domain.contents.domain.Contents;
-import com.ott.domain.shortform.domain.ShortForm;
-import jakarta.persistence.Column;
+import com.ott.domain.tag.domain.Tag;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,22 +22,18 @@ import lombok.NoArgsConstructor;
 @Entity
 @Builder
 @Getter
-@Table(name = "ingest_job")
-public class IngestJob extends BaseEntity {
+@Table(name = "contents_tag")
+public class ContentsTag extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "short_form_id")
-    private ShortForm shortForm;
+    @JoinColumn(name = "tag_id", nullable = false)
+    private Tag tag;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contents_id")
+    @JoinColumn(name = "contents_id", nullable = false)
     private Contents contents;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "ingest_status", nullable = false)
-    private IngestStatus ingestStatus;
 }

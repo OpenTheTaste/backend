@@ -1,4 +1,4 @@
-package com.ott.domain.clickevent.domain;
+package com.ott.domain.click_event.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.ott.domain.ingestjob.domain;
+package com.ott.domain.ingest_job.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

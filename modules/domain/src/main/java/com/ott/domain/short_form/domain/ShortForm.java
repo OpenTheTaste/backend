@@ -1,4 +1,4 @@
-package com.ott.domain.shortform.domain;
+package com.ott.domain.short_form.domain;
 
 import com.ott.domain.common.BaseEntity;
 import com.ott.domain.common.PublicStatus;

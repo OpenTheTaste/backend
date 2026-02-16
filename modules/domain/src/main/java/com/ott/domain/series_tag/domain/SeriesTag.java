@@ -1,7 +1,7 @@
-package com.ott.domain.contentstag.domain;
+package com.ott.domain.series_tag.domain;
 
 import com.ott.domain.common.BaseEntity;
-import com.ott.domain.contents.domain.Contents;
+import com.ott.domain.series.domain.Series;
 import com.ott.domain.tag.domain.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,8 +22,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Builder
 @Getter
-@Table(name = "contents_tag")
-public class ContentsTag extends BaseEntity {
+@Table(name = "series_tag")
+public class SeriesTag extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +34,6 @@ public class ContentsTag extends BaseEntity {
     private Tag tag;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contents_id", nullable = false)
-    private Contents contents;
+    @JoinColumn(name = "series_id", nullable = false)
+    private Series series;
 }

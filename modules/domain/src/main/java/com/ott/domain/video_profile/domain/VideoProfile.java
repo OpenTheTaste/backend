@@ -1,8 +1,7 @@
-package com.ott.domain.clickevent.domain;
+package com.ott.domain.video_profile.domain;
 
 import com.ott.domain.common.BaseEntity;
-import com.ott.domain.member.domain.Member;
-import com.ott.domain.shortform.domain.ShortForm;
+import com.ott.domain.ingest_job.domain.IngestJob;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,32 +19,30 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Builder
 @Getter
-@Table(name = "click_event")
-public class ClickEvent extends BaseEntity {
+@Table(name = "video_profile")
+public class VideoProfile extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    private Member member;
+    @JoinColumn(name = "ingest_job_id", nullable = false)
+    private IngestJob ingestJob;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "short_form_id", nullable = false)
-    private ShortForm shortForm;
-
-    @Column(name = "click_at", nullable = false)
-    private LocalDateTime clickAt;
+    @Column(name = "media_playlist_url", nullable = false, columnDefinition = "TEXT")
+    private String mediaPlaylistUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "click_type", nullable = false)
-    private ClickType clickType;
+    @Column(name = "resolution", nullable = false)
+    private Resolution resolution;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "profile_status", nullable = false)
+    private ProfileStatus profileStatus;
 }
