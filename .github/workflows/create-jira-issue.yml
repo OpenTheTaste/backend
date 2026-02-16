@@ -26,6 +26,8 @@ jobs:
       # 2️⃣ 현재 브랜치 기준 checkout
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: develop
 
       # 3️⃣ Issue Form 파싱
       - name: Parse issue form
@@ -33,13 +35,6 @@ jobs:
         id: issue-parser
         with:
           template-path: .github/ISSUE_TEMPLATE/issue-form.yml
-
-      # 4️⃣ 디버그 로그
-      - name: Debug parser output
-        run: |
-          echo "parentKey => ${{ steps.issue-parser.outputs.issueparser_parentKey }}"
-          echo "branch => ${{ steps.issue-parser.outputs.issueparser_branch }}"
-          echo "json => ${{ steps.issue-parser.outputs.jsonString }}"
 
       # 5️⃣ parentKey 검증
       - name: Validate parent key
