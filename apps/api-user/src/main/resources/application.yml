@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ott}
+    username: ${SPRING_DATASOURCE_USERNAME:ott}
+    password: ${SPRING_DATASOURCE_PASSWORD:ottpw}
+
+  # flyway 설정
+  flyway:
+    enabled: true
+
+  # JPA 설정
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    generate-ddl: false
+    hibernate:
+      ddl-auto: validate
+
+    #배포 할 때는 open-in-view false 설정
+    open-in-view: false
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
