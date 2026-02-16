@@ -38,8 +38,9 @@ public class VideoProfile extends BaseEntity {
     @Column(name = "media_playlist_url", nullable = false, columnDefinition = "TEXT")
     private String mediaPlaylistUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "resolution", nullable = false)
-    private String resolution;
+    private Resolution resolution;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "profile_status", nullable = false)
