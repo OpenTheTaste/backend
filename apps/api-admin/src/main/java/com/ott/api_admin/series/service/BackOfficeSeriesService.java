@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,8 +49,9 @@ public class BackOfficeSeriesService {
                 .toList();
 
         // 3. IN절로 태그 일괄 조회
-        Map<Long, List<SeriesTag>> tagListBySeriesId = seriesTagRepository
-                .findWithTagAndCategoryBySeriesIds(seriesIdList).stream()
+        Map<Long, List<SeriesTag>> tagListBySeriesId = seriesIdList.isEmpty()
+                ? Collections.emptyMap()
+                : seriesTagRepository.findWithTagAndCategoryBySeriesIds(seriesIdList).stream()
                 .collect(Collectors.groupingBy(st -> st.getSeries().getId()));
 
         List<SeriesListResponse> responseList = seriesPage.getContent().stream()
