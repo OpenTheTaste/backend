@@ -25,3 +25,13 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
