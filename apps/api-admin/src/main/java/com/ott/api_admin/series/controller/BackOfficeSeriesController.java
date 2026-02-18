@@ -22,10 +22,11 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
     @GetMapping("/admin/series")
     public ResponseEntity<SuccessResponse<PageResponse<SeriesListResponse>>> getSeries(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "searchWord", required = false) String searchWord
     ) {
         return ResponseEntity.ok(
-                SuccessResponse.of(backOfficeSeriesService.getSeries(page, size))
+                SuccessResponse.of(backOfficeSeriesService.getSeries(page, size, searchWord))
         );
     }
 }
