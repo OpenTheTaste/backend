@@ -8,7 +8,7 @@ import java.util.List;
 @Schema(description = "시리즈 목록 조회 응답")
 public record SeriesListResponse(
 
-        @Schema(type = "Long", example = "1", description = "시리즈 ID")
+        @Schema(type = "Long", description = "시리즈 ID", example = "1")
         Long seriesId,
 
         @Schema(type = "String", description = "썸네일 URL", example = "https://cdn.example.com/thumbnail.jpg")
