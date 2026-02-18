@@ -1,5 +1,6 @@
 package com.ott.api_admin.series.controller;
 
+import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.service.BackOfficeSeriesService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -19,7 +20,7 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
 
     @Override
     @GetMapping("/admin/series")
-    public ResponseEntity<SuccessResponse<PageResponse>> getSeries(
+    public ResponseEntity<SuccessResponse<PageResponse<SeriesListResponse>>> getSeries(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size
     ) {

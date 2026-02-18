@@ -32,7 +32,7 @@ public interface BackOfficeSeriesApi {
                     content = {@Content(mediaType = "application/json")}
             )
     })
-    ResponseEntity<SuccessResponse<PageResponse>> getSeries(
+    ResponseEntity<SuccessResponse<PageResponse<SeriesListResponse>>> getSeries(
             @Parameter(description = "조회할 페이지의 번호를 입력해주세요. **page는 0부터 시작합니다**", required = true) @RequestParam(value = "page", defaultValue = "0") Integer page,
             @Parameter(description = "한 페이지 당 최대 항목 개수를 입력해주세요. 기본값은 10입니다.", required = true) @RequestParam(value = "size", defaultValue = "10") Integer size
     );
