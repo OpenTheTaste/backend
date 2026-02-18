@@ -1,15 +1,13 @@
 package com.ott.api_admin.series.controller;
 
+import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.service.BackOfficeSeriesService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/back-office")
@@ -27,6 +25,14 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
     ) {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeSeriesService.getSeries(page, size, searchWord))
+        );
+    }
+
+    @Override
+    @GetMapping("/admin/series/{seriesId}")
+    public ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(@PathVariable("seriesId") Long seriesId) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(backOfficeSeriesService.getSeriesDetail(seriesId))
         );
     }
 }

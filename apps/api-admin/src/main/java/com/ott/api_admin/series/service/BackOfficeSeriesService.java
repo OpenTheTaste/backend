@@ -1,6 +1,10 @@
 package com.ott.api_admin.series.service;
 
+import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
+import com.ott.api_admin.series.mapper.BackOfficeSeriesMapper;
+import com.ott.common.web.exception.BusinessException;
+import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.domain.series_tag.repository.SeriesTagRepository;
 import com.ott.common.web.response.PageInfo;
@@ -23,6 +27,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class BackOfficeSeriesService {
+
+    private final BackOfficeSeriesMapper backOfficeSeriesMapper;
 
     private final SeriesRepository seriesRepository;
     private final SeriesTagRepository seriesTagRepository;
@@ -47,7 +53,10 @@ public class BackOfficeSeriesService {
                 .collect(Collectors.groupingBy(st -> st.getSeries().getId()));
 
         List<SeriesListResponse> responseList = seriesPage.getContent().stream()
-                .map(series -> toResponse(series, tagListBySeriesId.getOrDefault(series.getId(), List.of())))
+                .map(series -> backOfficeSeriesMapper.toSeriesListResponse(
+                        series,
+                        tagListBySeriesId.getOrDefault(series.getId(), List.of())
+                ))
                 .toList();
 
         PageInfo pageInfo = PageInfo.toPageInfo(
@@ -58,23 +67,14 @@ public class BackOfficeSeriesService {
         return PageResponse.toPageResponse(pageInfo, responseList);
     }
 
-    private SeriesListResponse toResponse(Series series, List<SeriesTag> seriesTagList) {
-        String categoryName = seriesTagList.stream()
-                .findFirst()
-                .map(st -> st.getTag().getCategory().getName())
-                .orElse(null);
+    @Transactional(readOnly = true)
+    public SeriesDetailResponse getSeriesDetail(Long seriesId) {
+        Series series = seriesRepository.findById(seriesId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
 
-        List<String> tagNameList = seriesTagList.stream()
-                .map(st -> st.getTag().getName())
-                .toList();
+        List<SeriesTag> seriesTagList = seriesTagRepository
+                .findWithTagAndCategoryBySeriesIds(List.of(seriesId));
 
-        return new SeriesListResponse(
-                series.getId(),
-                series.getThumbnailUrl(),
-                series.getTitle(),
-                categoryName,
-                tagNameList,
-                series.getPublicStatus()
-        );
+        return backOfficeSeriesMapper.toSeriesDetailResponse(series, seriesTagList);
     }
 }
