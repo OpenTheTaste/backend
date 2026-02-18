@@ -21,7 +21,30 @@ services:
       timeout: 5s
       retries: 5
 
-  # ============ 앱 ============
+  # ============ Flyway 마이그레이션 담당 (먼저 기동) ============
+  api-user:
+    build:
+      context: .
+      dockerfile: apps/api-user/Dockerfile
+    container_name: ott-api-user
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+
+  # ============ Flyway 완류 이후 빌드하는 앱 ============
   api-admin:
     build: # 이미지를 다운받는게 아니라 해당 경로에서 빌드
       context: .
@@ -36,20 +59,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-
-  api-user:
-    build:
-      context: .
-      dockerfile: apps/api-user/Dockerfile
-    container_name: ott-api-user
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-    depends_on:
-      mysql:
+      api-user:
         condition: service_healthy
 
   transcoder:
@@ -65,6 +75,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     depends_on:
       mysql:
+        condition: service_healthy
+      api-user:
         condition: service_healthy
 
 volumes:
