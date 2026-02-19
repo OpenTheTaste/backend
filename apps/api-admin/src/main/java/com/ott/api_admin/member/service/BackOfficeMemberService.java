@@ -1,7 +1,10 @@
 package com.ott.api_admin.member.service;
 
+import com.ott.api_admin.member.dto.request.ChangeRoleRequest;
 import com.ott.api_admin.member.dto.response.MemberListResponse;
 import com.ott.api_admin.member.mapper.BackOfficeMemberMapper;
+import com.ott.common.web.exception.BusinessException;
+import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.member.domain.Member;
@@ -40,5 +43,13 @@ public class BackOfficeMemberService {
                 memberPage.getSize()
         );
         return PageResponse.toPageResponse(pageInfo, responseList);
+    }
+
+    @Transactional
+    public void changeRole(Long memberId, ChangeRoleRequest changeRoleRequest) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        member.changeRole(changeRoleRequest.role());
     }
 }

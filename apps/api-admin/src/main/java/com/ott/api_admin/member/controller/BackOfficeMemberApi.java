@@ -1,9 +1,11 @@
 package com.ott.api_admin.member.controller;
 
+import com.ott.api_admin.member.dto.request.ChangeRoleRequest;
 import com.ott.api_admin.member.dto.response.MemberListResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
+import com.ott.domain.member.domain.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -12,8 +14,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.ott.domain.member.domain.Role;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "BackOffice Member API", description = "[백오피스] 사용자 관리 API")
@@ -43,5 +46,29 @@ public interface BackOfficeMemberApi {
             @Parameter(description = "한 페이지 당 최대 항목 개수를 입력해주세요. 기본값은 10입니다.", required = true) @RequestParam(value = "size", defaultValue = "10") Integer size,
             @Parameter(description = "닉네임 부분일치 검색어. 미입력 시 전체 목록을 조회합니다.", required = false) @RequestParam(value = "searchWord", required = false) String searchWord,
             @Parameter(description = "역할 필터. 미입력 시 전체 역할을 조회합니다.", required = false, example = "MEMBER") @RequestParam(value = "role", required = false) Role role
+    );
+
+    @Operation(summary = "사용자 역할 변경", description = "사용자의 역할을 변경합니다. EDITOR ↔ SUSPENDED 전환만 가능합니다. - ADMIN 권한 필요.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204", description = "역할 변경 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = Void.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "허용되지 않는 역할 변경",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            ),
+            @ApiResponse(
+                    responseCode = "404", description = "사용자를 찾을 수 없음",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<Void>> changeRole(
+            @Parameter(description = "사용자 ID", required = true, example = "1") @PathVariable Long memberId,
+            @RequestBody ChangeRoleRequest changeRoleRequest
     );
 }

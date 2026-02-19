@@ -49,4 +49,11 @@ public class Member extends BaseEntity {
 
     @Column(name = "refresh_token")
     private String refreshToken;
+
+    public void changeRole(Role targetRole) {
+        if (!this.role.canTransitionTo(targetRole))
+            throw new IllegalArgumentException("불가능한 상태 전이입니다.");
+
+        this.role = targetRole;
+    }
 }

@@ -13,4 +13,9 @@ public enum Role {
 
     String key;
     String value;
+
+    public boolean canTransitionTo(Role targetRole) {
+        return (this == EDITOR && targetRole == SUSPENDED)
+                || (this == SUSPENDED && targetRole == EDITOR);
+    }
 }
