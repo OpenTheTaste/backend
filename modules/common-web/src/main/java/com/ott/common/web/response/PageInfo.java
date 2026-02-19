@@ -3,8 +3,10 @@ package com.ott.common.web.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+@NoArgsConstructor
 @ToString
 @Getter
 public class PageInfo {
@@ -18,7 +20,13 @@ public class PageInfo {
     @Schema(type = "Integer", example = "10", description = "한 페이지의 사이즈")
     private Integer pageSize;
 
-    public PageInfo(){};
+    public static PageInfo toPageInfo(int currentPage, int totalPage, int pageSize) {
+        return PageInfo.builder()
+                .currentPage(currentPage)
+                .totalPage(totalPage)
+                .pageSize(pageSize)
+                .build();
+    }
 
     @Builder
     public PageInfo(Integer currentPage, Integer totalPage, Integer pageSize) {
