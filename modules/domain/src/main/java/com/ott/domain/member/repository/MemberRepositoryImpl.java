@@ -1,12 +1,15 @@
 package com.ott.domain.member.repository;
 
 import com.ott.domain.member.domain.Member;
+import com.ott.domain.member.domain.Role;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -18,9 +21,13 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Member> findMemberList(Pageable pageable) {
+    public Page<Member> findMemberList(Pageable pageable, String searchWord, Role role) {
         List<Member> memberList = queryFactory
                 .selectFrom(member)
+                .where(
+                        nicknameContains(searchWord),
+                        roleEq(role)
+                )
                 .orderBy(member.createdDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -28,8 +35,24 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 
         JPAQuery<Long> countQuery = queryFactory
                 .select(member.count())
-                .from(member);
+                .from(member)
+                .where(
+                        nicknameContains(searchWord),
+                        roleEq(role)
+                );
 
         return PageableExecutionUtils.getPage(memberList, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression nicknameContains(String searchWord) {
+        if (StringUtils.hasText(searchWord))
+            return member.nickname.contains(searchWord);
+        return null;
+    }
+
+    private BooleanExpression roleEq(Role role) {
+        if (role != null)
+            return member.role.eq(role);
+        return null;
     }
 }
