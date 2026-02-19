@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +25,9 @@ public class BackOfficeMemberService {
 
     @Transactional(readOnly = true)
     public PageResponse<MemberListResponse> getMemberList(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Pageable pageable = PageRequest.of(page, size);
 
-        Page<Member> memberPage = memberRepository.findAll(pageable);
+        Page<Member> memberPage = memberRepository.findMemberList(pageable);
 
         List<MemberListResponse> responseList = memberPage.getContent().stream()
                 .map(backOfficeMemberMapper::toMemberListResponse)
