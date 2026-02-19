@@ -36,12 +36,10 @@ public class BackOfficeSeriesService {
 
     @Transactional(readOnly = true)
     public PageResponse<SeriesListResponse> getSeries(int page, int size, String searchWord) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
+        Pageable pageable = PageRequest.of(page, size);
 
         // 1. keyword 유무에 따라 분기 / 시리즈 대상 페이징
-        Page<Series> seriesPage = StringUtils.hasText(searchWord)
-                ? seriesRepository.findByTitleContaining(searchWord, pageable)
-                : seriesRepository.findAll(pageable);
+        Page<Series> seriesPage = seriesRepository.findSeriesList(pageable, searchWord);
 
         // 2. 조회된 시리즈 ID 목록 추출
         List<Long> seriesIdList = seriesPage.getContent().stream()
