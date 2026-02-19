@@ -33,7 +33,7 @@ public class BackOfficeMemberController implements BackOfficeMemberApi {
 
     @Override
     @PatchMapping("/admin/members/{memberId}/role")
-    public ResponseEntity<SuccessResponse<Void>> changeRole(
+    public ResponseEntity<Void> changeRole(
             @PathVariable("memberId") Long memberId,
             @Valid @RequestBody ChangeRoleRequest changeRoleRequest
     ) {
