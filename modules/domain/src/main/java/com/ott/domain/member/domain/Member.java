@@ -52,7 +52,7 @@ public class Member extends BaseEntity {
 
     public void changeRole(Role targetRole) {
         if (!this.role.canTransitionTo(targetRole))
-            throw new IllegalArgumentException("불가능한 상태 전이입니다.");
+            throw new IllegalArgumentException();
 
         this.role = targetRole;
     }
