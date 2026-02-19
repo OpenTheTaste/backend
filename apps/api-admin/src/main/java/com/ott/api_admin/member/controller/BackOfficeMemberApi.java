@@ -67,7 +67,7 @@ public interface BackOfficeMemberApi {
                     content = {@Content(mediaType = "application/json")}
             )
     })
-    ResponseEntity<SuccessResponse<Void>> changeRole(
+    ResponseEntity<Void> changeRole(
             @Parameter(description = "사용자 ID", required = true, example = "1") @PathVariable Long memberId,
             @RequestBody ChangeRoleRequest changeRoleRequest
     );
