@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ott}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/ott} # 로컬 포트를 3307로 변경
     username: ${SPRING_DATASOURCE_USERNAME:ott}
     password: ${SPRING_DATASOURCE_PASSWORD:ottpw}
 
