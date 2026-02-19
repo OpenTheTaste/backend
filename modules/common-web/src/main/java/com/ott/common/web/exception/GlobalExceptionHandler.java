@@ -2,6 +2,7 @@ package com.ott.common.web.exception;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -72,6 +73,14 @@ public class GlobalExceptionHandler {
         log.warn("HttpRequestMethodNotSupportedException: {}", ex.getMessage());
         ErrorResponse response = ErrorResponse.of(ErrorCode.METHOD_NOT_ALLOWED, ex.getMessage());
         return ResponseEntity.status(ErrorCode.METHOD_NOT_ALLOWED.getStatus()).body(response);
+    }
+
+    // [Exception] 메소드에 전달된 인수가 유효하지 않은 경우
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.error("handleIllegalArgumentException", ex);
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
