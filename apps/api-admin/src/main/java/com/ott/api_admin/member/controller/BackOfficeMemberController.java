@@ -1,16 +1,15 @@
 package com.ott.api_admin.member.controller;
 
+import com.ott.api_admin.member.dto.request.ChangeRoleRequest;
 import com.ott.api_admin.member.dto.response.MemberListResponse;
 import com.ott.api_admin.member.service.BackOfficeMemberService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import com.ott.domain.member.domain.Role;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/back-office")
@@ -30,5 +29,15 @@ public class BackOfficeMemberController implements BackOfficeMemberApi {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeMemberService.getMemberList(page, size, searchWord, role))
         );
+    }
+
+    @Override
+    @PatchMapping("/admin/members/{memberId}/role")
+    public ResponseEntity<SuccessResponse<Void>> changeRole(
+            @PathVariable("memberId") Long memberId,
+            @Valid @RequestBody ChangeRoleRequest changeRoleRequest
+    ) {
+        backOfficeMemberService.changeRole(memberId, changeRoleRequest);
+        return ResponseEntity.noContent().build();
     }
 }
