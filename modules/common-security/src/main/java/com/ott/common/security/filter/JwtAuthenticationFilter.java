@@ -5,6 +5,7 @@ import com.ott.common.security.jwt.JwtTokenProvider;
 import com.ott.common.web.exception.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,9 @@ import java.util.List;
 
 /**
  * 들어오는 요청을 가로채서 토큰을 꺼내서 provider에게 검증을 요청
- * provider에서 정상임을 반환하면 Authentication을 securityContext에 넣음
+ * 토큰은 보통 Authorization 헤더 or accssToken 쿠키에서 꺼냄 // 현재는 쿠키에 httpOnly로 저장중
+ * provider에서 토큰을 검증하고 검증이 성공하면  Authentication객체를 생성해서 SecurityContextHolder에 authentication 저장함
+ * 이후 컨트롤러에서 authentication 받아서 사용함
  */
 @Component
 @RequiredArgsConstructor
@@ -36,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 토큰 꺼내옴
         String token = resolveToken(request);
 
-        // 토큰을 검증하여 인증 없음, 만료됨, 유효x일 경우 에러코드를 저장
+        // 토큰을 검증하여 인증 없음, 만료됨, 유효x일 경우 에러코드를 저장, 검증 통과 시 Authentication 생성
         if(token != null) {
             ErrorCode errorCode = jwtTokenProvider.validateAndGetErrorCode(token);
 
@@ -46,11 +49,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // auth: ["ROLE_USER"]
                 List<String> authorities = jwtTokenProvider.getAuthorities(token);
 
-                // Authentication을 만듬
+                // Authentication을 만듬 -> 민감한 정보 저장 x
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        memberId, // 추후 UserDetails?로 변경 예정
-                        null,
-                        authorities.stream()
+                        memberId, // principal // 추후 UserDetails로 변경할 예정 아마도
+                        null, // credentials
+                        authorities.stream() // grantedAuthorities
                                 .map(SimpleGrantedAuthority::new)
                                 .toList()
                 );
@@ -65,11 +68,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // request에서 토큰 빼오기
+    // 토큰 빼오기
     private String resolveToken(HttpServletRequest request) {
+        //Authorization 헤더에서 토큰 빼오기 시도
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {
             return bearer.substring(7);
+        }
+
+        // 쿠키에서 accessToken 빼오기 시도
+        if(request.getCookies() != null) {
+            for(Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }
