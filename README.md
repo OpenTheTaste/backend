@@ -102,7 +102,7 @@ flowchart LR
 
 위 다이어그램은 O+T 서비스의 핵심 인프라 구성도로, 네트워크 보안 강화, 비용 최적화, 미디어 처리의 비동기화에 초점을 맞추어 설계되었습니다.
 
-#### 1. 네트워크 격리 및 보안(VPC & Subnate)
+#### 1. 네트워크 격리 및 보안(VPC & Subnet)
 - 외부의 모든 클라이언트 트래픽은 Public Subnet에 위치한 ALB(Application Load Balancer) 1곳을 통해서만 인입됩니다.
 
 - 실제 비즈니스 로직이 실행되는 3대의 EC2(User API, Admin API, Transcoder Worker)와 데이터가 저장되는 RDS MySQL은 모두 Private Subnet에 완벽히 격리하여 외부 인터넷으로부터의 직접적인 접근을 원천 차단했습니다.
@@ -204,7 +204,6 @@ repo-root/
 │   │   └── src/main/java/com/ott/infra/
 │   │       ├── db/
 │   │       │   ├── config/
-│   │       │   └── BaseEntity.java
 │   │       └── s3/
 │   │           ├── config/
 │   │           └── S3FileService.java
