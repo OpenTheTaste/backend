@@ -1,20 +1,18 @@
 package com.ott.domain.short_form.domain;
 
 import com.ott.domain.common.BaseEntity;
-import com.ott.domain.common.PublicStatus;
 import com.ott.domain.contents.domain.Contents;
-import com.ott.domain.member.domain.Member;
+import com.ott.domain.media.domain.Media;
 import com.ott.domain.series.domain.Series;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -34,9 +32,9 @@ public class ShortForm extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploader_id", nullable = false)
-    private Member uploader;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "media_id", nullable = false, unique = true)
+    private Media media;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "series_id")
@@ -46,27 +44,11 @@ public class ShortForm extends BaseEntity {
     @JoinColumn(name = "contents_id")
     private Contents contents;
 
-    @Column(name = "title", nullable = false)
-    private String title;
-
-    @Column(name = "description", nullable = false)
-    private String description;
-
-    @Column(name = "poster_url", nullable = false, columnDefinition = "TEXT")
-    private String posterUrl;
-
     @Column(name = "duration")
     private Integer duration;
 
     @Column(name = "video_size")
     private Integer videoSize;
-
-    @Column(name = "bookmark_count", nullable = false)
-    private Long bookmarkCount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "public_status", nullable = false)
-    private PublicStatus publicStatus;
 
     @Column(name = "origin_url", nullable = false, columnDefinition = "TEXT")
     private String originUrl;
