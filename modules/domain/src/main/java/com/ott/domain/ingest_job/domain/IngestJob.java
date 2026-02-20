@@ -1,8 +1,7 @@
 package com.ott.domain.ingest_job.domain;
 
 import com.ott.domain.common.BaseEntity;
-import com.ott.domain.contents.domain.Contents;
-import com.ott.domain.short_form.domain.ShortForm;
+import com.ott.domain.media.domain.Media;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -33,12 +32,8 @@ public class IngestJob extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "short_form_id")
-    private ShortForm shortForm;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contents_id")
-    private Contents contents;
+    @JoinColumn(name = "media_id", nullable = false)
+    private Media media;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ingest_status", nullable = false)

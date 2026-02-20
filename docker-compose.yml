@@ -16,10 +16,10 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER} -p${MYSQL_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
 
   # ============ Flyway 마이그레이션 담당 (먼저 기동) ============
   api-user:

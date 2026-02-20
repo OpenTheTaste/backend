@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom {
 
     // 기존 회원인지 신규 회원인지 DB 조회
     Optional<Member> findByProviderAndProviderId(Provider provider, String providerId);
