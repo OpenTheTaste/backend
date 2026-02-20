@@ -49,4 +49,27 @@ public class Member extends BaseEntity {
 
     @Column(name = "refresh_token")
     private String refreshToken;
+
+    public static Member createKakaoMember(String providerId, String email, String nickname) {
+        return Member.builder()
+                .provider(Provider.KAKAO)
+                .providerId(providerId)
+                .email(email)
+                .nickname(nickname)
+                .role(Role.MEMBER)
+                .build();
+    }
+
+    public void updateKakaoProfile(String email, String nickname) {
+        this.email = email;
+        this.nickname = nickname;
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public void clearRefreshToken() {
+        this.refreshToken = null;
+    }
 }
