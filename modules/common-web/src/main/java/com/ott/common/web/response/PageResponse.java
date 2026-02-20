@@ -1,28 +1,24 @@
 package com.ott.common.web.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 
-@NoArgsConstructor
 @AllArgsConstructor
-@Setter
+@NoArgsConstructor
 @Getter
-@Builder
-public class PageResponse {
+public class PageResponse<T> {
 
-    @Schema(type = "PageInfo", description = "페이징 처리에 필요한 정보")
+    @Schema(description = "페이징 처리에 필요한 정보")
     private PageInfo pageInfo;
 
-    @Schema(type = "List<?>", example = "List<?> dataList (code 0번 참고)", description = "페이징 처리된 데이터 리스트")
-    private List<?> dataList = new ArrayList<>();
+    @Schema(description = "페이징 처리된 데이터 리스트")
+    private List<T> dataList;
 
-    public static PageResponse toPageResponse(PageInfo pageInfo, List<?> dataList) {
-        return PageResponse.builder()
-                .pageInfo(pageInfo)
-                .dataList(dataList)
-                .build();
+    public static <T> PageResponse<T> toPageResponse(PageInfo pageInfo, List<T> dataList) {
+        return new PageResponse<>(pageInfo, dataList);
     }
 }

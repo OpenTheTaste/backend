@@ -72,4 +72,11 @@ public class Member extends BaseEntity {
     public void clearRefreshToken() {
         this.refreshToken = null;
     }
+
+    public void changeRole(Role targetRole) {
+        if (!this.role.canTransitionTo(targetRole))
+            throw new IllegalArgumentException("Invalid role transition: " + this.role + " -> " + targetRole);
+
+        this.role = targetRole;
+    }
 }

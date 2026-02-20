@@ -22,23 +22,33 @@ public enum ErrorCode {
     INVALID_TYPE(HttpStatus.BAD_REQUEST, "C003", "타입이 올바르지 않습니다"),
     MISSING_BODY(HttpStatus.BAD_REQUEST, "C004", "요청 본문이 없습니다"),
     JSON_PARSE_ERROR(HttpStatus.BAD_REQUEST, "C005", "JSON 형식이 올바르지 않습니다"),
+
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "C006", "리소스를 찾을 수 없습니다"),
+
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "C007", "허용되지 않은 메서드입니다"),
+
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C999", "서버 오류가 발생했습니다"),
 
     // ========== Auth (A) - 인증/인가 ==========
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A001", "인증이 필요합니다"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "유효하지 않은 토큰입니다"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "만료된 토큰입니다"),
+
     FORBIDDEN(HttpStatus.FORBIDDEN, "A004", "접근 권한이 없습니다"),
 
     // ========== User (U) - 사용자 ==========
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다"),
+
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "U002", "이미 존재하는 이메일입니다"),
 
     // ========== Business (B) - 비즈니스 ==========
     CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "콘텐츠를 찾을 수 없습니다"),
-    SERIES_NOT_FOUND(HttpStatus.NOT_FOUND, "B002", "시리즈를 찾을 수 없습니다");
+    SERIES_NOT_FOUND(HttpStatus.NOT_FOUND, "B002", "시리즈를 찾을 수 없습니다"),
+    SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B003", "검색어는 최소 2글자 이상이어야 합니다"),
+    INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B004", "허용되지 않는 역할 변경입니다")
+
+
+    ;
 
     private final HttpStatus status;
     private final String code;
