@@ -59,7 +59,7 @@ ALTER TABLE media_tag
 -- 3. media 상세 테이블에 media_id 컬럼 추가 + 제약조건
 -- series
 ALTER TABLE series
-    ADD COLUMN media_id BIGINT NULL AFTER id;
+    ADD COLUMN media_id BIGINT NOT NULL AFTER id;
 
 ALTER TABLE series
     ADD CONSTRAINT uk_series_media UNIQUE (media_id);
@@ -71,7 +71,7 @@ ALTER TABLE series
 
 -- contents
 ALTER TABLE contents
-    ADD COLUMN media_id BIGINT NULL AFTER id;
+    ADD COLUMN media_id BIGINT NOT NULL AFTER id;
 
 ALTER TABLE contents
     ADD CONSTRAINT uk_contents_media UNIQUE (media_id);
@@ -83,7 +83,7 @@ ALTER TABLE contents
 
 -- short_form
 ALTER TABLE short_form
-    ADD COLUMN media_id BIGINT NULL AFTER id;
+    ADD COLUMN media_id BIGINT NOT NULL AFTER id;
 
 ALTER TABLE short_form
     ADD CONSTRAINT uk_short_form_media UNIQUE (media_id);
@@ -96,7 +96,7 @@ ALTER TABLE short_form
 
 -- 4. bookmark: target_type + target_id → media_id
 ALTER TABLE bookmark
-    ADD COLUMN media_id BIGINT NULL;
+    ADD COLUMN media_id BIGINT NOT NULL;
 
 ALTER TABLE bookmark
     ADD CONSTRAINT fk_bookmark_to_media
@@ -112,7 +112,7 @@ ALTER TABLE bookmark
 
 -- 5. likes: target_type + target_id → media_id
 ALTER TABLE likes
-    ADD COLUMN media_id BIGINT NULL;
+    ADD COLUMN media_id BIGINT NOT NULL;
 
 ALTER TABLE likes
     ADD CONSTRAINT fk_likes_to_media
@@ -128,7 +128,7 @@ ALTER TABLE likes
 
 -- 6. ingest_job: contents_id + short_form_id → media_id
 ALTER TABLE ingest_job
-    ADD COLUMN media_id BIGINT NULL;
+    ADD COLUMN media_id BIGINT NOT NULL;
 
 ALTER TABLE ingest_job
     ADD CONSTRAINT fk_ingest_job_to_media
