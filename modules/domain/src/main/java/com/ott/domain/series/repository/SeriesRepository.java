@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.series.domain.Series;
 
@@ -23,5 +24,5 @@ public interface SeriesRepository extends JpaRepository<Series, Long>, SeriesRep
                         Pageable pageable);
 
         // 시리즈 단건 조회
-        Optional<Series> findByIdAndStatusAndPublicStatus(Long id, Status status, Boolean publicStatus);
+        Optional<Series> findByIdAndStatusAndPublicStatus(Long id, Status status, PublicStatus publicStatus);
 }
