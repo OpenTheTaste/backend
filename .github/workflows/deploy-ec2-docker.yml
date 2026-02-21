@@ -1,0 +1,194 @@
+name: Deploy Docker Apps To EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (default: commit SHA)"
+        required: false
+        type: string
+  pull_request:
+    types:
+      - closed
+
+env:
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  build-and-push:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop') }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api-user
+            ecr_repo: oplust-api-user
+          - service: api-admin
+            ecr_repo: oplust-api-admin
+          - service: transcoder
+            ecr_repo: oplust-transcoder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR repository exists
+        run: |
+          aws ecr describe-repositories --repository-names "${{ matrix.ecr_repo }}" >/dev/null 2>&1 || \
+          aws ecr create-repository --repository-name "${{ matrix.ecr_repo }}" >/dev/null
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
+        run: |
+          IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
+          IMAGE_URI="${ECR_REGISTRY}/${{ matrix.ecr_repo }}:${IMAGE_TAG}"
+          IMAGE_URI_LATEST="${ECR_REGISTRY}/${{ matrix.ecr_repo }}:latest"
+
+          docker build \
+            -f "apps/${{ matrix.service }}/Dockerfile" \
+            -t "${IMAGE_URI}" \
+            -t "${IMAGE_URI_LATEST}" \
+            .
+
+          docker push "${IMAGE_URI}"
+          docker push "${IMAGE_URI_LATEST}"
+
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop') }}
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to EC2 instances via SSM
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
+          PROJECT_NAME: oplust
+          DB_NAME: oplust
+          RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          API_USER_ENV: ${{ secrets.API_USER_ENV }}
+          API_ADMIN_ENV: ${{ secrets.API_ADMIN_ENV }}
+          TRANSCODER_ENV: ${{ secrets.TRANSCODER_ENV }}
+        run: |
+          set -euo pipefail
+
+          IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
+
+          if [ -z "${RDS_ENDPOINT}" ] || [ -z "${DB_USERNAME}" ] || [ -z "${DB_PASSWORD}" ]; then
+            echo "RDS_ENDPOINT, DB_USERNAME, DB_PASSWORD secrets are required" >&2
+            exit 1
+          fi
+
+          deploy_service() {
+            local target_tag="$1"
+            local image_uri="$2"
+            local container_name="$3"
+            local env_file="$4"
+            local port="$5"
+            local env_payload="$6"
+
+            local instance_id
+            instance_id=$(aws ec2 describe-instances \
+              --region "$AWS_REGION" \
+              --filters "Name=tag:Name,Values=${target_tag}" "Name=instance-state-name,Values=running" \
+              --query "Reservations[0].Instances[0].InstanceId" \
+              --output text)
+
+            if [ -z "$instance_id" ] || [ "$instance_id" = "None" ]; then
+              echo "No running instance found for tag: ${target_tag}" >&2
+              exit 1
+            fi
+
+            local full_env_payload
+            full_env_payload=$(printf 'SPRING_DATASOURCE_URL=jdbc:mysql://%s:3306/%s\nSPRING_DATASOURCE_USERNAME=%s\nSPRING_DATASOURCE_PASSWORD=%s\n%s' "${RDS_ENDPOINT}" "${DB_NAME}" "${DB_USERNAME}" "${DB_PASSWORD}" "${env_payload}")
+
+            local env_payload_b64
+            env_payload_b64="$(printf '%s' "$full_env_payload" | base64 -w0)"
+
+            local run_cmd
+            if [ -n "$port" ]; then
+              run_cmd="sudo docker run -d --name ${container_name} --restart unless-stopped -p ${port}:${port} --env-file ${env_file} ${image_uri}"
+            else
+              run_cmd="sudo docker run -d --name ${container_name} --restart unless-stopped --env-file ${env_file} ${image_uri}"
+            fi
+
+            local cmd_id
+            cmd_id=$(aws ssm send-command \
+              --region "$AWS_REGION" \
+              --instance-ids "$instance_id" \
+              --document-name "AWS-RunShellScript" \
+              --comment "Deploy ${container_name}:${IMAGE_TAG}" \
+              --parameters commands="[
+                \"set -e\",
+                \"sudo mkdir -p /etc/oplust\",
+                \"echo '${env_payload_b64}' | base64 -d | sudo tee ${env_file} >/dev/null\",
+                \"sudo chmod 600 ${env_file}\",
+                \"aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY\",
+                \"sudo docker pull ${image_uri}\",
+                \"sudo docker rm -f ${container_name} || true\",
+                \"${run_cmd}\"
+              ]" \
+              --query 'Command.CommandId' \
+              --output text)
+
+            echo "[$container_name] command id: $cmd_id (instance: $instance_id)"
+
+            local status
+            for _ in $(seq 1 120); do
+              status=$(aws ssm get-command-invocation \
+                --region "$AWS_REGION" \
+                --command-id "$cmd_id" \
+                --instance-id "$instance_id" \
+                --query 'Status' \
+                --output text 2>/dev/null || true)
+
+              case "$status" in
+                Success)
+                  echo "[$container_name] deployment success"
+                  return 0
+                  ;;
+                Failed|Cancelled|TimedOut)
+                  echo "[$container_name] deployment failed with status: $status" >&2
+                  aws ssm get-command-invocation --region "$AWS_REGION" --command-id "$cmd_id" --instance-id "$instance_id" --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' --output json || true
+                  exit 1
+                  ;;
+                Pending|InProgress|Delayed|"")
+                  sleep 5
+                  ;;
+                *)
+                  echo "[$container_name] unexpected status: $status" >&2
+                  sleep 5
+                  ;;
+              esac
+            done
+
+            echo "[$container_name] deployment timed out waiting for SSM command completion" >&2
+            aws ssm get-command-invocation --region "$AWS_REGION" --command-id "$cmd_id" --instance-id "$instance_id" --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' --output json || true
+            exit 1
+          }
+
+          deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "${API_USER_ENV}"
+          deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "${API_ADMIN_ENV}"
+          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "" "${TRANSCODER_ENV}"
