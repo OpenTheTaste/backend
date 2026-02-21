@@ -7,4 +7,6 @@ import java.util.List;
 public interface MediaTagRepositoryCustom {
 
     List<MediaTag> findWithTagAndCategoryByMediaIds(List<Long> mediaIds);
+
+    List<MediaTag> findWithTagAndCategoryByMediaId(Long mediaId);
 }

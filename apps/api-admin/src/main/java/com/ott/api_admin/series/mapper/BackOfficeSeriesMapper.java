@@ -26,24 +26,24 @@ public class BackOfficeSeriesMapper {
         );
     }
 
-//    public SeriesDetailResponse toSeriesDetailResponse(Series series, List<SeriesTag> seriesTagList) {
-//        String categoryName = extractCategoryName(seriesTagList);
-//        List<String> tagNameList = extractTagNameList(seriesTagList);
-//
-//        return new SeriesDetailResponse(
-//                series.getId(),
-//                series.getTitle(),
-//                series.getDescription(),
-//                categoryName,
-//                tagNameList,
-//                series.getPublicStatus(),
-//                series.getUploader().getNickname(),
-//                series.getBookmarkCount(),
-//                series.getActors(),
-//                series.getPosterUrl(),
-//                series.getThumbnailUrl()
-//        );
-//    }
+    public SeriesDetailResponse toSeriesDetailResponse(Series series, Media media, String uploaderName, List<MediaTag> mediaTagList) {
+        String categoryName = extractCategoryName(mediaTagList);
+        List<String> tagNameList = extractTagNameList(mediaTagList);
+
+        return new SeriesDetailResponse(
+                series.getId(),
+                media.getTitle(),
+                media.getDescription(),
+                categoryName,
+                tagNameList,
+                media.getPublicStatus(),
+                uploaderName,
+                media.getBookmarkCount(),
+                series.getActors(),
+                media.getPosterUrl(),
+                media.getThumbnailUrl()
+        );
+    }
 
     private String extractCategoryName(List<MediaTag> mediaTagList) {
         return mediaTagList.stream()

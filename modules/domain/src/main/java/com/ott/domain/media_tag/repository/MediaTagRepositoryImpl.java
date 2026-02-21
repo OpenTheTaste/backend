@@ -24,4 +24,14 @@ public class MediaTagRepositoryImpl implements MediaTagRepositoryCustom {
                 .where(mediaTag.media.id.in(mediaIds))
                 .fetch();
     }
+
+    @Override
+    public List<MediaTag> findWithTagAndCategoryByMediaId(Long mediaId) {
+        return queryFactory
+                .selectFrom(mediaTag)
+                .join(mediaTag.tag, tag).fetchJoin()
+                .join(tag.category, category).fetchJoin()
+                .where(mediaTag.media.id.eq(mediaId))
+                .fetch();
+    }
 }
