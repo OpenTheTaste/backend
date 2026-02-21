@@ -7,5 +7,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface MediaRepositoryCustom {
 
-    Page<Media> findMediaListByMediaType(Pageable pageable, MediaType mediaType, String searchWord);
+    Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType, String searchWord);
 }
