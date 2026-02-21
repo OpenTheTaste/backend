@@ -109,20 +109,35 @@ jobs:
             local port="$5"
             local env_payload="$6"
 
+            local instance_id
+            instance_id=$(aws ec2 describe-instances \
+              --region "$AWS_REGION" \
+              --filters "Name=tag:Name,Values=${target_tag}" "Name=instance-state-name,Values=running" \
+              --query "Reservations[0].Instances[0].InstanceId" \
+              --output text)
+
+            if [ -z "$instance_id" ] || [ "$instance_id" = "None" ]; then
+              echo "No running instance found for tag: ${target_tag}" >&2
+              exit 1
+            fi
+
             local full_env_payload
             full_env_payload=$(printf 'SPRING_DATASOURCE_URL=jdbc:mysql://%s:3306/%s\nSPRING_DATASOURCE_USERNAME=%s\nSPRING_DATASOURCE_PASSWORD=%s\n%s' "${RDS_ENDPOINT}" "${DB_NAME}" "${DB_USERNAME}" "${DB_PASSWORD}" "${env_payload}")
 
             local env_payload_b64
             env_payload_b64="$(printf '%s' "$full_env_payload" | base64 -w0)"
 
+            local run_cmd
             if [ -n "$port" ]; then
               run_cmd="sudo docker run -d --name ${container_name} --restart unless-stopped -p ${port}:${port} --env-file ${env_file} ${image_uri}"
             else
               run_cmd="sudo docker run -d --name ${container_name} --restart unless-stopped --env-file ${env_file} ${image_uri}"
             fi
 
-            aws ssm send-command \
-              --targets "Key=tag:Name,Values=${target_tag}" \
+            local cmd_id
+            cmd_id=$(aws ssm send-command \
+              --region "$AWS_REGION" \
+              --instance-ids "$instance_id" \
               --document-name "AWS-RunShellScript" \
               --comment "Deploy ${container_name}:${IMAGE_TAG}" \
               --parameters commands="[
@@ -135,10 +150,43 @@ jobs:
                 \"sudo docker rm -f ${container_name} || true\",
                 \"${run_cmd}\"
               ]" \
-              --max-concurrency "1" \
-              --max-errors "1" \
               --query 'Command.CommandId' \
-              --output text >/dev/null
+              --output text)
+
+            echo "[$container_name] command id: $cmd_id (instance: $instance_id)"
+
+            local status
+            for _ in $(seq 1 120); do
+              status=$(aws ssm get-command-invocation \
+                --region "$AWS_REGION" \
+                --command-id "$cmd_id" \
+                --instance-id "$instance_id" \
+                --query 'Status' \
+                --output text 2>/dev/null || true)
+
+              case "$status" in
+                Success)
+                  echo "[$container_name] deployment success"
+                  return 0
+                  ;;
+                Failed|Cancelled|TimedOut)
+                  echo "[$container_name] deployment failed with status: $status" >&2
+                  aws ssm get-command-invocation --region "$AWS_REGION" --command-id "$cmd_id" --instance-id "$instance_id" --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' --output json || true
+                  exit 1
+                  ;;
+                Pending|InProgress|Delayed|"")
+                  sleep 5
+                  ;;
+                *)
+                  echo "[$container_name] unexpected status: $status" >&2
+                  sleep 5
+                  ;;
+              esac
+            done
+
+            echo "[$container_name] deployment timed out waiting for SSM command completion" >&2
+            aws ssm get-command-invocation --region "$AWS_REGION" --command-id "$cmd_id" --instance-id "$instance_id" --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' --output json || true
+            exit 1
           }
 
           deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "${API_USER_ENV}"
