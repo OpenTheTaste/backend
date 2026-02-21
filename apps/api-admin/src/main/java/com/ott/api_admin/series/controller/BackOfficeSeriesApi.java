@@ -61,6 +61,6 @@ public interface BackOfficeSeriesApi {
             )
     })
     ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
-            @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable Long seriesId
+            @Parameter(description = "미디어 ID", required = true, example = "1") @PathVariable Long mediaId
     );
 }
