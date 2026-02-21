@@ -29,10 +29,10 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
     }
 
     @Override
-    @GetMapping("/admin/series/{seriesId}")
-    public ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(@PathVariable("seriesId") Long seriesId) {
+    @GetMapping("/admin/series/{mediaId}")
+    public ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(@PathVariable("mediaId") Long mediaId) {
         return ResponseEntity.ok(
-                SuccessResponse.of(backOfficeSeriesService.getSeriesDetail(seriesId))
+                SuccessResponse.of(backOfficeSeriesService.getSeriesDetail(mediaId))
         );
     }
 }

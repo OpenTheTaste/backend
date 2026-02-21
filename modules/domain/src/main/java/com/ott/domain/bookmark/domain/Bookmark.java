@@ -1,12 +1,9 @@
 package com.ott.domain.bookmark.domain;
 
 import com.ott.domain.common.BaseEntity;
-import com.ott.domain.common.TargetType;
+import com.ott.domain.media.domain.Media;
 import com.ott.domain.member.domain.Member;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,10 +33,7 @@ public class Bookmark extends BaseEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(name = "target_id", nullable = false)
-    private Long targetId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false)
-    private TargetType targetType;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "media_id", nullable = false)
+    private Media media;
 }

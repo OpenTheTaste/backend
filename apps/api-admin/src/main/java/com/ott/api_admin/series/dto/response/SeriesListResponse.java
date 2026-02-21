@@ -8,8 +8,8 @@ import java.util.List;
 @Schema(description = "시리즈 목록 조회 응답")
 public record SeriesListResponse(
 
-        @Schema(type = "Long", description = "시리즈 ID", example = "1")
-        Long seriesId,
+        @Schema(type = "Long", description = "미디어 ID (시리즈에서 참조)", example = "1")
+        Long mediaId,
 
         @Schema(type = "String", description = "썸네일 URL", example = "https://cdn.example.com/thumbnail.jpg")
         String thumbnailUrl,

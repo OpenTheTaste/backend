@@ -42,3 +42,8 @@ node_modules/
 package-lock.json
 pnpm-lock.yaml
 
+modules/infra/src/main/resources/db/seed/
+
+private_docs/
+AGENTS.md
+CLAUDE.md

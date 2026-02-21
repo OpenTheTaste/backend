@@ -5,10 +5,10 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public enum TargetType {
-    SHORT_FORM("SHORT_FORM", "SHORT_FORM"),
+public enum MediaType {
+    SERIES("SERIES", "SERIES"),
     CONTENTS("CONTENTS", "CONTENTS"),
-    SERIES("SERIES", "SERIES");
+    SHORT_FORM("SHORT_FORM", "SHORT_FORM");
 
     String key;
     String value;

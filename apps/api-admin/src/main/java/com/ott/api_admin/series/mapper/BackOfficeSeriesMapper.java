@@ -2,8 +2,9 @@ package com.ott.api_admin.series.mapper;
 
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
+import com.ott.domain.media.domain.Media;
+import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.series.domain.Series;
-import com.ott.domain.series_tag.domain.SeriesTag;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,49 +12,49 @@ import java.util.List;
 @Component
 public class BackOfficeSeriesMapper {
 
-    public SeriesListResponse toSeriesListResponse(Series series, List<SeriesTag> seriesTagList) {
-        String categoryName = extractCategoryName(seriesTagList);
-        List<String> tagNameList = extractTagNameList(seriesTagList);
+    public SeriesListResponse toSeriesListResponse(Media media, List<MediaTag> mediaTagList) {
+        String categoryName = extractCategoryName(mediaTagList);
+        List<String> tagNameList = extractTagNameList(mediaTagList);
 
         return new SeriesListResponse(
-                series.getId(),
-                series.getThumbnailUrl(),
-                series.getTitle(),
+                media.getId(),
+                media.getThumbnailUrl(),
+                media.getTitle(),
                 categoryName,
                 tagNameList,
-                series.getPublicStatus()
+                media.getPublicStatus()
         );
     }
 
-    public SeriesDetailResponse toSeriesDetailResponse(Series series, List<SeriesTag> seriesTagList) {
-        String categoryName = extractCategoryName(seriesTagList);
-        List<String> tagNameList = extractTagNameList(seriesTagList);
+    public SeriesDetailResponse toSeriesDetailResponse(Series series, Media media, String uploaderName, List<MediaTag> mediaTagList) {
+        String categoryName = extractCategoryName(mediaTagList);
+        List<String> tagNameList = extractTagNameList(mediaTagList);
 
         return new SeriesDetailResponse(
                 series.getId(),
-                series.getTitle(),
-                series.getDescription(),
+                media.getTitle(),
+                media.getDescription(),
                 categoryName,
                 tagNameList,
-                series.getPublicStatus(),
-                series.getUploader().getNickname(),
-                series.getBookmarkCount(),
+                media.getPublicStatus(),
+                uploaderName,
+                media.getBookmarkCount(),
                 series.getActors(),
-                series.getPosterUrl(),
-                series.getThumbnailUrl()
+                media.getPosterUrl(),
+                media.getThumbnailUrl()
         );
     }
 
-    private String extractCategoryName(List<SeriesTag> seriesTagList) {
-        return seriesTagList.stream()
+    private String extractCategoryName(List<MediaTag> mediaTagList) {
+        return mediaTagList.stream()
                 .findFirst()
-                .map(st -> st.getTag().getCategory().getName())
+                .map(mt -> mt.getTag().getCategory().getName())
                 .orElse(null);
     }
 
-    private List<String> extractTagNameList(List<SeriesTag> seriesTagList) {
-        return seriesTagList.stream()
-                .map(st -> st.getTag().getName())
+    private List<String> extractTagNameList(List<MediaTag> mediaTagList) {
+        return mediaTagList.stream()
+                .map(mt -> mt.getTag().getName())
                 .toList();
     }
 }
