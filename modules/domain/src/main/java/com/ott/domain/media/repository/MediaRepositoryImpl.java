@@ -21,7 +21,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<Media> findMediaListByMediaType(Pageable pageable, MediaType mediaType, String searchWord) {
+    public Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType, String searchWord) {
         List<Media> mediaList = queryFactory
                 .selectFrom(media)
                 .where(

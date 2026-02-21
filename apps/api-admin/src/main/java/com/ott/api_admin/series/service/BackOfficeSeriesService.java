@@ -41,7 +41,7 @@ public class BackOfficeSeriesService {
         Pageable pageable = PageRequest.of(page, size);
 
         // 1. 미디어 중 시리즈 대상 페이징
-        Page<Media> mediaPage = mediaRepository.findMediaListByMediaType(pageable, MediaType.SERIES, searchWord);
+        Page<Media> mediaPage = mediaRepository.findMediaListByMediaTypeAndSearchWord(pageable, MediaType.SERIES, searchWord);
 
         // 2. 조회된 미디어 ID 목록 추출
         List<Long> mediaIdList = mediaPage.getContent().stream()
