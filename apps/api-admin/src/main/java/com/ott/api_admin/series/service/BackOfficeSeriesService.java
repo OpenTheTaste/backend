@@ -13,6 +13,7 @@ import com.ott.domain.media_tag.repository.MediaTagRepository;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.series.domain.Series;
+import com.ott.domain.series.repository.SeriesRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +34,7 @@ public class BackOfficeSeriesService {
 
     private final MediaRepository mediaRepository;
     private final MediaTagRepository mediaTagRepository;
+    private final SeriesRepository seriesRepository;
 
     @Transactional(readOnly = true)
     public PageResponse<SeriesListResponse> getSeries(int page, int size, String searchWord) {
@@ -67,14 +69,18 @@ public class BackOfficeSeriesService {
         return PageResponse.toPageResponse(pageInfo, responseList);
     }
 
-//    @Transactional(readOnly = true)
-//    public SeriesDetailResponse getSeriesDetail(Long seriesId) {
-//        Series series = seriesRepository.findById(seriesId)
-//                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
-//
-//        List<SeriesTag> seriesTagList = seriesTagRepository
-//                .findWithTagAndCategoryBySeriesIds(List.of(seriesId));
-//
-//        return backOfficeSeriesMapper.toSeriesDetailResponse(series, seriesTagList);
-//    }
+    @Transactional(readOnly = true)
+    public SeriesDetailResponse getSeriesDetail(Long mediaId) {
+        // 1. Series + Media + Uploader 한 번에 조회
+        Series series = seriesRepository.findWithMediaAndUploaderByMediaId(mediaId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+
+        Media media = series.getMedia();
+        String uploaderNickname = media.getUploader().getNickname();
+
+        // 2. 태그 조회
+        List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(mediaId);
+
+        return backOfficeSeriesMapper.toSeriesDetailResponse(series, media, uploaderNickname, mediaTagList);
+    }
 }
