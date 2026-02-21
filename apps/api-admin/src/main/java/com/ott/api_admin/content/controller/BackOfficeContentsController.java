@@ -1,5 +1,6 @@
 package com.ott.api_admin.content.controller;
 
+import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.content.service.BackOfficeContentsService;
 import com.ott.common.web.response.PageResponse;
@@ -8,6 +9,7 @@ import com.ott.domain.common.PublicStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +31,16 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
     ) {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeContentsService.getContents(page, size, searchWord, publicStatus))
+        );
+    }
+
+    @Override
+    @GetMapping("/admin/contents/{mediaId}")
+    public ResponseEntity<SuccessResponse<ContentsDetailResponse>> getContentsDetail(
+            @PathVariable Long mediaId
+    ) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(backOfficeContentsService.getContentsDetail(mediaId))
         );
     }
 }
