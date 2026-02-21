@@ -21,22 +21,7 @@ services:
       timeout: 5s
       retries: 20
 
-  # ============ 앱 ============
-  api-admin:
-    build: # 이미지를 다운받는게 아니라 해당 경로에서 빌드
-      context: .
-      dockerfile: apps/api-admin/Dockerfile
-    container_name: ott-api-admin
-    ports:
-      - "8081:8081"
-    environment:
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-    depends_on:
-      mysql:
-        condition: service_healthy
-
+  # ============ Flyway 마이그레이션 담당 (먼저 기동) ============
   api-user:
     build:
       context: .
@@ -48,8 +33,38 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      JWT_SECRET_BASE64: ${JWT_SECRET_BASE64}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
     depends_on:
       mysql:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+
+  # ============ Flyway 완류 이후 빌드하는 앱 ============
+  api-admin:
+    build: # 이미지를 다운받는게 아니라 해당 경로에서 빌드
+      context: .
+      dockerfile: apps/api-admin/Dockerfile
+    container_name: ott-api-admin
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      JWT_SECRET_BASE64: ${JWT_SECRET_BASE64}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      api-user:
         condition: service_healthy
 
   transcoder:
@@ -65,6 +80,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     depends_on:
       mysql:
+        condition: service_healthy
+      api-user:
         condition: service_healthy
 
 volumes:

@@ -16,4 +16,19 @@ dependencies {
 	implementation 'org.flywaydb:flyway-mysql'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	testImplementation 'org.springframework.security:spring-security-test'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+}
+
+
+/**
+ * Flyway가 infra 모듈의 db/migration 리소스를 확실히 인식하도록 설정
+ */
+tasks.named('processResources') {
+	from(project(':modules:infra').sourceSets.main.resources.srcDirs) {
+		include 'db/migration/**'
+	}
 }
