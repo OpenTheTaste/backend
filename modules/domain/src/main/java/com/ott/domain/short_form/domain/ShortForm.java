@@ -55,4 +55,8 @@ public class ShortForm extends BaseEntity {
 
     @Column(name = "master_playlist_url", columnDefinition = "TEXT")
     private String masterPlaylistUrl;
+
+    public Media getOriginMedia() {
+        return series == null ? contents.getMedia() : series.getMedia();
+    }
 }

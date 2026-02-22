@@ -1,5 +1,6 @@
 package com.ott.api_admin.shortform.controller;
 
+import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.ShortFormListResponse;
 import com.ott.api_admin.shortform.service.BackOfficeShortFormService;
 import com.ott.common.web.response.PageResponse;
@@ -8,10 +9,7 @@ import com.ott.domain.common.PublicStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/back-office/short-forms")
@@ -31,6 +29,17 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
     ) {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeShortFormService.getShortFormList(page, size, searchWord, publicStatus, authentication))
+        );
+    }
+
+    @Override
+    @GetMapping("/{mediaId}")
+    public ResponseEntity<SuccessResponse<ShortFormDetailResponse>> getShortFormDetail(
+            @PathVariable Long mediaId,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(backOfficeShortFormService.getShortFormDetail(mediaId, authentication))
         );
     }
 }
