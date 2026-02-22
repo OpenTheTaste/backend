@@ -12,14 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/back-office")
+@RequestMapping("/back-office/admin/members")
 @RequiredArgsConstructor
 public class BackOfficeMemberController implements BackOfficeMemberApi {
 
     private final BackOfficeMemberService backOfficeMemberService;
 
     @Override
-    @GetMapping("/admin/members")
+    @GetMapping
     public ResponseEntity<SuccessResponse<PageResponse<MemberListResponse>>> getMemberList(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
@@ -32,7 +32,7 @@ public class BackOfficeMemberController implements BackOfficeMemberApi {
     }
 
     @Override
-    @PatchMapping("/admin/members/{memberId}/role")
+    @PatchMapping("/{memberId}/role")
     public ResponseEntity<Void> changeRole(
             @PathVariable("memberId") Long memberId,
             @Valid @RequestBody ChangeRoleRequest changeRoleRequest
