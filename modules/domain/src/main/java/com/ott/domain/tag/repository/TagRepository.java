@@ -10,12 +10,14 @@ import com.ott.domain.tag.domain.Tag;
 
 public interface TagRepository extends JpaRepository<Tag, Long> {
 
+    // 시리즈/콘텐츠에 연결된 태그 조회
     @Query("""
-            SELECT t.name
-            FROM Tag t
-            JOIN SeriesTag st ON t.id = st.tag.id
-            WHERE st.series.id = :seriesId
+            SELECT DISTINCT t.name
+            FROM MediaTag mt
+            JOIN mt.tag t
+            WHERE mt.media.id = :mediaId
             AND t.status = 'ACTIVE'
+            AND mt.status = 'ACTIVE'
             """)
-    List<String> findTagNamesBySeriesId(@Param("seriesId") Long seriesId);
+    List<String> findTagNamesByMediaId(@Param("mediaId") Long mediaId);
 }

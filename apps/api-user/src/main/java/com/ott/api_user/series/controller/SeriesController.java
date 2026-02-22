@@ -2,6 +2,7 @@ package com.ott.api_user.series.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.method.P;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,10 +25,10 @@ public class SeriesController implements SeriesApi {
 
     @Override
     public ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
-            @PathVariable(value = "seriesId") Long seriesId, Long memberId) {
+            @PathVariable(value = "seriesId") Long seriesId,
+            @AuthenticationPrincipal Long memberId) {
 
-        Long currentMemberId = 1L;
-        SeriesDetailResponse response = seriesService.getSeriesDetail(seriesId, currentMemberId);
+        SeriesDetailResponse response = seriesService.getSeriesDetail(seriesId, memberId);
 
         return ResponseEntity.ok(SuccessResponse.of(response));
     }
@@ -37,10 +38,9 @@ public class SeriesController implements SeriesApi {
             @PathVariable(value = "seriesId") Long seriesId,
             @RequestParam(value = "page") Integer pageParam,
             @RequestParam(value = "size") Integer sizeParam,
-            Long memberId) {
+            @AuthenticationPrincipal Long memberId) {
 
-        Long currentMemberId = 1L;
-        PageResponse response = seriesService.getSeriesContents(seriesId, pageParam, sizeParam, currentMemberId);
+        PageResponse response = seriesService.getSeriesContents(seriesId, pageParam, sizeParam, memberId);
 
         return ResponseEntity.ok(SuccessResponse.of(response));
     }

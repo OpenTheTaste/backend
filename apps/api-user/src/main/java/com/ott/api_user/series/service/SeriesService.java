@@ -50,8 +50,8 @@ public class SeriesService {
 
                 Long mediaId = series.getMedia().getId();
 
-                List<String> tags = tagRepository.findTagNamesBySeriesId(seriesId);
-                List<String> categories = categoryRepository.findCategoryNameBySeriesId(seriesId);
+                List<String> tags = tagRepository.findTagNamesByMediaId(mediaId);
+                List<String> categories = categoryRepository.findCategoryNamesByMediaId(mediaId);
 
                 Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId,
                                 Status.ACTIVE);
