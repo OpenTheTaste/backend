@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.ott.domain.common.Status;
 import com.ott.domain.tag.domain.Tag;
 
 public interface TagRepository extends JpaRepository<Tag, Long> {
@@ -16,8 +17,8 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
             FROM MediaTag mt
             JOIN mt.tag t
             WHERE mt.media.id = :mediaId
-            AND t.status = 'ACTIVE'
-            AND mt.status = 'ACTIVE'
+            AND t.status = :status
+            AND mt.status = :status
             """)
-    List<String> findTagNamesByMediaId(@Param("mediaId") Long mediaId);
+    List<String> findTagNamesByMediaId(@Param("mediaId") Long mediaId, @Param("status") Status status);
 }

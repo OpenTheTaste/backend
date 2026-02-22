@@ -8,5 +8,6 @@ import com.ott.domain.common.Status;
 import com.ott.domain.playback.domain.Playback;
 
 public interface PlaybackRepository extends JpaRepository<Playback, Long> {
-    Optional<Playback> findByMemberIdAndContentsIdAndStatus(Long memberId, Long contentsId, Status status);
+    // 가장 최신으로 하나만 가져오기
+    Optional<Playback> findFirstByMemberIdAndContentsIdAndStatus(Long memberId, Long contentsId, Status status);
 }
