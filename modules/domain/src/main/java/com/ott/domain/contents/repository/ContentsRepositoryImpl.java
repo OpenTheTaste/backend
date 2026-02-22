@@ -1,6 +1,7 @@
 package com.ott.domain.contents.repository;
 
 import com.ott.domain.contents.domain.Contents;
+import com.ott.domain.media.domain.QMedia;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -18,12 +19,13 @@ public class ContentsRepositoryImpl implements ContentsRepositoryCustom {
 
     @Override
     public Optional<Contents> findWithMediaAndUploaderByMediaId(Long mediaId) {
+        QMedia seriesMedia = new QMedia("seriesMedia");
         Contents result = queryFactory
                 .selectFrom(contents)
                 .join(contents.media, media).fetchJoin()
                 .join(media.uploader, member).fetchJoin()
                 .leftJoin(contents.series, series).fetchJoin()
-                .leftJoin(series.media).fetchJoin()
+                .leftJoin(series.media, seriesMedia).fetchJoin()
                 .where(media.id.eq(mediaId))
                 .fetchOne();
 
