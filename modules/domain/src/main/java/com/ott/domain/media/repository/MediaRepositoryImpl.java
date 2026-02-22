@@ -71,6 +71,34 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
         return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
     }
 
+    @Override
+    public Page<Media> findMediaListByMediaTypeAndSearchWordAndPublicStatusAndUploaderId(Pageable pageable, MediaType mediaType, String searchWord, PublicStatus publicStatus, Long uploaderId) {
+        List<Media> mediaList = queryFactory
+                .selectFrom(media)
+                .where(
+                        mediaTypeEq(mediaType),
+                        titleContains(searchWord),
+                        publicStatusEq(publicStatus),
+                        uploaderIdEq(uploaderId)
+                )
+                .orderBy(media.createdDate.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(media.count())
+                .from(media)
+                .where(
+                        mediaTypeEq(mediaType),
+                        titleContains(searchWord),
+                        publicStatusEq(publicStatus),
+                        uploaderIdEq(uploaderId)
+                );
+
+        return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
+    }
+
     private BooleanExpression titleContains(String searchWord) {
         if (StringUtils.hasText(searchWord))
             return media.title.contains(searchWord);
@@ -86,6 +114,12 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
     private BooleanExpression publicStatusEq(PublicStatus publicStatus) {
         if (publicStatus != null)
             return media.publicStatus.eq(publicStatus);
+        return null;
+    }
+
+    private BooleanExpression uploaderIdEq(Long uploaderId) {
+        if (uploaderId != null)
+            return media.uploader.id.eq(uploaderId);
         return null;
     }
 }

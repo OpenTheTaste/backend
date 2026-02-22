@@ -10,4 +10,5 @@ public interface MediaRepositoryCustom {
 
     Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType, String searchWord);
     Page<Media> findMediaListByMediaTypeAndSearchWordAndPublicStatus(Pageable pageable, MediaType mediaType, String searchWord, PublicStatus publicStatus);
+    Page<Media> findMediaListByMediaTypeAndSearchWordAndPublicStatusAndUploaderId(Pageable pageable, MediaType mediaType, String searchWord, PublicStatus publicStatus, Long uploaderId);
 }
