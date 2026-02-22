@@ -36,7 +36,7 @@ public record ContentsDetailResponse(
         @Schema(type = "Integer", description = "영상 길이(초)", example = "7200")
         Integer duration,
 
-        @Schema(type = "Integer", description = "영상 크기(바이트)", example = "1048576")
+        @Schema(type = "Integer", description = "영상 크기(KB)", example = "1048576")
         Integer videoSize,
 
         @Schema(type = "String", description = "카테고리명", example = "드라마")
