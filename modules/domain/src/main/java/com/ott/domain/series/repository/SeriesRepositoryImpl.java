@@ -54,6 +54,14 @@ public class SeriesRepositoryImpl implements SeriesRepositoryCustom {
         return PageableExecutionUtils.getPage(seriesList, pageable, countQuery::fetchOne);
     }
 
+    @Override
+    public List<Series> findAllByMediaIdIn(List<Long> mediaIdList) {
+        return queryFactory
+                .selectFrom(series)
+                .where(series.media.id.in(mediaIdList))
+                .fetch();
+    }
+
     private BooleanExpression titleContains(String searchWord) {
         if (StringUtils.hasText(searchWord))
             return media.title.contains(searchWord);

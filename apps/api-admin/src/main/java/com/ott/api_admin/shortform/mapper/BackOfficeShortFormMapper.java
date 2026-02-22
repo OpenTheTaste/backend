@@ -1,13 +1,16 @@
 package com.ott.api_admin.shortform.mapper;
 
+import com.ott.api_admin.shortform.dto.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.ShortFormListResponse;
+import com.ott.domain.common.MediaType;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.short_form.domain.ShortForm;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class BackOfficeShortFormMapper {
@@ -40,6 +43,20 @@ public class BackOfficeShortFormMapper {
                 media.getPublicStatus(),
                 media.getBookmarkCount(),
                 media.getCreatedDate().toLocalDate()
+        );
+    }
+
+    public OriginMediaTitleListResponse toOriginMediaTitleListResponse(
+            Media media, Map<Long, Long> seriesIdByMediaId, Map<Long, Long> contentsIdByMediaId
+    ) {
+        Long originId = media.getMediaType() == MediaType.SERIES
+                ? seriesIdByMediaId.get(media.getId())
+                : contentsIdByMediaId.get(media.getId());
+
+        return new OriginMediaTitleListResponse(
+                originId,
+                media.getTitle(),
+                media.getMediaType()
         );
     }
 
