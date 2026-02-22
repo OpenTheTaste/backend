@@ -2,6 +2,7 @@ package com.ott.api_admin.series.mapper;
 
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
+import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.series.domain.Series;
@@ -23,6 +24,13 @@ public class BackOfficeSeriesMapper {
                 categoryName,
                 tagNameList,
                 media.getPublicStatus()
+        );
+    }
+
+    public SeriesTitleListResponse toSeriesTitleList(Series series) {
+        return new SeriesTitleListResponse(
+                series.getId(),
+                series.getMedia().getTitle()
         );
     }
 

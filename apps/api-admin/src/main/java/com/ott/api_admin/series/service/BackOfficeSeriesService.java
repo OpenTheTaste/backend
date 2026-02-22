@@ -1,7 +1,9 @@
 package com.ott.api_admin.series.service;
 
+import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
+import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
 import com.ott.api_admin.series.mapper.BackOfficeSeriesMapper;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
@@ -41,7 +43,7 @@ public class BackOfficeSeriesService {
         Pageable pageable = PageRequest.of(page, size);
 
         // 1. 미디어 중 시리즈 대상 페이징
-        Page<Media> mediaPage = mediaRepository.findMediaListByMediaType(pageable, MediaType.SERIES, searchWord);
+        Page<Media> mediaPage = mediaRepository.findMediaListByMediaTypeAndSearchWord(pageable, MediaType.SERIES, searchWord);
 
         // 2. 조회된 미디어 ID 목록 추출
         List<Long> mediaIdList = mediaPage.getContent().stream()
@@ -65,6 +67,25 @@ public class BackOfficeSeriesService {
                 mediaPage.getNumber(),
                 mediaPage.getTotalPages(),
                 mediaPage.getSize()
+        );
+        return PageResponse.toPageResponse(pageInfo, responseList);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<SeriesTitleListResponse> getSeriesTitle(Integer page, Integer size, String searchWord) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        // 시리즈 + 미디어 페이징
+        Page<Series> seriesPage = seriesRepository.findSeriesListWithMediaBySearchWord(pageable, searchWord);
+
+        List<SeriesTitleListResponse> responseList = seriesPage.getContent().stream()
+                .map(backOfficeSeriesMapper::toSeriesTitleList)
+                .toList();
+
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                seriesPage.getNumber(),
+                seriesPage.getTotalPages(),
+                seriesPage.getSize()
         );
         return PageResponse.toPageResponse(pageInfo, responseList);
     }
