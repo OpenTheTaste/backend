@@ -1,7 +1,6 @@
 package com.ott.api_user.series.service;
 
 import java.util.List;
-import java.util.Locale.Category;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -49,8 +48,8 @@ public class SeriesService {
 
                 Long mediaId = series.getMedia().getId();
 
-                List<String> tags = tagRepository.findTagNamesByMediaId(mediaId);
-                List<String> categories = categoryRepository.findCategoryNamesByMediaId(mediaId);
+                List<String> tags = tagRepository.findTagNamesByMediaId(mediaId, Status.ACTIVE);
+                List<String> categories = categoryRepository.findCategoryNamesByMediaId(mediaId, Status.ACTIVE);
 
                 Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId,
                                 Status.ACTIVE);
