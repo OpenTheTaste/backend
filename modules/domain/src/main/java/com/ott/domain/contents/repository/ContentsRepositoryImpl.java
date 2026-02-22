@@ -5,6 +5,7 @@ import com.ott.domain.media.domain.QMedia;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.ott.domain.contents.domain.QContents.contents;
@@ -16,6 +17,14 @@ import static com.ott.domain.series.domain.QSeries.series;
 public class ContentsRepositoryImpl implements ContentsRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+
+    @Override
+    public List<Contents> findAllByMediaIdIn(List<Long> mediaIdList) {
+        return queryFactory
+                .selectFrom(contents)
+                .where(contents.media.id.in(mediaIdList))
+                .fetch();
+    }
 
     @Override
     public Optional<Contents> findWithMediaAndUploaderByMediaId(Long mediaId) {

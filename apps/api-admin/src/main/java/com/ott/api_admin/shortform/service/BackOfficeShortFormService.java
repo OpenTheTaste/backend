@@ -1,5 +1,6 @@
 package com.ott.api_admin.shortform.service;
 
+import com.ott.api_admin.shortform.dto.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.ShortFormListResponse;
 import com.ott.api_admin.shortform.mapper.BackOfficeShortFormMapper;
@@ -14,6 +15,10 @@ import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.media_tag.repository.MediaTagRepository;
 import com.ott.domain.member.domain.Role;
+import com.ott.domain.contents.domain.Contents;
+import com.ott.domain.contents.repository.ContentsRepository;
+import com.ott.domain.series.domain.Series;
+import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.domain.short_form.domain.ShortForm;
 import com.ott.domain.short_form.repository.ShortFormRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +30,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +41,8 @@ public class BackOfficeShortFormService {
 
     private final MediaRepository mediaRepository;
     private final MediaTagRepository mediaTagRepository;
+    private final SeriesRepository seriesRepository;
+    private final ContentsRepository contentsRepository;
     private final ShortFormRepository shortFormRepository;
 
     @Transactional(readOnly = true)
@@ -58,6 +67,47 @@ public class BackOfficeShortFormService {
 
         List<ShortFormListResponse> responseList = mediaPage.getContent().stream()
                 .map(backOfficeShortFormMapper::toShortFormListResponse)
+                .toList();
+
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                mediaPage.getNumber(),
+                mediaPage.getTotalPages(),
+                mediaPage.getSize()
+        );
+
+        return PageResponse.toPageResponse(pageInfo, responseList);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OriginMediaTitleListResponse> getOriginMediaTitle(Integer page, Integer size, String searchWord) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        // 1. Media 페이징 조회 (Series + 단편 Contents / 에피소드 제외)
+        Page<Media> mediaPage = mediaRepository.findOriginMediaListBySearchWord(pageable, searchWord);
+
+        List<Media> mediaList = mediaPage.getContent();
+
+        // 2. mediaId를 타입별로 분리
+        List<Long> seriesMediaIdList = mediaList.stream()
+                .filter(m -> m.getMediaType() == MediaType.SERIES)
+                .map(Media::getId)
+                .toList();
+
+        List<Long> contentsMediaIdList = mediaList.stream()
+                .filter(m -> m.getMediaType() == MediaType.CONTENTS)
+                .map(Media::getId)
+                .toList();
+
+        // 3. 일괄 조회: mediaId → entityId 매핑
+        Map<Long, Long> seriesIdByMediaId = seriesRepository.findAllByMediaIdIn(seriesMediaIdList).stream()
+                .collect(Collectors.toMap(s -> s.getMedia().getId(), Series::getId));
+
+        Map<Long, Long> contentsIdByMediaId = contentsRepository.findAllByMediaIdIn(contentsMediaIdList).stream()
+                .collect(Collectors.toMap(c -> c.getMedia().getId(), Contents::getId));
+
+        // 4. 응답 매핑
+        List<OriginMediaTitleListResponse> responseList = mediaList.stream()
+                .map(m -> backOfficeShortFormMapper.toOriginMediaTitleListResponse(m, seriesIdByMediaId, contentsIdByMediaId))
                 .toList();
 
         PageInfo pageInfo = PageInfo.toPageInfo(

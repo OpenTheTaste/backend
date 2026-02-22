@@ -1,5 +1,6 @@
 package com.ott.api_admin.shortform.controller;
 
+import com.ott.api_admin.shortform.dto.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.ShortFormListResponse;
 import com.ott.api_admin.shortform.service.BackOfficeShortFormService;
@@ -29,6 +30,18 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
     ) {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeShortFormService.getShortFormList(page, size, searchWord, publicStatus, authentication))
+        );
+    }
+
+    @Override
+    @GetMapping("/origin-media")
+    public ResponseEntity<SuccessResponse<PageResponse<OriginMediaTitleListResponse>>> getOriginMediaTitle(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "searchWord", required = false) String searchWord
+    ) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(backOfficeShortFormService.getOriginMediaTitle(page, size, searchWord))
         );
     }
 

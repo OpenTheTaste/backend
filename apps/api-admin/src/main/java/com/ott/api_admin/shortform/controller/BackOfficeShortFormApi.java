@@ -1,6 +1,8 @@
 package com.ott.api_admin.shortform.controller;
 
 import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
+import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
+import com.ott.api_admin.shortform.dto.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.ShortFormListResponse;
 import com.ott.common.web.exception.ErrorResponse;
@@ -44,6 +46,27 @@ public interface BackOfficeShortFormApi {
             @Parameter(description = "제목 부분일치 검색어. 미입력 시 전체 목록을 조회합니다.", required = false) @RequestParam(value = "searchWord", required = false) String searchWord,
             @Parameter(description = "공개 여부. 공개/비공개로 나뉩니다.", required = false, example = "PUBLIC") @RequestParam(value = "publicStatus", required = false) PublicStatus publicStatus,
             Authentication authentication
+    );
+
+    @Operation(summary = "원본 콘텐츠 제목 목록 조회 (숏폼 업로드 페이지)", description = "원본 콘텐츠 목록을 페이징으로 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "0", description = "조회 성공 - 페이징 dataList 구성",
+                    content = {@Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = OriginMediaTitleListResponse.class)))}
+            ),
+            @ApiResponse(
+                    responseCode = "200", description = "원본 콘텐츠 제목 목록 조회 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "원본 콘텐츠 제목 목록 조회 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            )
+    })
+    ResponseEntity<SuccessResponse<PageResponse<OriginMediaTitleListResponse>>> getOriginMediaTitle(
+            @Parameter(description = "조회할 페이지의 번호를 입력해주세요. **page는 0부터 시작합니다**", required = true) @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @Parameter(description = "한 페이지 당 최대 항목 개수를 입력해주세요. 기본값은 10입니다.", required = true) @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @Parameter(description = "제목 부분일치 검색어. 미입력 시 전체 목록을 조회합니다.", required = false) @RequestParam(value = "searchWord", required = false) String searchWord
     );
 
     @Operation(summary = "숏폼 상세 조회", description = "숏폼 상세 정보를 조회합니다.")
