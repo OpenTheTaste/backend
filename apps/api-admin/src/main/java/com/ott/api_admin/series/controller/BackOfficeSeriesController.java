@@ -2,6 +2,7 @@ package com.ott.api_admin.series.controller;
 
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
+import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
 import com.ott.api_admin.series.service.BackOfficeSeriesService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -25,6 +26,18 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
     ) {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeSeriesService.getSeries(page, size, searchWord))
+        );
+    }
+
+    @Override
+    @GetMapping("/admin/series/titles")
+    public ResponseEntity<SuccessResponse<PageResponse<SeriesTitleListResponse>>> getSeriesTitle(
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "searchWord", required = false) String searchWord
+    ) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(backOfficeSeriesService.getSeriesTitle(page, size, searchWord))
         );
     }
 
