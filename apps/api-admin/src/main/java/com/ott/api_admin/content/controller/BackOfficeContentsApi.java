@@ -54,7 +54,7 @@ public interface BackOfficeContentsApi {
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ContentsDetailResponse.class))}
             ),
             @ApiResponse(
-                    responseCode = "400", description = "시리즈 상세 조회 실패",
+                    responseCode = "400", description = "콘텐츠 상세 조회 실패",
                     content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
             ),
             @ApiResponse(
