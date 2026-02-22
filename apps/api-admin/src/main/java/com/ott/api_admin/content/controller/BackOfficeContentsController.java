@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/back-office")
+@RequestMapping("/back-office/admin/contents")
 @RequiredArgsConstructor
 public class BackOfficeContentsController implements BackOfficeContentsApi {
 
     private final BackOfficeContentsService backOfficeContentsService;
 
     @Override
-    @GetMapping("/admin/contents")
+    @GetMapping
     public ResponseEntity<SuccessResponse<PageResponse<ContentsListResponse>>> getContents(
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
@@ -35,7 +35,7 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
     }
 
     @Override
-    @GetMapping("/admin/contents/{mediaId}")
+    @GetMapping("/{mediaId}")
     public ResponseEntity<SuccessResponse<ContentsDetailResponse>> getContentsDetail(
             @PathVariable Long mediaId
     ) {
