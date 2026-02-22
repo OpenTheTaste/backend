@@ -44,8 +44,7 @@ public class SeriesService {
 
         // 시리즈 상세 조회
         public SeriesDetailResponse getSeriesDetail(Long seriesId, Long memberId) {
-                Series series = seriesRepository
-                                .findByIdAndStatusAndMedia_PublicStatus(seriesId, Status.ACTIVE, PublicStatus.PUBLIC)
+                Series series = seriesRepository.findByIdWithMedia(seriesId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
 
                 Long mediaId = series.getMedia().getId();
@@ -74,7 +73,7 @@ public class SeriesService {
         // 시리즈 콘텐츠 목록 조회 (페이징)
         public PageResponse getSeriesContents(Long seriesId, int page, int size, Long memberId) {
 
-                seriesRepository.findByIdAndStatusAndMedia_PublicStatus(seriesId, Status.ACTIVE, PublicStatus.PUBLIC)
+                seriesRepository.findByIdWithMedia(seriesId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
 
                 Pageable pageable = PageRequest.of(page, size);
