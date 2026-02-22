@@ -2,6 +2,7 @@ package com.ott.domain.contents.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 // import java.util.List;
 //
@@ -33,6 +34,8 @@ import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 
 public interface ContentsRepository extends JpaRepository<Contents, Long> {
+
+    @EntityGraph(attributePaths = { "media" })
     Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
             PublicStatus publicStatus, Pageable pageable);
 }
