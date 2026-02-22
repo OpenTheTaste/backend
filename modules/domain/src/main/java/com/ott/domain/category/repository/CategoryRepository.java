@@ -11,14 +11,14 @@ import com.ott.domain.common.Status;
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
   @Query("""
-                  SELECT DISTINCT c.name
-                  FROM MediaTag mt
-                  JOIN mt.tag t
-                  JOIN t.category c
-                  WHERE mt.media.id = :mediaId
-                    AND mt.status = :status
-      +              AND t.status = :status
-      +              AND c.status = :status
-                  """)
+      SELECT DISTINCT c.name
+      FROM MediaTag mt
+      JOIN mt.tag t
+      JOIN t.category c
+      WHERE mt.media.id = :mediaId
+      AND mt.status = :status
+      AND t.status = :status
+      AND c.status = :status
+      """)
   List<String> findCategoryNamesByMediaId(@Param("mediaId") Long mediaId, @Param("status") Status status);
 }
