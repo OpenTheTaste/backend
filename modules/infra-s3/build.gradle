@@ -1,0 +1,5 @@
+dependencies {
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    implementation 'software.amazon.awssdk:s3:2.21.0'
+}

@@ -2,7 +2,7 @@ apply plugin: 'org.springframework.boot'
 
 dependencies {
 	implementation project(':modules:domain')
-	implementation project(':modules:infra')
+	implementation project(':modules:infra-db')
 	implementation project(':modules:common-web')
 	implementation project(':modules:common-security')
 
@@ -28,7 +28,7 @@ dependencies {
  * Flyway가 infra 모듈의 db/migration 리소스를 확실히 인식하도록 설정
  */
 tasks.named('processResources') {
-	from(project(':modules:infra').sourceSets.main.resources.srcDirs) {
+	from(project(':modules:infra-db').sourceSets.main.resources.srcDirs) {
 		include 'db/migration/**'
 	}
 }
