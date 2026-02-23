@@ -7,10 +7,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ott.api_user.series.dto.SeriesContentsResponse;
 import com.ott.api_user.series.dto.SeriesDetailResponse;
 import com.ott.api_user.series.service.SeriesService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
+
+import io.micrometer.core.ipc.http.HttpSender.Response;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,20 +27,18 @@ public class SeriesController implements SeriesApi {
             @PathVariable(value = "seriesId") Long seriesId,
             @AuthenticationPrincipal Long memberId) {
 
-        SeriesDetailResponse response = seriesService.getSeriesDetail(seriesId, memberId);
-
-        return ResponseEntity.ok(SuccessResponse.of(response));
+        return ResponseEntity.ok(
+                SuccessResponse.of(seriesService.getSeriesDetail(seriesId, memberId)));
     }
 
     @Override
-    public ResponseEntity<SuccessResponse<PageResponse>> getSeriesContents(
+    public ResponseEntity<SuccessResponse<PageResponse<SeriesContentsResponse>>> getSeriesContents(
             @PathVariable(value = "seriesId") Long seriesId,
             @RequestParam(value = "page") Integer pageParam,
             @RequestParam(value = "size") Integer sizeParam,
             @AuthenticationPrincipal Long memberId) {
 
-        PageResponse response = seriesService.getSeriesContents(seriesId, pageParam, sizeParam, memberId);
-
-        return ResponseEntity.ok(SuccessResponse.of(response));
+        return ResponseEntity.ok(
+                SuccessResponse.of(seriesService.getSeriesContents(seriesId, pageParam, sizeParam, memberId)));
     }
 }
