@@ -70,7 +70,9 @@ public class SeriesService {
         }
 
         // 시리즈 콘텐츠 목록 조회 (페이징)
-        public PageResponse getSeriesContents(Long seriesId, int page, int size, Long memberId) {
+        // 반환 타입 제네릭으로 수정
+        public PageResponse<SeriesContentsResponse> getSeriesContents(Long seriesId, int page, int size,
+                        Long memberId) {
 
                 seriesRepository.findByIdWithMedia(seriesId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
