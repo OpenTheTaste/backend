@@ -53,4 +53,9 @@ public class Contents extends BaseEntity {
 
     @Column(name = "master_playlist_url", columnDefinition = "TEXT")
     private String masterPlaylistUrl;
+
+    public void updateStorageKeys(String originUrl, String masterPlaylistUrl) {
+        this.originUrl = originUrl;
+        this.masterPlaylistUrl = masterPlaylistUrl;
+    }
 }
