@@ -41,3 +41,7 @@ jwt:
   secret: ${JWT_SECRET_BASE64}
   access-token-expiry: 3200000 # 60분 -> 관리자의 경우 1시간으로 증가
   refresh-token-expiry: 1209600000 # 14일
+
+springdoc:
+  api-docs:
+    version: OPENAPI_3_0
