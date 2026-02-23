@@ -2,6 +2,8 @@ package com.ott.api_user.series.dto;
 
 import java.util.List;
 
+import com.ott.domain.series.domain.Series;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,5 +44,22 @@ public class SeriesDetailResponse {
 
     @Schema(description = "사용자 좋아요 여부", example = "true")
     private Boolean isLiked;
+
+    // 정적 팩토리 메서드 사용
+    public static SeriesDetailResponse of(Series series, List<String> tags, List<String> categories,
+            Boolean isBookmarked, Boolean isLiked) {
+        return SeriesDetailResponse.builder()
+                .id(series.getId())
+                .actors(series.getActors())
+                .title(series.getMedia().getTitle())
+                .description(series.getMedia().getDescription())
+                .posterUrl(series.getMedia().getPosterUrl())
+                .thumbnailUrl(series.getMedia().getThumbnailUrl())
+                .category(categories.isEmpty() ? null : categories.get(0))
+                .tags(tags)
+                .isBookmarked(isBookmarked)
+                .isLiked(isLiked)
+                .build();
+    }
 
 }

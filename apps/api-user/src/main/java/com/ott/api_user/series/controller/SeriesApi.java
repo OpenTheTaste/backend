@@ -1,10 +1,12 @@
 package com.ott.api_user.series.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.ott.api_user.series.dto.SeriesContentsResponse;
 import com.ott.api_user.series.dto.SeriesDetailResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
@@ -41,7 +43,7 @@ public interface SeriesApi {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
         })
         @GetMapping("/{seriesId}/contents")
-        ResponseEntity<SuccessResponse<PageResponse>> getSeriesContents(
+        ResponseEntity<SuccessResponse<PageResponse<SeriesContentsResponse>>> getSeriesContents(
                         @Parameter(description = "시리즈 ID", required = true) @PathVariable("seriesId") Long seriesId,
                         @Parameter(description = "페이지 번호 (0부터 시작)", schema = @Schema(defaultValue = "0")) @RequestParam("page") Integer page,
                         @Parameter(description = "페이지 크기", schema = @Schema(defaultValue = "24")) @RequestParam("size") Integer size,

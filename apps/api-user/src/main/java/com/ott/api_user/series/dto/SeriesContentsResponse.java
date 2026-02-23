@@ -1,5 +1,7 @@
 package com.ott.api_user.series.dto;
 
+import com.ott.domain.contents.domain.Contents;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,4 +30,18 @@ public class SeriesContentsResponse {
     // 이어보기 지점도 응답에 포함
     @Schema(type = "Integer", example = "1200", description = "사용자가 마지막으로 시청한 지점 (초)")
     private Integer positionSec;
+
+    public static SeriesContentsResponse from(Contents content) {
+        // 임시 이어보기용 (나중에 로직 작성 후 파라미터로 받게 수정 예정)
+        Integer positionSec = 0;
+
+        return SeriesContentsResponse.builder()
+                .id(content.getId())
+                .duration(content.getDuration())
+                .title(content.getMedia().getTitle())
+                .description(content.getMedia().getDescription())
+                .thumbnailUrl(content.getMedia().getThumbnailUrl())
+                .positionSec(positionSec)
+                .build();
+    }
 }

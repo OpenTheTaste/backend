@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.ott.api_user.series.dto.SeriesContentsResponse;
 import com.ott.api_user.series.dto.SeriesDetailResponse;
 import com.ott.common.web.exception.BusinessException;
@@ -27,11 +28,11 @@ import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.domain.tag.repository.TagRepository;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true) // 더티 체킹 비활성화
 public class SeriesService {
         private final SeriesRepository seriesRepository;
         private final ContentsRepository contentsRepository;
@@ -55,18 +56,7 @@ public class SeriesService {
                                 Status.ACTIVE);
                 Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId, Status.ACTIVE);
 
-                return SeriesDetailResponse.builder()
-                                .id(series.getId())
-                                .actors(series.getActors())
-                                .title(series.getMedia().getTitle())
-                                .description(series.getMedia().getDescription())
-                                .posterUrl(series.getMedia().getPosterUrl())
-                                .thumbnailUrl(series.getMedia().getThumbnailUrl())
-                                .category(categories.isEmpty() ? null : categories.get(0))
-                                .tags(tags)
-                                .isBookmarked(isBookmarked)
-                                .isLiked(isLiked)
-                                .build();
+                return SeriesDetailResponse.of(series, tags, categories, isBookmarked, isLiked);
         }
 
         // 시리즈 콘텐츠 목록 조회 (페이징)
@@ -83,17 +73,8 @@ public class SeriesService {
                                 .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(
                                                 seriesId, Status.ACTIVE, PublicStatus.PUBLIC, pageable);
 
-                List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream().map(content -> {
-                        Integer positionSec = 0;// 임시 이어보기용 (이어보기 API 구현 시 수정)
-                        return SeriesContentsResponse.builder()
-                                        .id(content.getId())
-                                        .duration(content.getDuration())
-                                        .title(content.getMedia().getTitle())
-                                        .description(content.getMedia().getDescription())
-                                        .thumbnailUrl(content.getMedia().getThumbnailUrl())
-                                        .positionSec(positionSec)
-                                        .build();
-                }).collect(Collectors.toList());
+                List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream()
+                                .map(SeriesContentsResponse::from).collect(Collectors.toList());
 
                 PageInfo pageInfo = PageInfo.builder()
                                 .currentPage(contentsPage.getNumber())
