@@ -13,7 +13,7 @@ public record ContentsListResponse(
         Long mediaId,
 
         @Schema(type = "String", description = "포스터(세로, 5:7) URL", example = "https://cdn.example.com/thumbnail.jpg")
-        String poster_url,
+        String posterUrl,
 
         @Schema(type = "String", description = "콘텐츠 제목", example = "기생충")
         String title,

@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -137,11 +138,14 @@ public class BackOfficeShortFormService {
         String uploaderNickname = media.getUploader().getNickname();
 
         // 2. 원본 미디어(시리즈 or 콘텐츠) 추출
-        Media originMedia = shortForm.getOriginMedia();
+        Optional<Media> originMedia = shortForm.findOriginMedia();
+        String originMediaTitle = null;
+        if (originMedia.isPresent())
+            originMediaTitle = originMedia.get().getTitle();
 
         // 3. 태그 조회
-        List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(originMedia.getId());
+        List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(mediaId); // 숏폼은 원본 콘텐츠의 태그를 따라가지만, 자체 태그로 생성되어 있음을 상정
 
-        return backOfficeShortFormMapper.toShortFormDetailResponse(shortForm, media, uploaderNickname, originMedia.getTitle(), mediaTagList);
+        return backOfficeShortFormMapper.toShortFormDetailResponse(shortForm, media, uploaderNickname, originMediaTitle, mediaTagList);
     }
 }
