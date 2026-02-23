@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 @Schema(description = "성공 Response")

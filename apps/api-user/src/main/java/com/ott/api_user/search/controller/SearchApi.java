@@ -30,7 +30,8 @@ public interface SearchApi {
         ResponseEntity<SuccessResponse<PageResponse>> search(
                         @Parameter(description = "검색어를 입력해주세요.", required = true) @RequestParam(value = "searchWord") String searchWord,
 
-                        @Parameter(description = "조회할 페이지 번호를 입력해주세요. page는 0부터 시작합니다") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                        @Parameter(description = "페이지 번호 (0부터 시작)", schema = @Schema(defaultValue = "0")) @RequestParam(value = "page", defaultValue = "0") Integer page,
 
-                        @Parameter(description = "한 페이지 당 최대 항목 개수를 입력해주세요. 기본값은 24입니다.") @RequestParam(value = "size", defaultValue = "24") Integer size);
+                        @Parameter(description = "한 페이지 당 최대 항목 개수", schema = @Schema(defaultValue = "24")) @RequestParam(value = "size", defaultValue = "24") Integer size);
+
 }
