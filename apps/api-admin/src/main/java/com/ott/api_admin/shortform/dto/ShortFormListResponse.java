@@ -12,7 +12,7 @@ public record ShortFormListResponse(
         Long mediaId,
 
         @Schema(type = "String", description = "포스터(세로, 5:7) URL", example = "https://cdn.example.com/thumbnail.jpg")
-        String poster_url,
+        String posterUrl,
 
         @Schema(type = "String", description = "숏폼 제목", example = "비밀의 숲 명장면")
         String title,
