@@ -12,12 +12,12 @@ import com.ott.domain.series.domain.Series;
 
 public interface SeriesRepository extends JpaRepository<Series, Long>, SeriesRepositoryCustom {
 
-        // 제목에 검색어 포함, 상태 ACTIVE인 시리즈 검색 (최신순 정렬)
-        @Query("SELECT s FROM Series s " +
-                "WHERE LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-                "AND s.status = :status " +
-                "ORDER BY s.createdDate DESC")
-        List<Series> searchLatest(@Param("keyword") String keyword,
-                                  @Param("status") Status status,
-                                  Pageable pageable);
+//        // 제목에 검색어 포함, 상태 ACTIVE인 시리즈 검색 (최신순 정렬)
+//        @Query("SELECT s FROM Series s " +
+//                "WHERE LOWER(s.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+//                "AND s.status = :status " +
+//                "ORDER BY s.createdDate DESC")
+//        List<Series> searchLatest(@Param("keyword") String keyword,
+//                                  @Param("status") Status status,
+//                                  Pageable pageable);
 }
