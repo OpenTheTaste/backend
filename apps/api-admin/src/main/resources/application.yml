@@ -4,7 +4,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/ott}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/ott}
     username: ${SPRING_DATASOURCE_USERNAME:ott}
     password: ${SPRING_DATASOURCE_PASSWORD:ottpw}
 
@@ -25,3 +25,23 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET_BASE64}
+  access-token-expiry: 3200000 # 60분 -> 관리자의 경우 1시간으로 증가
+  refresh-token-expiry: 1209600000 # 14일
+
+springdoc:
+  api-docs:
+    version: OPENAPI_3_0
