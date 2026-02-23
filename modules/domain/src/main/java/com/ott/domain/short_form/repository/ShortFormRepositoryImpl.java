@@ -5,6 +5,7 @@ import com.ott.domain.short_form.domain.ShortForm;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.ott.domain.contents.domain.QContents.contents;
@@ -35,5 +36,13 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
                 .fetchOne();
 
         return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<ShortForm> findAllByMediaIdIn(List<Long> mediaIdList) {
+        return queryFactory
+                .selectFrom(shortForm)
+                .where(shortForm.media.id.in(mediaIdList))
+                .fetch();
     }
 }

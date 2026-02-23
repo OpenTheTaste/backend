@@ -9,7 +9,7 @@ public record IngestJobListResponse(
         @Schema(type = "Long", description = "작업 ID", example = "1")
         Long ingestJobId,
 
-        @Schema(type = "String", description = "콘텐츠 제목", example = "비밀의 숲 1화")
+        @Schema(type = "String", description = "미디어(시리즈/콘텐츠/숏폼) 제목", example = "비밀의 숲 1화")
         String title,
 
         @Schema(type = "Integer", description = "파일 크기 (bytes)", example = "104857600")

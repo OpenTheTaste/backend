@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "BackOffice IngestJob API", description = "[백오피스] 업로드 작업 관리 API")
@@ -37,6 +38,6 @@ public interface BackOfficeIngestJobApi {
             @Parameter(description = "조회할 페이지의 번호를 입력해주세요. **page는 0부터 시작합니다**", required = true) @RequestParam(value = "page", defaultValue = "0") Integer page,
             @Parameter(description = "한 페이지 당 최대 항목 개수를 입력해주세요. 기본값은 10입니다.", required = true) @RequestParam(value = "size", defaultValue = "10") Integer size,
             @Parameter(description = "콘텐츠 제목 부분일치 검색어. 미입력 시 전체 목록을 조회합니다.", required = false) @RequestParam(value = "searchWord", required = false) String searchWord,
-            @Parameter(description = "업로더 ID. EDITOR인 경우 본인 ID를 전달합니다. 미입력 시 전체 조회 (ADMIN).", required = false) @RequestParam(value = "uploaderId", required = false) Long uploaderId
+            Authentication authentication
     );
 }
