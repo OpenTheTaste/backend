@@ -33,7 +33,7 @@ import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 
-public interface ContentsRepository extends JpaRepository<Contents, Long> {
+public interface ContentsRepository extends JpaRepository<Contents, Long>, ContentsRepositoryCustom {
 
     @EntityGraph(attributePaths = { "media" })
     Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
