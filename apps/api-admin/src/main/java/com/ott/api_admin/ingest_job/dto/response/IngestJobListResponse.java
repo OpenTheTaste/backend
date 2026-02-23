@@ -12,7 +12,7 @@ public record IngestJobListResponse(
         @Schema(type = "String", description = "미디어(시리즈/콘텐츠/숏폼) 제목", example = "비밀의 숲 1화")
         String title,
 
-        @Schema(type = "Integer", description = "파일 크기 (bytes)", example = "104857600")
+        @Schema(type = "Integer", description = "영상 크기(KB)", example = "1048576")
         Integer videoSize,
 
         @Schema(type = "String", description = "업로더 닉네임", example = "홍길동")

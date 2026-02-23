@@ -58,7 +58,7 @@ public class BackOfficeIngestJobService {
 
         List<IngestJob> ingestJobList = ingestJobPage.getContent();
 
-        // 3. mediaId를 타입별 분리
+        // 3. 타입별로  mediaId 분리
         List<Long> contentsMediaIdList = ingestJobList.stream()
                 .filter(j -> j.getMedia().getMediaType() == MediaType.CONTENTS)
                 .map(j -> j.getMedia().getId())
@@ -72,15 +72,19 @@ public class BackOfficeIngestJobService {
         // 4. 일괄 조회: mediaId → videoSize 매핑
         Map<Long, Integer> videoSizeByMediaId = new HashMap<>();
 
-        contentsRepository.findAllByMediaIdIn(contentsMediaIdList).forEach(
-                c -> videoSizeByMediaId.put(c.getMedia().getId(), c.getVideoSize())
-        );
+        // 5. 빈 리스트면 조회 x
+        if (!contentsMediaIdList.isEmpty()) {
+            contentsRepository.findAllByMediaIdIn(contentsMediaIdList).forEach(
+                    c -> videoSizeByMediaId.put(c.getMedia().getId(), c.getVideoSize())
+            );
+        }
 
-        shortFormRepository.findAllByMediaIdIn(shortFormMediaIdList).forEach(
-                s -> videoSizeByMediaId.put(s.getMedia().getId(), s.getVideoSize())
-        );
+        if (!shortFormMediaIdList.isEmpty()) {
+            shortFormRepository.findAllByMediaIdIn(shortFormMediaIdList).forEach(
+                    s -> videoSizeByMediaId.put(s.getMedia().getId(), s.getVideoSize())
+            );
+        }
 
-        // 5. 응답 매핑
         List<IngestJobListResponse> responseList = ingestJobList.stream()
                 .map(j -> backOfficeIngestJobMapper.toIngestJobListResponse(j, videoSizeByMediaId))
                 .toList();
