@@ -20,6 +20,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Optional;
+
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -55,4 +57,10 @@ public class ShortForm extends BaseEntity {
 
     @Column(name = "master_playlist_url", columnDefinition = "TEXT")
     private String masterPlaylistUrl;
+
+    public Optional<Media> findOriginMedia() {
+        if (series != null) return Optional.of(series.getMedia());
+        if (contents != null) return Optional.of(contents.getMedia());
+        return Optional.empty();
+    }
 }
