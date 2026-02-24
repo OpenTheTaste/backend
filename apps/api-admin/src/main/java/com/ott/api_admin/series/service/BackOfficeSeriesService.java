@@ -178,7 +178,7 @@ public class BackOfficeSeriesService {
         String sanitizedName = namePart
                 .replace("/", "")
                 .replace("\\", "")
-                .replaceAll("[^0-9A-Za-z_-]", "");
+                .replaceAll("[^0-9A-Za-z가-힣_-]", "");
         String sanitizedExt = extPart.replaceAll("[^0-9A-Za-z]", "").toLowerCase();
 
         if (sanitizedName.isBlank()) {
