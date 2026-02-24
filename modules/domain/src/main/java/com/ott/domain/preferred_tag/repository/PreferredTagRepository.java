@@ -1,8 +1,27 @@
 package com.ott.domain.preferred_tag.repository;
 
+import com.ott.domain.common.Status;
 import com.ott.domain.preferred_tag.domain.PreferredTag;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface PreferredTagRepository extends JpaRepository<PreferredTag, Long> {
     boolean existsByMemberId(Long memberId);
+
+    @Query("""
+            select pt
+            from PreferredTag pt
+            join fetch pt.tag t
+            join fetch t.category c
+            where pt.member.id = :memberId
+              and pt.status = :status
+              and t.status = :status
+              and c.status = :status
+            order by pt.id asc
+            """)
+    List<PreferredTag> findAllWithTagAndCategoryByMemberIdAndStatus(@Param("memberId") Long memberId,
+                                                                    @Param("status") Status status);
 }
