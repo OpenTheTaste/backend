@@ -1,8 +1,10 @@
 package com.ott.domain.preferred_tag.repository;
 
 import com.ott.domain.common.Status;
+import com.ott.domain.member.domain.Member;
 import com.ott.domain.preferred_tag.domain.PreferredTag;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,4 +26,9 @@ public interface PreferredTagRepository extends JpaRepository<PreferredTag, Long
             """)
     List<PreferredTag> findAllWithTagAndCategoryByMemberIdAndStatus(@Param("memberId") Long memberId,
                                                                     @Param("status") Status status);
+
+    // 선호 태그 삭제
+    @Modifying
+    @Query("DELETE FROM PreferredTag pt WHERE pt.member = :member")
+    void deleteAllByMember(@Param("member") Member member);
 }
