@@ -4,6 +4,7 @@ import com.ott.domain.common.PublicStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 
 @Schema(description = "숏폼 업로드 요청")
 public record ShortFormUploadRequest(
@@ -18,8 +19,10 @@ public record ShortFormUploadRequest(
         // 공개 상태
         @NotNull PublicStatus publicStatus,
         // 영상 길이(초)
+        @PositiveOrZero
         Integer duration,
         // 영상 크기(KB)
+        @PositiveOrZero
         Integer videoSize,
         // 포스터 원본 파일명
         @NotBlank String posterFileName,
