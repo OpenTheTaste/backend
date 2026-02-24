@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Optional;
+import java.util.Objects;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -59,7 +60,7 @@ public class ShortForm extends BaseEntity {
     private String masterPlaylistUrl;
 
     public void updateStorageKeys(String originUrl, String masterPlaylistUrl) {
-        this.originUrl = originUrl;
+        this.originUrl = Objects.requireNonNull(originUrl, "originUrl must not be null");
         this.masterPlaylistUrl = masterPlaylistUrl;
     }
 

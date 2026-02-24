@@ -21,6 +21,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -64,7 +66,7 @@ public class Media extends BaseEntity {
     private PublicStatus publicStatus;
 
     public void updateImageKeys(String posterUrl, String thumbnailUrl) {
-        this.posterUrl = posterUrl;
+        this.posterUrl = Objects.requireNonNull(posterUrl, "posterUrl must not be null");
         this.thumbnailUrl = thumbnailUrl;
     }
 }
