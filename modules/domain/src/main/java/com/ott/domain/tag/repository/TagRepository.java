@@ -2,6 +2,7 @@ package com.ott.domain.tag.repository;
 
 import java.util.List;
 
+import com.ott.domain.category.domain.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,4 +22,6 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
             AND mt.status = :status
             """)
     List<String> findTagNamesByMediaId(@Param("mediaId") Long mediaId, @Param("status") Status status);
+
+    List<Tag> findAllByCategoryAndStatus(Category category, Status status);
 }

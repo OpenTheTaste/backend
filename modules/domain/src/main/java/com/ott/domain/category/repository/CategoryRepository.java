@@ -1,6 +1,7 @@
 package com.ott.domain.category.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,6 +24,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
   List<String> findCategoryNamesByMediaId(@Param("mediaId") Long mediaId, @Param("status") Status status);
 
   List<Category> findAllByStatus(Status status);
+
+  Optional<Category> findByIdAndStatus(Long id, Status status);
 
 
 }
