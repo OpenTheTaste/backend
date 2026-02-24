@@ -19,7 +19,7 @@ public record ContentsUploadRequest(
         @NotNull PublicStatus publicStatus,
         // 영상 길이(초)
         Integer duration,
-        // 영상 크기(바이트 또는 내부 단위)
+        // 영상 크기(KB)
         Integer videoSize,
         // 포스터 원본 파일명
         @NotBlank String posterFileName,
