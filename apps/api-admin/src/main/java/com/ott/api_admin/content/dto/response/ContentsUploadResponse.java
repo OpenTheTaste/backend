@@ -2,9 +2,6 @@ package com.ott.api_admin.content.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/**
- * 콘텐츠 업로드 초기화 응답 DTO입니다.
- */
 @Schema(description = "콘텐츠 업로드 응답")
 public record ContentsUploadResponse(
         // 생성된 콘텐츠 ID
