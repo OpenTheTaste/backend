@@ -2,6 +2,7 @@ package com.ott.infra.s3.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -35,19 +36,23 @@ public class S3PresignService {
     }
 
     public String createPutPresignedUrl(String objectKey, String contentType) {
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucket)
-                .key(objectKey)
-                .contentType(contentType)
-                .build();
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .contentType(contentType)
+                    .build();
 
-        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofSeconds(expireSeconds))
-                .putObjectRequest(putObjectRequest)
-                .build();
+            PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofSeconds(expireSeconds))
+                    .putObjectRequest(putObjectRequest)
+                    .build();
 
-        PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
-        return presignedRequest.url().toString();
+            PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+            return presignedRequest.url().toString();
+        } catch (SdkException ex) {
+            throw new IllegalStateException("업로드 URL 생성에 실패했습니다.", ex);
+        }
     }
 
     // objectKey를 실제 S3 객체 URL 형식으로 변환합니다.
