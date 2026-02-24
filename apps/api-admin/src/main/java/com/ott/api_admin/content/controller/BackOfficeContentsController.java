@@ -1,18 +1,18 @@
 package com.ott.api_admin.content.controller;
 
+import com.ott.api_admin.content.dto.request.ContentsUploadRequest;
 import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
+import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
 import com.ott.api_admin.content.service.BackOfficeContentsService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import com.ott.domain.common.PublicStatus;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/back-office/admin/contents")
@@ -42,5 +42,15 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeContentsService.getContentsDetail(mediaId))
         );
+    }
+
+    @Override
+    @PostMapping("/upload")
+    @PreAuthorize("hasRole('ADMIN')")
+    // ADMIN 권한으로 콘텐츠 업로드 초기화를 수행합니다.
+    public ResponseEntity<SuccessResponse<ContentsUploadResponse>> createContentsUpload(
+            @Valid @RequestBody ContentsUploadRequest request
+    ) {
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeContentsService.createContentsUpload(request)));
     }
 }
