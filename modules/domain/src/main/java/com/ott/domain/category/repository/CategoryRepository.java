@@ -21,4 +21,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
       AND c.status = :status
       """)
   List<String> findCategoryNamesByMediaId(@Param("mediaId") Long mediaId, @Param("status") Status status);
+
+  List<Category> findAllByStatus(Status status);
+
+
 }
