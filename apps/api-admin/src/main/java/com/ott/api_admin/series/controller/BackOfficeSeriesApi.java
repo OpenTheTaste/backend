@@ -1,8 +1,10 @@
 package com.ott.api_admin.series.controller;
 
+import com.ott.api_admin.series.dto.request.SeriesUploadRequest;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
+import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "BackOffice Series API", description = "[백오피스] 시리즈 관리 API")
@@ -88,5 +91,24 @@ public interface BackOfficeSeriesApi {
     })
     ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
             @Parameter(description = "미디어 ID", required = true, example = "1") @PathVariable Long mediaId
+    );
+
+    @Operation(summary = "시리즈 메타데이터 업로드", description = "시리즈 메타데이터를 생성하고 S3 업로드용 Presigned URL을 반환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "시리즈 메타데이터 업로드 및 Presigned URL 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = SeriesUploadResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "시리즈 메타데이터 업로드 및 Presigned URL 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
+            @RequestBody SeriesUploadRequest request
     );
 }
