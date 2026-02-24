@@ -1,4 +1,4 @@
-package com.ott.api_admin.series.service;
+﻿package com.ott.api_admin.series.service;
 
 import com.ott.api_admin.series.dto.request.SeriesUploadRequest;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
@@ -6,6 +6,7 @@ import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
 import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
 import com.ott.api_admin.series.mapper.BackOfficeSeriesMapper;
+import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
@@ -16,7 +17,6 @@ import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.media_tag.repository.MediaTagRepository;
 import com.ott.domain.member.domain.Member;
-import com.ott.domain.member.repository.MemberRepository;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.infra.s3.service.S3PresignService;
@@ -24,8 +24,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,8 +41,8 @@ public class BackOfficeSeriesService {
     private final MediaRepository mediaRepository;
     private final MediaTagRepository mediaTagRepository;
     private final SeriesRepository seriesRepository;
-    private final MemberRepository memberRepository;
     private final S3PresignService s3PresignService;
+    private final UploadHelper uploadHelper;
 
     @Transactional(readOnly = true)
     public PageResponse<SeriesListResponse> getSeries(int page, int size, String searchWord) {
@@ -109,9 +107,9 @@ public class BackOfficeSeriesService {
 
     @Transactional
     public SeriesUploadResponse createSeriesUpload(SeriesUploadRequest request) {
-        Member uploader = resolveUploader();
-        String sanitizedPosterFileName = sanitizeFileName(request.posterFileName());
-        String sanitizedThumbnailFileName = sanitizeFileName(request.thumbnailFileName());
+        Member uploader = uploadHelper.resolveUploader();
+        String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
+        String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
 
         Media media = mediaRepository.save(
                 Media.builder()
@@ -135,8 +133,8 @@ public class BackOfficeSeriesService {
         );
 
         Long seriesId = series.getId();
-        String posterObjectKey = buildObjectKey("series", seriesId, "poster", sanitizedPosterFileName);
-        String thumbnailObjectKey = buildObjectKey("series", seriesId, "thumbnail", sanitizedThumbnailFileName);
+        String posterObjectKey = uploadHelper.buildObjectKey("series", seriesId, "poster", sanitizedPosterFileName);
+        String thumbnailObjectKey = uploadHelper.buildObjectKey("series", seriesId, "thumbnail", sanitizedThumbnailFileName);
         media.updateImageKeys(
                 s3PresignService.toObjectUrl(posterObjectKey),
                 s3PresignService.toObjectUrl(thumbnailObjectKey)
@@ -146,70 +144,9 @@ public class BackOfficeSeriesService {
                 seriesId,
                 posterObjectKey,
                 thumbnailObjectKey,
-                s3PresignService.createPutPresignedUrl(posterObjectKey, resolveContentType(sanitizedPosterFileName)),
-                s3PresignService.createPutPresignedUrl(thumbnailObjectKey, resolveContentType(sanitizedThumbnailFileName))
+                s3PresignService.createPutPresignedUrl(posterObjectKey, uploadHelper.resolveImageContentType(sanitizedPosterFileName)),
+                s3PresignService.createPutPresignedUrl(thumbnailObjectKey, uploadHelper.resolveImageContentType(sanitizedThumbnailFileName))
         );
-    }
-
-    private String buildObjectKey(String root, Long id, String mediaType, String fileName) {
-        return root + "/" + id + "/" + mediaType + "/" + fileName;
-    }
-
-    private String resolveContentType(String fileName) {
-        String lowerFileName = fileName.toLowerCase();
-        if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
-            return "image/jpeg";
-        }
-        if (lowerFileName.endsWith(".png")) {
-            return "image/png";
-        }
-        if (lowerFileName.endsWith(".webp")) {
-            return "image/webp";
-        }
-        throw new BusinessException(ErrorCode.INVALID_INPUT);
-    }
-
-    private String sanitizeFileName(String fileName) {
-        String trimmed = fileName == null ? "" : fileName.trim();
-        int lastDot = trimmed.lastIndexOf('.');
-        String namePart = lastDot > 0 ? trimmed.substring(0, lastDot) : trimmed;
-        String extPart = lastDot > 0 ? trimmed.substring(lastDot + 1) : "";
-
-        String sanitizedName = namePart
-                .replace("/", "")
-                .replace("\\", "")
-                .replaceAll("[^0-9A-Za-z가-힣_-]", "");
-        String sanitizedExt = extPart.replaceAll("[^0-9A-Za-z]", "").toLowerCase();
-
-        if (sanitizedName.isBlank()) {
-            sanitizedName = "file";
-        }
-        if (sanitizedExt.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
-        }
-        return sanitizedName + "." + sanitizedExt;
-    }
-
-    private Member resolveUploader() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Object principal = authentication.getPrincipal();
-        if (principal == null || "anonymousUser".equals(principal)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Long memberId;
-        try {
-            memberId = Long.valueOf(String.valueOf(principal));
-        } catch (NumberFormatException ex) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     }
 }
 
