@@ -1,16 +1,26 @@
 package com.ott.api_admin.shortform.controller;
 
-import com.ott.api_admin.shortform.dto.OriginMediaTitleListResponse;
-import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
-import com.ott.api_admin.shortform.dto.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
+import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
 import com.ott.api_admin.shortform.service.BackOfficeShortFormService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import com.ott.domain.common.PublicStatus;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/back-office/short-forms")
@@ -54,5 +64,14 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeShortFormService.getShortFormDetail(mediaId, authentication))
         );
+    }
+
+    @Override
+    @PostMapping("/upload")
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
+    public ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
+            @Valid @RequestBody ShortFormUploadRequest request
+    ) {
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.createShortFormUpload(request)));
     }
 }

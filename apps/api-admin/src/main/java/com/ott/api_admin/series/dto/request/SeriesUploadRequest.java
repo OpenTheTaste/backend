@@ -1,13 +1,12 @@
-package com.ott.api_admin.upload.dto.request;
+package com.ott.api_admin.series.dto.request;
 
 import com.ott.domain.common.PublicStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/**
- * 시리즈 업로드 초기화 요청 DTO입니다.
- */
-public record SeriesUploadInitRequest(
+@Schema(description = "시리즈 업로드 요청")
+public record SeriesUploadRequest(
         // 시리즈 제목
         @NotBlank String title,
         // 시리즈 설명

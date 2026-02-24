@@ -1,13 +1,12 @@
-package com.ott.api_admin.upload.dto.request;
+package com.ott.api_admin.content.dto.request;
 
 import com.ott.domain.common.PublicStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/**
- * 콘텐츠 업로드 초기화 요청 DTO입니다.
- */
-public record ContentsUploadInitRequest(
+@Schema(description = "콘텐츠 업로드 요청")
+public record ContentsUploadRequest(
         // 연결할 시리즈 ID (없으면 단일 콘텐츠)
         Long seriesId,
         // 콘텐츠 제목

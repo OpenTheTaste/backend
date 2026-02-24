@@ -1,13 +1,12 @@
-package com.ott.api_admin.upload.dto.request;
+package com.ott.api_admin.shortform.dto.request;
 
 import com.ott.domain.common.PublicStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-/**
- * 숏폼 업로드 초기화 요청 DTO입니다.
- */
-public record ShortFormUploadInitRequest(
+@Schema(description = "숏폼 업로드 요청")
+public record ShortFormUploadRequest(
         // 연결할 시리즈 ID (선택)
         Long seriesId,
         // 연결할 콘텐츠 ID (선택)
