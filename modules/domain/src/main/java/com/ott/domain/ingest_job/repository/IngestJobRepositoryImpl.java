@@ -22,15 +22,15 @@ public class IngestJobRepositoryImpl implements IngestJobRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<IngestJob> findIngestJobListWithMediaBySearchWordAndUploaderId(Pageable pageable, String searchWord, Long uploaderId) {
+    public Page<IngestJob> findIngestJobListWithMediaBySearchWordAndUploaderId(Pageable pageable, String searchWord,
+            Long uploaderId) {
         List<IngestJob> ingestJobList = queryFactory
                 .selectFrom(ingestJob)
                 .join(ingestJob.media, media).fetchJoin()
                 .join(media.uploader, member).fetchJoin()
                 .where(
                         titleContains(searchWord),
-                        uploaderIdEq(uploaderId)
-                )
+                        uploaderIdEq(uploaderId))
                 .orderBy(ingestJob.createdDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -42,8 +42,7 @@ public class IngestJobRepositoryImpl implements IngestJobRepositoryCustom {
                 .join(ingestJob.media, media)
                 .where(
                         titleContains(searchWord),
-                        uploaderIdEq(uploaderId)
-                );
+                        uploaderIdEq(uploaderId));
 
         return PageableExecutionUtils.getPage(ingestJobList, pageable, countQuery::fetchOne);
     }

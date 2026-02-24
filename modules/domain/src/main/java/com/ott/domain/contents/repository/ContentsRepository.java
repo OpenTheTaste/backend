@@ -1,5 +1,7 @@
 package com.ott.domain.contents.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,13 +31,20 @@ import org.springframework.data.jpa.repository.EntityGraph;
 // }
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 
 public interface ContentsRepository extends JpaRepository<Contents, Long>, ContentsRepositoryCustom {
 
-    @EntityGraph(attributePaths = { "media" })
-    Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
-            PublicStatus publicStatus, Pageable pageable);
+        @EntityGraph(attributePaths = { "media" })
+        Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
+                        PublicStatus publicStatus, Pageable pageable);
+
+        @Query("SELECT c FROM Contents c JOIN FETCH c.media m WHERE c.id = :contentsId AND c.status = :status AND m.publicStatus = :publicStatus")
+        Optional<Contents> findByIdWithMedia(@Param("contentsId") Long contentsId, @Param("status") Status status,
+                        @Param("publicStatus") PublicStatus publicStatus);
 }

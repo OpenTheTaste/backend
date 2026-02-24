@@ -1,6 +1,5 @@
 package com.ott.api_user.auth.controller;
 
-
 import com.ott.api_user.auth.dto.TokenResponse;
 import com.ott.api_user.auth.service.AuthService;
 import com.ott.common.web.exception.BusinessException;
@@ -29,7 +28,6 @@ public class AuthController implements AuthApi {
 
     @Value("${jwt.refresh-token-expiry}")
     private int refreshTokenExpiry;
-
 
     // Access Token 재발급
     @PostMapping("reissue")
@@ -71,25 +69,19 @@ public class AuthController implements AuthApi {
         return ResponseEntity.noContent().build();
     }
 
-
-
     // 임시 테스트 코드 -> 추후 프론트 페이지로 변경 예정
     @GetMapping("logincheck")
     public ResponseEntity<Map<String, Object>> logincheck(
             @RequestParam(value = "isNewMember") boolean isNewMember,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         String accessToken = extractCookie(request, "accessToken");
         String refreshToken = extractCookie(request, "refreshToken");
-
 
         return ResponseEntity.ok(Map.of(
                 "isNewMember", isNewMember,
                 "accessToken", accessToken,
-                "refreshToken", refreshToken
-        ));
+                "refreshToken", refreshToken));
     }
-
 
     // 인가 테스트용 코드 -> 이렇게 @AuthenticationPrincipal로 쓰시면 됩니다.
     // 추후 memberId -> UserDetails로 리팩토링 예정
@@ -98,15 +90,13 @@ public class AuthController implements AuthApi {
         return memberId;
     }
 
-
-
     // 쿠키에 대한 접근은 HTTP고 서비스로 내려가면 안되기 때문에 Controller에서 구현
     private String extractCookie(HttpServletRequest request, String name) {
         if (request.getCookies() == null) {
             return null;
         }
 
-        for (Cookie cookie: request.getCookies()) {
+        for (Cookie cookie : request.getCookies()) {
             if (name.equals(cookie.getName())) {
                 return cookie.getValue();
             }
@@ -117,7 +107,7 @@ public class AuthController implements AuthApi {
     private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false);    // 배포 시 true 변경
+        cookie.setSecure(false); // 배포 시 true 변경
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
         response.addCookie(cookie);
@@ -126,9 +116,9 @@ public class AuthController implements AuthApi {
     private void deleteCookie(HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, null);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false);    // 배포 시 true 변경
+        cookie.setSecure(false); // 배포 시 true 변경
         cookie.setPath("/");
-        cookie.setMaxAge(0);        // 즉시 삭제
+        cookie.setMaxAge(0); // 즉시 삭제
         response.addCookie(cookie);
     }
 

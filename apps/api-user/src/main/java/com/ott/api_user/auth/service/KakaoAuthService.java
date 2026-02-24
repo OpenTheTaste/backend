@@ -34,17 +34,14 @@ public class KakaoAuthService {
                 .map(existingMember -> {
                     existingMember.updateKakaoProfile(
                             kakaoUserInfo.getEmail(),
-                            kakaoUserInfo.getNickname()
-                    );
+                            kakaoUserInfo.getNickname());
                     return existingMember;
                 })
                 .orElseGet(() -> memberRepository.save(
                         Member.createKakaoMember(
                                 kakaoUserInfo.getProviderId(),
                                 kakaoUserInfo.getEmail(),
-                                kakaoUserInfo.getNickname()
-                        )
-                ));
+                                kakaoUserInfo.getNickname())));
     }
 
     // 신규 회원 판별 -> 태그 소유 유무로 판단
@@ -58,6 +55,5 @@ public class KakaoAuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         member.updateRefreshToken(refreshToken);
     }
-
 
 }

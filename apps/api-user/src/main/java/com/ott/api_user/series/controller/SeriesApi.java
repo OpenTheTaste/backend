@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Series API", description = "시리즈 관련 API입니다.")
 public interface SeriesApi {
-        @Operation(summary = "시리즈 상세 조회", description = "특정 시리즈의 상세 정보를 조회합니다.")
+        @Operation(summary = "시리즈 상세 조회", description = "특정 시리즈의 상세 정보를 조회합니다.(시리즈 상세 페이지)")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "시리즈 상세 조회 성공", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = SeriesDetailResponse.class)) }),
