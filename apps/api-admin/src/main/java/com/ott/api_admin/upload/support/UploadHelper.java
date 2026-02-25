@@ -1,4 +1,4 @@
-﻿package com.ott.api_admin.upload.support;
+package com.ott.api_admin.upload.support;
 
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
