@@ -61,7 +61,6 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
 
     @Override
     @PostMapping("/upload")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
             @Valid @RequestBody SeriesUploadRequest request
     ) {

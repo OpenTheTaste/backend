@@ -68,7 +68,6 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
 
     @Override
     @PostMapping("/upload")
-    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
     public ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
             @Valid @RequestBody ShortFormUploadRequest request
     ) {

@@ -46,7 +46,6 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
 
     @Override
     @PostMapping("/upload")
-    @PreAuthorize("hasRole('ADMIN')")
     // ADMIN 권한으로 콘텐츠 업로드 초기화를 수행합니다.
     public ResponseEntity<SuccessResponse<ContentsUploadResponse>> createContentsUpload(
             @Valid @RequestBody ContentsUploadRequest request
