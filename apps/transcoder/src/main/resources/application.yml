@@ -36,10 +36,12 @@ transcoder:
   messaging:
     provider: ${TRANSCODER_MESSAGING_PROVIDER}
   ffmpeg:
+    engine: ${TRANSCODER_FFMPEG_ENGINE}
     path: ${FFMPEG_PATH}
     temp-dir: ${TRANSCODER_TEMP_DIR}
     segment-duration: ${TRANSCODER_SEGMENT_DURATION}
 
 storage:
+  provider: ${STORAGE_PROVIDER}
   local:
     output-dir: ${STORAGE_LOCAL_OUTPUT_DIR}
