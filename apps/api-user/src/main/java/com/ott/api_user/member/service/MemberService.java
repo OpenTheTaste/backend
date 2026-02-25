@@ -1,5 +1,6 @@
 package com.ott.api_user.member.service;
 
+import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.MyPageResponse;
 import com.ott.common.web.exception.BusinessException;
@@ -26,7 +27,9 @@ public class MemberService {
     private final PreferredTagRepository preferredTagRepository;
     private final TagRepository tagRepository;
 
-
+    /**
+     * 마이 페이지 조회 : 닉네임, 선호태그 List 반환
+     */
     public MyPageResponse getMyPage(Long memberId) {
         Member findMember = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -38,7 +41,10 @@ public class MemberService {
         return MyPageResponse.from(findMember, preferredTags);
     }
 
-    // 쓰기작업 readOnly = false
+
+    /**
+     * 마이페이지 내 정보 수정 : 닉네임, 선호태그 변경 후 반환
+     */
     @Transactional
     public MyPageResponse updateMyInfo(Long memberId, UpdateMemberRequest request) {
         Member findMember = memberRepository.findById(memberId)
@@ -76,5 +82,28 @@ public class MemberService {
 
         return MyPageResponse.from(findMember, preferredTags);
     }
-}
 
+    /**
+     * 온보딩 화면 : 초기 1회만 노출되며
+     */
+    @Transactional
+    public void setPreferredTags(Long memberId, SetPreferredTagRequest request) {
+        Member findMember = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        List<Tag> tags = tagRepository.findAllByIdInAndStatus(request.getTagsId(), Status.ACTIVE);
+        if (tags.size() != request.getTagsId().size()) {
+            throw new BusinessException(ErrorCode.TAG_NOT_FOUND);
+        }
+
+        List<PreferredTag> preferredTags = tags.stream()
+                .map(tag -> PreferredTag.builder()
+                        .member(findMember)
+                        .tag(tag)
+                        .build())
+                .toList();
+
+        preferredTagRepository.saveAll(preferredTags);
+    }
+
+    }
