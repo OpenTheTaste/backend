@@ -2,6 +2,7 @@ package com.ott.api_admin.content.mapper;
 
 import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
+import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_tag.domain.MediaTag;
@@ -42,6 +43,28 @@ public class BackOfficeContentsMapper {
                 media.getPublicStatus(),
                 media.getBookmarkCount(),
                 media.getCreatedDate().toLocalDate()
+        );
+    }
+
+    public ContentsUploadResponse toContentsUploadResponse(
+            Long contentsId,
+            String posterObjectKey,
+            String thumbnailObjectKey,
+            String originObjectKey,
+            String masterPlaylistObjectKey,
+            String posterUploadUrl,
+            String thumbnailUploadUrl,
+            String originUploadUrl
+    ) {
+        return new ContentsUploadResponse(
+                contentsId,
+                posterObjectKey,
+                thumbnailObjectKey,
+                originObjectKey,
+                masterPlaylistObjectKey,
+                posterUploadUrl,
+                thumbnailUploadUrl,
+                originUploadUrl
         );
     }
 

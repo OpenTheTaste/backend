@@ -1,8 +1,9 @@
 package com.ott.api_admin.shortform.mapper;
 
-import com.ott.api_admin.shortform.dto.OriginMediaTitleListResponse;
-import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
-import com.ott.api_admin.shortform.dto.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
 import com.ott.domain.common.MediaType;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_tag.domain.MediaTag;
@@ -57,6 +58,28 @@ public class BackOfficeShortFormMapper {
                 originId,
                 media.getTitle(),
                 media.getMediaType()
+        );
+    }
+
+    public ShortFormUploadResponse toShortFormUploadResponse(
+            Long shortFormId,
+            String posterObjectKey,
+            String thumbnailObjectKey,
+            String originObjectKey,
+            String masterPlaylistObjectKey,
+            String posterUploadUrl,
+            String thumbnailUploadUrl,
+            String originUploadUrl
+    ) {
+        return new ShortFormUploadResponse(
+                shortFormId,
+                posterObjectKey,
+                thumbnailObjectKey,
+                originObjectKey,
+                masterPlaylistObjectKey,
+                posterUploadUrl,
+                thumbnailUploadUrl,
+                originUploadUrl
         );
     }
 
