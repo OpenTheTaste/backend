@@ -30,6 +30,11 @@ public class RabbitTranscodeListener implements MessageListener {
     @RabbitListener(queues = RabbitConfig.QUEUE_NAME)
     public void listen(TranscodeMessage message) {
         log.info("트랜스코딩 요청 수신 - mediaId: {}, originUrl: {}", message.mediaId(), message.originUrl());
-        commandPipeline.execute(message.mediaId(), message.originUrl());
+        try {
+            commandPipeline.execute(message.mediaId(), message.originUrl());
+        } catch (Exception e) {
+            // 예외를 삼켜 requeue를 방지 / DLQ 구성 후 AmqpRejectAndDontRequeueException으로 교체
+            log.error("트랜스코딩 처리 실패, 메시지 폐기 - mediaId: {}", message.mediaId(), e);
+        }
     }
 }

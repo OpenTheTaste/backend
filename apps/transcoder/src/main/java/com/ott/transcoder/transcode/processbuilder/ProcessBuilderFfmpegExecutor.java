@@ -101,7 +101,17 @@ public class ProcessBuilderFfmpegExecutor implements FfmpegExecutor {
             }
         }
 
-        int exitCode = process.waitFor();
+//        int exitCode = process.waitFor();
+//        if (exitCode != 0) {
+//            throw new RuntimeException("FFmpeg 실패 - resolution: " + resolution.getKey() + ", exitCode: " + exitCode);
+//        }
+
+        boolean finished = process.waitFor(30, java.util.concurrent.TimeUnit.MINUTES);
+        if (!finished) {
+            process.destroyForcibly();
+            throw new RuntimeException("FFmpeg 타임아웃 - resolution: " + resolution.getKey());
+        }
+        int exitCode = process.exitValue();
         if (exitCode != 0) {
             throw new RuntimeException("FFmpeg 실패 - resolution: " + resolution.getKey() + ", exitCode: " + exitCode);
         }
