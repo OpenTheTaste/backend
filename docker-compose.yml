@@ -77,6 +77,22 @@ services:
       api-user:
         condition: service_healthy
 
+  # ============ Message Queue ============
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ott-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   # ============ Transcoder 워커 ============
   transcoder:
     build:
@@ -89,10 +105,25 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+
+      TRANSCODER_MESSAGING_PROVIDER: ${TRANSCODER_MESSAGING_PROVIDER}
+      TRANSCODER_FFMPEG_ENGINE: ${TRANSCODER_FFMPEG_ENGINE}
+      FFMPEG_PATH: ${FFMPEG_PATH}
+      TRANSCODER_TEMP_DIR: ${TRANSCODER_TEMP_DIR}
+      TRANSCODER_SEGMENT_DURATION: ${TRANSCODER_SEGMENT_DURATION}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      STORAGE_OUTPUT_DIR: ${STORAGE_OUTPUT_DIR}
     depends_on:
       mysql:
         condition: service_healthy
       api-user:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
 volumes:
