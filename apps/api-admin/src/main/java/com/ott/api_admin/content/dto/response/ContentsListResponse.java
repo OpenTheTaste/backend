@@ -1,10 +1,11 @@
 package com.ott.api_admin.content.dto.response;
 
-import com.ott.domain.common.PublicStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
+
+import com.ott.domain.common.PublicStatus;
 
 @Schema(description = "콘텐츠 목록 조회 응답")
 public record ContentsListResponse(

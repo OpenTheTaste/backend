@@ -22,139 +22,133 @@ import static com.ott.domain.media.domain.QMedia.media;
 @RequiredArgsConstructor
 public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
-    private final JPAQueryFactory queryFactory;
+        private final JPAQueryFactory queryFactory;
 
-    @Override
-    public Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType, String searchWord) {
-        List<Media> mediaList = queryFactory
-                .selectFrom(media)
-                .where(
-                        media.mediaType.eq(mediaType),
-                        titleContains(searchWord)
-                )
-                .orderBy(media.createdDate.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        JPAQuery<Long> countQuery = queryFactory
-                .select(media.count())
-                .from(media)
-                .where(
-                        media.mediaType.eq(mediaType),
-                        titleContains(searchWord)
-                );
-
-        return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
-    }
-
-    @Override
-    public Page<Media> findMediaListByMediaTypeAndSearchWordAndPublicStatus(Pageable pageable, MediaType mediaType, String searchWord, PublicStatus publicStatus) {
-        List<Media> mediaList = queryFactory
-                .selectFrom(media)
-                .where(
-                        mediaTypeEq(mediaType),
-                        titleContains(searchWord),
-                        publicStatusEq(publicStatus)
-                )
-                .orderBy(media.createdDate.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        JPAQuery<Long> countQuery = queryFactory
-                .select(media.count())
-                .from(media)
-                .where(
-                        mediaTypeEq(mediaType),
-                        titleContains(searchWord),
-                        publicStatusEq(publicStatus)
-                );
-
-        return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
-    }
-
-    @Override
-    public Page<Media> findMediaListByMediaTypeAndSearchWordAndPublicStatusAndUploaderId(Pageable pageable, MediaType mediaType, String searchWord, PublicStatus publicStatus, Long uploaderId) {
-        List<Media> mediaList = queryFactory
-                .selectFrom(media)
-                .where(
-                        mediaTypeEq(mediaType),
-                        titleContains(searchWord),
-                        publicStatusEq(publicStatus),
-                        uploaderIdEq(uploaderId)
-                )
-                .orderBy(media.createdDate.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        JPAQuery<Long> countQuery = queryFactory
-                .select(media.count())
-                .from(media)
-                .where(
-                        mediaTypeEq(mediaType),
-                        titleContains(searchWord),
-                        publicStatusEq(publicStatus),
-                        uploaderIdEq(uploaderId)
-                );
-
-        return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
-    }
-
-    @Override
-    public Page<Media> findOriginMediaListBySearchWord(Pageable pageable, String searchWord) {
-        BooleanExpression condition = media.mediaType.in(List.of(MediaType.SERIES, MediaType.CONTENTS))
-                .and(
-                        JPAExpressions.selectOne()
-                                .from(contents)
+        @Override
+        public Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType,
+                        String searchWord) {
+                List<Media> mediaList = queryFactory
+                                .selectFrom(media)
                                 .where(
-                                        contents.media.id.eq(media.id),
-                                        contents.series.isNotNull()
-                                )
-                                .notExists()
-                );
+                                                media.mediaType.eq(mediaType),
+                                                titleContains(searchWord))
+                                .orderBy(media.createdDate.desc())
+                                .offset(pageable.getOffset())
+                                .limit(pageable.getPageSize())
+                                .fetch();
 
-        List<Media> mediaList = queryFactory
-                .selectFrom(media)
-                .where(
-                        condition,
-                        titleContains(searchWord)
-                )
-                .orderBy(media.createdDate.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+                JPAQuery<Long> countQuery = queryFactory
+                                .select(media.count())
+                                .from(media)
+                                .where(
+                                                media.mediaType.eq(mediaType),
+                                                titleContains(searchWord));
 
-        JPAQuery<Long> countQuery = queryFactory
-                .select(media.count())
-                .from(media)
-                .where(condition, titleContains(searchWord));
+                return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
+        }
 
-        return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
-    }
+        @Override
+        public Page<Media> findMediaListByMediaTypeAndSearchWordAndPublicStatus(Pageable pageable, MediaType mediaType,
+                        String searchWord, PublicStatus publicStatus) {
+                List<Media> mediaList = queryFactory
+                                .selectFrom(media)
+                                .where(
+                                                mediaTypeEq(mediaType),
+                                                titleContains(searchWord),
+                                                publicStatusEq(publicStatus))
+                                .orderBy(media.createdDate.desc())
+                                .offset(pageable.getOffset())
+                                .limit(pageable.getPageSize())
+                                .fetch();
 
-    private BooleanExpression titleContains(String searchWord) {
-        if (StringUtils.hasText(searchWord))
-            return media.title.contains(searchWord);
-        return null;
-    }
+                JPAQuery<Long> countQuery = queryFactory
+                                .select(media.count())
+                                .from(media)
+                                .where(
+                                                mediaTypeEq(mediaType),
+                                                titleContains(searchWord),
+                                                publicStatusEq(publicStatus));
 
-    private BooleanExpression mediaTypeEq(MediaType mediaType) {
-        if (mediaType != null)
-            return media.mediaType.eq(mediaType);
-        return null;
-    }
+                return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
+        }
 
-    private BooleanExpression publicStatusEq(PublicStatus publicStatus) {
-        if (publicStatus != null)
-            return media.publicStatus.eq(publicStatus);
-        return null;
-    }
+        @Override
+        public Page<Media> findMediaListByMediaTypeAndSearchWordAndPublicStatusAndUploaderId(Pageable pageable,
+                        MediaType mediaType, String searchWord, PublicStatus publicStatus, Long uploaderId) {
+                List<Media> mediaList = queryFactory
+                                .selectFrom(media)
+                                .where(
+                                                mediaTypeEq(mediaType),
+                                                titleContains(searchWord),
+                                                publicStatusEq(publicStatus),
+                                                uploaderIdEq(uploaderId))
+                                .orderBy(media.createdDate.desc())
+                                .offset(pageable.getOffset())
+                                .limit(pageable.getPageSize())
+                                .fetch();
 
-    private BooleanExpression uploaderIdEq(Long uploaderId) {
-        if (uploaderId != null)
-            return media.uploader.id.eq(uploaderId);
-        return null;
-    }
+                JPAQuery<Long> countQuery = queryFactory
+                                .select(media.count())
+                                .from(media)
+                                .where(
+                                                mediaTypeEq(mediaType),
+                                                titleContains(searchWord),
+                                                publicStatusEq(publicStatus),
+                                                uploaderIdEq(uploaderId));
+
+                return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
+        }
+
+        @Override
+        public Page<Media> findOriginMediaListBySearchWord(Pageable pageable, String searchWord) {
+                BooleanExpression condition = media.mediaType.in(List.of(MediaType.SERIES, MediaType.CONTENTS))
+                                .and(
+                                                JPAExpressions.selectOne()
+                                                                .from(contents)
+                                                                .where(
+                                                                                contents.media.id.eq(media.id),
+                                                                                contents.series.isNotNull())
+                                                                .notExists());
+
+                List<Media> mediaList = queryFactory
+                                .selectFrom(media)
+                                .where(
+                                                condition,
+                                                titleContains(searchWord))
+                                .orderBy(media.createdDate.desc())
+                                .offset(pageable.getOffset())
+                                .limit(pageable.getPageSize())
+                                .fetch();
+
+                JPAQuery<Long> countQuery = queryFactory
+                                .select(media.count())
+                                .from(media)
+                                .where(condition, titleContains(searchWord));
+
+                return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
+        }
+
+        private BooleanExpression titleContains(String searchWord) {
+                if (StringUtils.hasText(searchWord))
+                        return media.title.contains(searchWord);
+                return null;
+        }
+
+        private BooleanExpression mediaTypeEq(MediaType mediaType) {
+                if (mediaType != null)
+                        return media.mediaType.eq(mediaType);
+                return null;
+        }
+
+        private BooleanExpression publicStatusEq(PublicStatus publicStatus) {
+                if (publicStatus != null)
+                        return media.publicStatus.eq(publicStatus);
+                return null;
+        }
+
+        private BooleanExpression uploaderIdEq(Long uploaderId) {
+                if (uploaderId != null)
+                        return media.uploader.id.eq(uploaderId);
+                return null;
+        }
 }

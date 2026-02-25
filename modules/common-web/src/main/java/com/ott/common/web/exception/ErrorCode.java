@@ -45,10 +45,8 @@ public enum ErrorCode {
     CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "콘텐츠를 찾을 수 없습니다"),
     SERIES_NOT_FOUND(HttpStatus.NOT_FOUND, "B002", "시리즈를 찾을 수 없습니다"),
     SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B003", "검색어는 최소 2글자 이상이어야 합니다"),
-    INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B004", "허용되지 않는 역할 변경입니다")
-
-
-    ;
+    INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B004", "허용되지 않는 역할 변경입니다"),
+    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B005", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요");
 
     private final HttpStatus status;
     private final String code;
