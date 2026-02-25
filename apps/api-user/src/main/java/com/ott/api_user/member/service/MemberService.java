@@ -91,6 +91,9 @@ public class MemberService {
         Member findMember = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        //재 호출 시 중복 방지 코드
+        preferredTagRepository.deleteAllByMember(findMember);
+
         List<Tag> tags = tagRepository.findAllByIdInAndStatus(request.getTagsId(), Status.ACTIVE);
         if (tags.size() != request.getTagsId().size()) {
             throw new BusinessException(ErrorCode.TAG_NOT_FOUND);

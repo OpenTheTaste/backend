@@ -27,8 +27,8 @@ public interface PreferredTagRepository extends JpaRepository<PreferredTag, Long
     List<PreferredTag> findAllWithTagAndCategoryByMemberIdAndStatus(@Param("memberId") Long memberId,
                                                                     @Param("status") Status status);
 
-    // 선호 태그 삭제
-    @Modifying
+    // 선호 태그 삭제,  영속성 컨텍스트 들어있는 내용 삭제
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PreferredTag pt WHERE pt.member = :member")
     void deleteAllByMember(@Param("member") Member member);
 }
