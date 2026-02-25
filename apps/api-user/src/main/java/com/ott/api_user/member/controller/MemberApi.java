@@ -86,7 +86,7 @@ public interface MemberApi {
             @RequestBody UpdateMemberRequest request
     );
 
-    /**3
+    /**
      *
      * POST /member/me/tags : 온보딩 화면 선호 태그 수집 API
      */
