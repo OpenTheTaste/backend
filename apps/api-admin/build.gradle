@@ -2,7 +2,8 @@ apply plugin: 'org.springframework.boot'
 
 dependencies {
 	implementation project(':modules:domain')
-	implementation project(':modules:infra')
+	implementation project(':modules:infra-db')
+	implementation project(':modules:infra-s3')
 	implementation project(':modules:common-web')
 	implementation project(':modules:common-security')
 

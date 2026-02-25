@@ -1,4 +1,4 @@
-package com.ott.api_admin.shortform.dto;
+package com.ott.api_admin.shortform.dto.response;
 
 import com.ott.domain.common.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;

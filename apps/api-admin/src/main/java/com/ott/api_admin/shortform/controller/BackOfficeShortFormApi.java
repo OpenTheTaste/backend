@@ -1,10 +1,10 @@
 package com.ott.api_admin.shortform.controller;
 
-import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
-import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
-import com.ott.api_admin.shortform.dto.OriginMediaTitleListResponse;
-import com.ott.api_admin.shortform.dto.ShortFormDetailResponse;
-import com.ott.api_admin.shortform.dto.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
+import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "BackOffice Short-Form API", description = "[백오피스] 숏폼 관리 API")
@@ -83,5 +84,25 @@ public interface BackOfficeShortFormApi {
     ResponseEntity<SuccessResponse<ShortFormDetailResponse>> getShortFormDetail(
             @Parameter(description = "조회할 숏폼의 미디어 ID", required = true) @PathVariable Long mediaId,
             Authentication authentication
+    );
+
+    @Operation(summary = "숏폼 메타데이터 업로드", description = "숏폼 메타데이터를 생성하고 S3 업로드용 Presigned URL을 반환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "숏폼 메타데이터 업로드 및 Presigned URL 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ShortFormUploadResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "숏폼 메타데이터 업로드 및 Presigned URL 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN, EDITOR 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
+            @Parameter(description = "ShortFormUploadRequest 참고해주세요.", required = true)
+            @RequestBody ShortFormUploadRequest request
     );
 }
