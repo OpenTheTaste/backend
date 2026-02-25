@@ -45,7 +45,6 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
                         ).permitAll()
-                        .requestMatchers("/back-office/short-forms/upload").hasAnyRole("ADMIN", "EDITOR")
                         .requestMatchers("/back-office/admin/**").hasRole("ADMIN")
                         .anyRequest().hasAnyRole("ADMIN", "EDITOR")
                 )
