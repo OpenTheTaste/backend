@@ -84,6 +84,7 @@ public interface BackOfficeContentsApi {
             )
     })
     ResponseEntity<SuccessResponse<ContentsUploadResponse>> createContentsUpload(
+            @Parameter(description = "api_admin.content.dto.request.ContentsUploadRequest를 참고해주세요.", required = true)
             @RequestBody ContentsUploadRequest request
     );
 }

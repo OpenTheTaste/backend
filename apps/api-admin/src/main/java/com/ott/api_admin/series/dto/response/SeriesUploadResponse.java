@@ -2,17 +2,21 @@ package com.ott.api_admin.series.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "시리즈 업로드 응답")
+@Schema(type = "Object", description = "시리즈 업로드 응답")
 public record SeriesUploadResponse(
-        // 생성된 시리즈 ID
+        @Schema(type = "Long", description = "생성된 시리즈 ID", example = "10")
         Long seriesId,
-        // 포스터 S3 object key
+
+        @Schema(type = "String", description = "포스터 S3 object key", example = "series/10/poster/poster.jpg")
         String posterObjectKey,
-        // 썸네일 S3 object key
+
+        @Schema(type = "String", description = "썸네일 S3 object key", example = "series/10/thumbnail/thumb.jpg")
         String thumbnailObjectKey,
-        // 포스터 업로드용 Presigned URL
+
+        @Schema(type = "String", description = "포스터 업로드용 사전 서명 URL")
         String posterUploadUrl,
-        // 썸네일 업로드용 Presigned URL
+
+        @Schema(type = "String", description = "썸네일 업로드용 사전 서명 URL")
         String thumbnailUploadUrl
 ) {
 }

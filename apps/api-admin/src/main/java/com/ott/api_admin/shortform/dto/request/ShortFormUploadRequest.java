@@ -6,29 +6,44 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
-@Schema(description = "숏폼 업로드 요청")
+@Schema(type = "Object", description = "숏폼 업로드 요청")
 public record ShortFormUploadRequest(
-        // 연결할 시리즈 ID (선택)
+        @Schema(type = "Long", description = "연결할 시리즈 ID(선택)", example = "1")
         Long seriesId,
-        // 연결할 콘텐츠 ID (선택)
+
+        @Schema(type = "Long", description = "연결할 콘텐츠 ID(선택)", example = "2")
         Long contentsId,
-        // 숏폼 제목
-        @NotBlank String title,
-        // 숏폼 설명
-        @NotBlank String description,
-        // 공개 상태
-        @NotNull PublicStatus publicStatus,
-        // 영상 길이(초)
+
+        @Schema(type = "String", description = "숏폼 제목", example = "하이라이트")
+        @NotBlank
+        String title,
+
+        @Schema(type = "String", description = "숏폼 설명", example = "명장면 하이라이트")
+        @NotBlank
+        String description,
+
+        @Schema(type = "String", description = "공개 상태", example = "PUBLIC")
+        @NotNull
+        PublicStatus publicStatus,
+
+        @Schema(type = "Integer", description = "영상 길이(초)", example = "60")
         @PositiveOrZero
         Integer duration,
-        // 영상 크기(KB)
+
+        @Schema(type = "Integer", description = "영상 크기(KB)", example = "10240")
         @PositiveOrZero
         Integer videoSize,
-        // 포스터 원본 파일명
-        @NotBlank String posterFileName,
-        // 썸네일 원본 파일명
-        @NotBlank String thumbnailFileName,
-        // 원본 영상 파일명
-        @NotBlank String originFileName
+
+        @Schema(type = "String", description = "포스터 원본 파일명", example = "poster.jpg")
+        @NotBlank
+        String posterFileName,
+
+        @Schema(type = "String", description = "썸네일 원본 파일명", example = "thumb.jpg")
+        @NotBlank
+        String thumbnailFileName,
+
+        @Schema(type = "String", description = "원본 영상 파일명", example = "origin.mp4")
+        @NotBlank
+        String originFileName
 ) {
 }

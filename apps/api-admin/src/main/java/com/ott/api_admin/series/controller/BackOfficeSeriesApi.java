@@ -109,6 +109,7 @@ public interface BackOfficeSeriesApi {
             )
     })
     ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
+            @Parameter(description = "api_admin.series.dto.request.SeriesUploadRequest를 참고해주세요.", required = true)
             @RequestBody SeriesUploadRequest request
     );
 }

@@ -2,23 +2,30 @@ package com.ott.api_admin.shortform.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "숏폼 업로드 응답")
+@Schema(type = "Object", description = "숏폼 업로드 응답")
 public record ShortFormUploadResponse(
-        // 생성된 숏폼 ID
+        @Schema(type = "Long", description = "생성된 숏폼 ID", example = "10")
         Long shortFormId,
-        // 포스터 S3 object key
+
+        @Schema(type = "String", description = "포스터 S3 object key", example = "short-forms/10/poster/poster.jpg")
         String posterObjectKey,
-        // 썸네일 S3 object key
+
+        @Schema(type = "String", description = "썸네일 S3 object key", example = "short-forms/10/thumbnail/thumb.jpg")
         String thumbnailObjectKey,
-        // 원본 영상 S3 object key
+
+        @Schema(type = "String", description = "원본 영상 S3 object key", example = "short-forms/10/origin/origin.mp4")
         String originObjectKey,
-        // 트랜스코딩 결과 마스터 플레이리스트 object key
+
+        @Schema(type = "String", description = "트랜스코딩 마스터 플레이리스트 object key", example = "short-forms/10/transcoded/master.m3u8")
         String masterPlaylistObjectKey,
-        // 포스터 업로드용 Presigned URL
+
+        @Schema(type = "String", description = "포스터 업로드용 사전 서명 URL")
         String posterUploadUrl,
-        // 썸네일 업로드용 Presigned URL
+
+        @Schema(type = "String", description = "썸네일 업로드용 사전 서명 URL")
         String thumbnailUploadUrl,
-        // 원본 영상 업로드용 Presigned URL
+
+        @Schema(type = "String", description = "원본 영상 업로드용 사전 서명 URL")
         String originUploadUrl
 ) {
 }

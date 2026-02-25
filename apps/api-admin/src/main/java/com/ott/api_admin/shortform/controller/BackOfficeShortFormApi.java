@@ -102,6 +102,7 @@ public interface BackOfficeShortFormApi {
             )
     })
     ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
+            @Parameter(description = "api_admin.shortform.dto.request.ShortFormUploadRequest 참고해주세요.", required = true)
             @RequestBody ShortFormUploadRequest request
     );
 }
