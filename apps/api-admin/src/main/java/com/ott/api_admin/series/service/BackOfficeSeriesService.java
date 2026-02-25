@@ -1,4 +1,4 @@
-﻿package com.ott.api_admin.series.service;
+package com.ott.api_admin.series.service;
 
 import com.ott.api_admin.series.dto.request.SeriesUploadRequest;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;

@@ -1,4 +1,4 @@
-﻿package com.ott.api_admin.shortform.service;
+package com.ott.api_admin.shortform.service;
 
 import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;

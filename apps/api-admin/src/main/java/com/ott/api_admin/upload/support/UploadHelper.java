@@ -15,60 +15,45 @@ public class UploadHelper {
 
     private final MemberRepository memberRepository;
 
-    public String buildObjectKey(String root, Long id, String mediaType, String fileName) {
-        return root + "/" + id + "/" + mediaType + "/" + fileName;
+    public String buildObjectKey(String resourceRoot, Long resourceId, String assetType, String fileName) {
+        return resourceRoot + "/" + resourceId + "/" + assetType + "/" + fileName;
     }
 
     public String resolveImageContentType(String fileName) {
-        String lowerFileName = fileName.toLowerCase();
-        if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg")) {
-            return "image/jpeg";
+        try {
+            return ExtensionEnum.resolveImageContentType(fileName);
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
-        if (lowerFileName.endsWith(".png")) {
-            return "image/png";
-        }
-        if (lowerFileName.endsWith(".webp")) {
-            return "image/webp";
-        }
-        throw new BusinessException(ErrorCode.INVALID_INPUT);
     }
 
     public String resolveVideoContentType(String fileName) {
-        String lowerFileName = fileName.toLowerCase();
-        if (lowerFileName.endsWith(".mp4")) {
-            return "video/mp4";
+        try {
+            return ExtensionEnum.resolveVideoContentType(fileName);
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
-        if (lowerFileName.endsWith(".mov")) {
-            return "video/quicktime";
-        }
-        if (lowerFileName.endsWith(".webm")) {
-            return "video/webm";
-        }
-        if (lowerFileName.endsWith(".m4v")) {
-            return "video/x-m4v";
-        }
-        throw new BusinessException(ErrorCode.INVALID_INPUT);
     }
 
     public String sanitizeFileName(String fileName) {
         String trimmed = fileName == null ? "" : fileName.trim();
-        int lastDot = trimmed.lastIndexOf('.');
-        String namePart = lastDot > 0 ? trimmed.substring(0, lastDot) : trimmed;
-        String extPart = lastDot > 0 ? trimmed.substring(lastDot + 1) : "";
+        int extensionDelimiterIndex = trimmed.lastIndexOf('.');
+        String baseName = extensionDelimiterIndex > 0 ? trimmed.substring(0, extensionDelimiterIndex) : trimmed;
+        String extensionPart = extensionDelimiterIndex > 0 ? trimmed.substring(extensionDelimiterIndex + 1) : "";
 
-        String sanitizedName = namePart
+        String sanitizedBaseName = baseName
                 .replace("/", "")
                 .replace("\\", "")
                 .replaceAll("[^0-9A-Za-z가-힣_-]", "");
-        String sanitizedExt = extPart.replaceAll("[^0-9A-Za-z]", "").toLowerCase();
+        String sanitizedExtension = extensionPart.replaceAll("[^0-9A-Za-z]", "").toLowerCase();
 
-        if (sanitizedName.isBlank()) {
-            sanitizedName = "file";
+        if (sanitizedBaseName.isBlank()) {
+            sanitizedBaseName = "file";
         }
-        if (sanitizedExt.isBlank()) {
+        if (sanitizedExtension.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
-        return sanitizedName + "." + sanitizedExt;
+        return sanitizedBaseName + "." + sanitizedExtension;
     }
 
     public Member resolveUploader() {
