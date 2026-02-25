@@ -66,7 +66,7 @@ public class Media extends BaseEntity {
     private PublicStatus publicStatus;
 
     public void updateImageKeys(String posterUrl, String thumbnailUrl) {
-        this.posterUrl = Objects.requireNonNull(posterUrl, "posterUrl must not be null");
+        this.posterUrl = posterUrl;
         this.thumbnailUrl = thumbnailUrl;
     }
 }
