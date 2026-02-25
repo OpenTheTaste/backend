@@ -50,8 +50,11 @@ public class MemberService {
         Member findMember = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 닉네임 변경 (null이면??) -> 논의 필요
+        // 닉네임 변경
         if (request.getNickname() != null) {
+            if (request.getNickname().isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT, "공백은 입력할 수 없습니다");
+            }
             findMember.updateNickname(request.getNickname());
         }
 

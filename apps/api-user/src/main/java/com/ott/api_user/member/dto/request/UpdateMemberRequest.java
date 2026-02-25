@@ -13,8 +13,6 @@ import java.util.List;
 @Schema(description = "내 정보 수정 요청 DTO")
 public class UpdateMemberRequest {
 
-    @NotNull
-    @NotEmpty
     @Schema(type = "String", example = "김마루1", description = "변경할 닉네임 / null인 경우 변경 x")
     private String nickname;
 
