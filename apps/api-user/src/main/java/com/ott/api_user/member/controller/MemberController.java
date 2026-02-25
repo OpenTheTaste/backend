@@ -28,7 +28,7 @@ public class MemberController implements MemberApi {
     @PatchMapping("/me")
     public ResponseEntity<SuccessResponse<MyPageResponse>> updateMyInfo(
             @AuthenticationPrincipal Long memberId,
-            @RequestBody UpdateMemberRequest request
+            @Valid @RequestBody UpdateMemberRequest request
     ) {
         return ResponseEntity.ok(SuccessResponse.of(memberService.updateMyInfo(memberId, request)));
 
