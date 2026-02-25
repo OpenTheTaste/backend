@@ -45,8 +45,10 @@ public enum ErrorCode {
     CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "콘텐츠를 찾을 수 없습니다"),
     SERIES_NOT_FOUND(HttpStatus.NOT_FOUND, "B002", "시리즈를 찾을 수 없습니다"),
     SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B003", "검색어는 최소 2글자 이상이어야 합니다"),
-    INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B004", "허용되지 않는 역할 변경입니다")
-
+    INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B004", "허용되지 않는 역할 변경입니다"),
+    MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B005", "미디어를 찾을 수 없습니다"),
+    BOOKMARK_ALREADY_EXISTS(HttpStatus.CONFLICT, "B006", "이미 북마크한 미디어입니다"),
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B007", "북마크를 찾을 수 없습니다")
 
     ;
 
