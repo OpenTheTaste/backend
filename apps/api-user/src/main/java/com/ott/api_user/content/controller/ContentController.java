@@ -20,30 +20,31 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/contents")
 public class ContentController implements ContentApi {
-    private final ContentService contentService;
+        private final ContentService contentService;
 
-    @Override
-    public ResponseEntity<SuccessResponse<ContentDetailResponse>> getContentDetail(
-            @PathVariable(value = "contentsId") Long contentsId,
-            @AuthenticationPrincipal Long memberId) {
+        @Override
+        public ResponseEntity<SuccessResponse<ContentDetailResponse>> getContentDetail(
+                        @PathVariable(value = "contentsId") Long contentsId,
+                        @AuthenticationPrincipal Long memberId) {
 
-        return ResponseEntity.ok(
-                SuccessResponse.of(contentService.getContentDetail(contentsId, memberId)));
-    }
+                return ResponseEntity.ok(
+                                SuccessResponse.of(contentService.getContentDetail(contentsId, memberId)));
+        }
 
-    // 플레이 리스트 API (/contents/{contentsId}/playlist?source={SOURCE})
-    @Override
-    public ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
-            @PathVariable(value = "contentId") Long contentId,
-            @RequestParam(value = "source", required = false) ContentSource source,
-            @RequestParam(value = "page") Integer pageParam,
-            @RequestParam(value = "size") Integer sizeParam,
-            @AuthenticationPrincipal Long memberId) {
-        return ResponseEntity.ok(
-                SuccessResponse
-                        .of(contentService.getContentPlayList(contentId, source, pageParam, sizeParam, memberId)));
-    }
+        // 플레이 리스트 API (/contents/{contentsId}/playlist?source={SOURCE})
+        @Override
+        public ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
+                        @PathVariable(value = "contentsId") Long contentId,
+                        @RequestParam(value = "source", required = false) ContentSource source,
+                        @RequestParam(value = "page") Integer pageParam,
+                        @RequestParam(value = "size") Integer sizeParam,
+                        @AuthenticationPrincipal Long memberId) {
+                return ResponseEntity.ok(
+                                SuccessResponse
+                                                .of(contentService.getContentPlayList(contentId, source, pageParam,
+                                                                sizeParam, memberId)));
+        }
 
-    // 댓글 조회 API
+        // 댓글 조회 API
 
 }

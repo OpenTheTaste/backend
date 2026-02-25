@@ -68,14 +68,33 @@ public class SeriesService {
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
 
                 Pageable pageable = PageRequest.of(page, size);
-
+                
+                System.out.println("🚨 1. DB 쿼리 실행 직전!"); // <--- 추가
+                
                 Page<Contents> contentsPage = contentsRepository
                                 .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(
                                                 seriesId, Status.ACTIVE, PublicStatus.PUBLIC, pageable);
+                System.out.println("🚨 2. DB 조회 완료! (결과 개수: " + contentsPage.getContent().size() + ")"); // <--- 추가
 
-                List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream()
-                                .map(SeriesContentsResponse::from).collect(Collectors.toList());
+                // List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream()
+                //                 .map(SeriesContentsResponse::from).collect(Collectors.toList());
+                
+                                
+                // ======== 여기서부터 교체 ========
+                List<SeriesContentsResponse> contentsList = new java.util.ArrayList<>();
+                try {
+                        for (Contents content : contentsPage.getContent()) {
+                        System.out.println("👉 변환 시도 중인 에피소드 ID: " + content.getId());
+                        contentsList.add(SeriesContentsResponse.from(content));
+                        System.out.println("✅ 에피소드 ID: " + content.getId() + " 변환 성공!");
+                        }
+                } catch (Exception e) {
+                        System.out.println("💥💥💥 대참사 발생! 범인은 바로 아래 에러입니다 💥💥💥");
+                        e.printStackTrace(); // <--- 이게 에러의 진짜 원인을 콘솔에 뱉어줍니다!
+                }
+                // ======== 여기까지 교체 ========
 
+                System.out.println("🚨 3. DTO 변환 및 리턴 직전!"); // <--- 추가
                 PageInfo pageInfo = PageInfo.builder()
                                 .currentPage(contentsPage.getNumber())
                                 .totalPage(contentsPage.getTotalPages())

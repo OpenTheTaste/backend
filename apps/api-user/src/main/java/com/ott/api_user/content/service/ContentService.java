@@ -1,10 +1,7 @@
 package com.ott.api_user.content.service;
 
-import static com.ott.domain.contents.domain.QContents.*;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
