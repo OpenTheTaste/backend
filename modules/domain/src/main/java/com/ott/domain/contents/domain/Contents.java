@@ -57,7 +57,7 @@ public class Contents extends BaseEntity {
     private String masterPlaylistUrl;
 
     public void updateStorageKeys(String originUrl, String masterPlaylistUrl) {
-        this.originUrl = Objects.requireNonNull(originUrl, "originUrl must not be null");
+        this.originUrl = originUrl;
         this.masterPlaylistUrl = masterPlaylistUrl;
     }
 }
