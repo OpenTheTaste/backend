@@ -81,4 +81,14 @@ public class Media extends BaseEntity {
             this.bookmarkCount--;
         }
     }
+
+    public void increaseLikesCount() {
+        this.likesCount++;
+    }
+
+    public void decreaseLikesCount() {
+        if (this.likesCount > 0) {
+            this.likesCount--;
+        }
+    }
 }
