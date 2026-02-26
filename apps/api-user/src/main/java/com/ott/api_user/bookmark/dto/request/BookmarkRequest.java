@@ -3,6 +3,7 @@ package com.ott.api_user.bookmark.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class BookmarkRequest {
 
     @NotNull(message = "mediaId는 필수입니다.")
+    @Positive(message = "mediaId는 1 이상이어야 합니다.")
     @Schema(description = "북마크할 미디어 ID", example = "1")
     private Long mediaId;
 }
