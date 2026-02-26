@@ -7,6 +7,7 @@ import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.bookmark.domain.Bookmark;
 import com.ott.domain.bookmark.repository.BookmarkRepository;
+import com.ott.domain.common.MediaType;
 import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media.repository.MediaRepository;
@@ -75,9 +76,14 @@ public class BookmarkService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        // 해당 유저의 ACTIVE 북마크 목록 페이징 조회 (fetch Join)
+        // 해당 유저의 ACTIVE인 북마크한 콘텐츠 OR 시리즈 타입 목록 페이징 조회 (fetch Join)
         Page<Bookmark> bookmarkPage =
-                bookmarkRepository.findByMemberIdAndStatus(memberId, Status.ACTIVE, pageable);
+                bookmarkRepository.findByMemberIdAndStatusAndMedia_MediaTypeIn(
+                        memberId,
+                        Status.ACTIVE,
+                        List.of(MediaType.CONTENTS, MediaType.SERIES),
+                        pageable
+                );
 
         // Bookmark -> DTO로 변환
         List<BookmarkMediaResponse> dataList = bookmarkPage.getContent().stream()

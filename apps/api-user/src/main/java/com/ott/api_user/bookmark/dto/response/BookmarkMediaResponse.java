@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-@Schema(description = "북마크한 미디어 목록 응답 DTO")
+@Schema(description = "북마크한 콘텐츠 목록 응답 DTO")
 public class BookmarkMediaResponse {
 
     @Schema(description = "미디어 ID", example = "1")
