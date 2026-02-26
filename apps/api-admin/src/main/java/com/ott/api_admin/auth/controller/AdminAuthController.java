@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/back-office/admin")
+@RequestMapping("/back-office")
 @RequiredArgsConstructor
 public class AdminAuthController implements AdminAuthApi {
 

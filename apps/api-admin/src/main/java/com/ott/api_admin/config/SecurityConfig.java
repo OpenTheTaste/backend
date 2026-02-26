@@ -39,8 +39,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/back-office/actuator/health/**",
                                 "/back-office/actuator/info",
-                                "/back-office/admin/login",
-                                "/back-office/admin/reissue",
+                                "/back-office/login",
+                                "/back-office/reissue",
                                 "/back-office/swagger-ui/**",
                                 "/back-office/v3/api-docs/**",
                                 "/back-office/swagger-resources/**"
