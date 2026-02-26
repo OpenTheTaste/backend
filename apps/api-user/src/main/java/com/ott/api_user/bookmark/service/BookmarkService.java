@@ -1,7 +1,10 @@
 package com.ott.api_user.bookmark.service;
 
+import com.ott.api_user.bookmark.dto.response.BookmarkMediaResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.common.web.response.PageInfo;
+import com.ott.common.web.response.PageResponse;
 import com.ott.domain.bookmark.domain.Bookmark;
 import com.ott.domain.bookmark.repository.BookmarkRepository;
 import com.ott.domain.common.Status;
@@ -9,11 +12,14 @@ import com.ott.domain.media.domain.Media;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.repository.MemberRepository;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -62,5 +68,29 @@ public class BookmarkService {
                             findMedia.increaseBookmarkCount();
                         }
                 );
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<BookmarkMediaResponse> getBookmarkMediaList(Long memberId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        // 해당 유저의 ACTIVE 북마크 목록 페이징 조회 (fetch Join)
+        Page<Bookmark> bookmarkPage =
+                bookmarkRepository.findByMemberIdAndStatus(memberId, Status.ACTIVE, pageable);
+
+        // Bookmark -> DTO로 변환
+        List<BookmarkMediaResponse> dataList = bookmarkPage.getContent().stream()
+                .map(BookmarkMediaResponse::from)
+                .toList();
+
+        // pageInfo 생성
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                bookmarkPage.getNumber(),
+                bookmarkPage.getTotalPages(),
+                bookmarkPage.getSize()
+        );
+
+        return PageResponse.toPageResponse(pageInfo, dataList);
     }
 }

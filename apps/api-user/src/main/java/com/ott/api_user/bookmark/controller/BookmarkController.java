@@ -1,12 +1,13 @@
 package com.ott.api_user.bookmark.controller;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
+import com.ott.api_user.bookmark.dto.response.BookmarkMediaResponse;
+import com.ott.common.web.response.PageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ott.api_user.bookmark.dto.request.BookmarkRequest;
@@ -16,6 +17,7 @@ import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/bookmarks")
@@ -33,4 +35,14 @@ public class BookmarkController implements BookmarkAPI  {
         return ResponseEntity.ok(SuccessResponse.of(null));
     }
 
+    // 북마크 리스트 조회
+    @Override
+    public ResponseEntity<SuccessResponse<PageResponse<BookmarkMediaResponse>>> getBookmarkMediaList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal Long memberId) {
+
+        return ResponseEntity.ok(SuccessResponse.of(
+                bookmarkService.getBookmarkMediaList(memberId, page, size)));
+    }
 }
