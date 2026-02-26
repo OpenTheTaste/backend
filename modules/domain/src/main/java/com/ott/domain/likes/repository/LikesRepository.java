@@ -12,4 +12,6 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
 
 
    Optional<Likes> findByMemberIdAndMediaIdAndStatus(Long memberId, Long mediaId, Status status);
+
+   Optional<Likes> findByMemberIdAndMediaId(Long memberId, Long mediaId);
 }

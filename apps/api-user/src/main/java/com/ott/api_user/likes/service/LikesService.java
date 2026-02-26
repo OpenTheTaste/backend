@@ -29,7 +29,8 @@ public class LikesService {
     /**
      * 좋아요 버튼
      * CONTENTS  → 시리즈 에피소드면 부모 Series.media로 처리
-     * SHORT_FORM → 시리즈 소속 숏폼이면 부모 Series.media로 처리
+     * CONTENTS  → 시리즈가 아닐경우 자기 자신 그래도 처리
+     * SHORT_FORM → 그대로 처리
      * SERIES    → 그대로 처리
      */
     @Transactional
@@ -41,10 +42,11 @@ public class LikesService {
         // 실제 좋아요 처리할 미디어 결정
         Media targetMedia = resolveTargetMedia(findMedia);
 
-        likesRepository.findByMemberIdAndMediaIdAndStatus(memberId, targetMedia.getId(), Status.ACTIVE)
+        // likes 테이블에서 처음 등록했는지 여부를 판단함
+        likesRepository.findByMemberIdAndMediaId(memberId, targetMedia.getId())
                 .ifPresentOrElse(
                         likes -> {
-                            // 한번 더 상태 검증
+
                             if (likes.getStatus() == Status.ACTIVE) {
                                 // 기록이 있을 경우 ACTIVE → DELETE + 카운트 감소
                                 likes.updateStatus(Status.DELETE);
