@@ -49,8 +49,8 @@ public interface BookmarkAPI {
     })
     @GetMapping("/me/contents")
     ResponseEntity<SuccessResponse<PageResponse<BookmarkMediaResponse>>> getBookmarkMediaList(
-            @Parameter(description = "페이지 번호 (0부터 시작)", required = true) @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "페이지 크기", required = true) @RequestParam(defaultValue = "10") @Min(0) @Max(100) int size,
+            @Parameter(description = "페이지 번호 (0부터 시작)", required = true) @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @Parameter(description = "페이지 크기", required = true) @RequestParam(defaultValue = "10") @Min(0) @Max(100) Integer size,
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
     );
 
@@ -65,8 +65,8 @@ public interface BookmarkAPI {
     })
     @GetMapping("/me/short-form")
     ResponseEntity<SuccessResponse<PageResponse<BookmarkShortFormResponse>>> getBookmarkShortFormList(
-            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") @Min(0) @Max(100) int size,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") @Min(0) @Max(100) Integer size,
             @Parameter(hidden = true) Long memberId
     );
 
