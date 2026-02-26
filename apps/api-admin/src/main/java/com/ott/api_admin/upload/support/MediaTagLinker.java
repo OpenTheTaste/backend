@@ -26,6 +26,9 @@ public class MediaTagLinker {
     private final MediaTagRepository mediaTagRepository;
 
     public void linkTags(Media media, String categoryName, List<String> tagNameList) {
+        if (media == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT);
+        }
         String normalizedCategoryName = normalizeName(categoryName);
         Set<String> normalizedTagNameSet = normalizeTagNames(tagNameList);
 
