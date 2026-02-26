@@ -1,7 +1,7 @@
-package com.ott.transcoder.transcode.processbuilder;
+package com.ott.transcoder.ffmpeg.processbuilder;
 
 import com.ott.domain.video_profile.domain.Resolution;
-import com.ott.transcoder.transcode.FfmpegExecutor;
+import com.ott.transcoder.ffmpeg.FfmpegExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

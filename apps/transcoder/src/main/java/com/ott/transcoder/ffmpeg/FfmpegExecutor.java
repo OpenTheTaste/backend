@@ -1,4 +1,4 @@
-package com.ott.transcoder.transcode;
+package com.ott.transcoder.ffmpeg;
 
 import com.ott.domain.video_profile.domain.Resolution;
 

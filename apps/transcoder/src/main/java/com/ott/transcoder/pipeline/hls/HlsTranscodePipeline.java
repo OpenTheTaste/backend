@@ -3,7 +3,7 @@ package com.ott.transcoder.pipeline.hls;
 import com.ott.domain.video_profile.domain.Resolution;
 import com.ott.transcoder.pipeline.CommandPipeline;
 import com.ott.transcoder.storage.VideoStorage;
-import com.ott.transcoder.transcode.FfmpegExecutor;
+import com.ott.transcoder.ffmpeg.FfmpegExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
