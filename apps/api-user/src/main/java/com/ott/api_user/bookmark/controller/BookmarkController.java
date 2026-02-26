@@ -42,8 +42,8 @@ public class BookmarkController implements BookmarkAPI  {
     // 북마크한 콘텐츠 or 시리즈 리스트 조회
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<BookmarkMediaResponse>>> getBookmarkMediaList(
-            @PositiveOrZero @RequestParam(defaultValue = "0") Integer page,
-            @Min(1) @Max(100) @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         return ResponseEntity.ok(SuccessResponse.of(
@@ -53,8 +53,8 @@ public class BookmarkController implements BookmarkAPI  {
     // 북마크한 숏폼 리스트 조회
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<BookmarkShortFormResponse>>> getBookmarkShortFormList(
-            @PositiveOrZero @RequestParam(defaultValue = "0") Integer page,
-            @Min(1) @Max(100) @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         return ResponseEntity.ok(SuccessResponse.of(
