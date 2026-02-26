@@ -69,4 +69,14 @@ public class Media extends BaseEntity {
         this.posterUrl = posterUrl;
         this.thumbnailUrl = thumbnailUrl;
     }
+
+    public void increaseLikesCount() {
+        this.likesCount++;
+    }
+
+    public void decreaseLikesCount() {
+        if (this.likesCount > 0) {
+            this.likesCount--;
+        }
+    }
 }
