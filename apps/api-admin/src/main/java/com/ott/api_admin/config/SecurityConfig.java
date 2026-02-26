@@ -37,13 +37,13 @@ public class SecurityConfig {
                         .accessDeniedHandler(jwtAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/actuator/health/**",
-                                "/actuator/info",
-                                "/admin/login",
-                                "/admin/reissue",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**"
+                                "/back-office/actuator/health/**",
+                                "/back-office/actuator/info",
+                                "/back-office/login",
+                                "/back-office/reissue",
+                                "/back-office/swagger-ui/**",
+                                "/back-office/v3/api-docs/**",
+                                "/back-office/swagger-resources/**"
                         ).permitAll()
                         .requestMatchers("/back-office/admin/**").hasRole("ADMIN")
                         .anyRequest().hasAnyRole("ADMIN", "EDITOR")
