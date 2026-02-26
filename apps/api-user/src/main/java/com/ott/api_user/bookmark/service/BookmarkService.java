@@ -1,6 +1,7 @@
 package com.ott.api_user.bookmark.service;
 
 import com.ott.api_user.bookmark.dto.response.BookmarkMediaResponse;
+import com.ott.api_user.bookmark.dto.response.BookmarkShortFormResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
@@ -71,6 +72,7 @@ public class BookmarkService {
                 );
     }
 
+    // 북마크 리스트 조회
     @Transactional(readOnly = true)
     public PageResponse<BookmarkMediaResponse> getBookmarkMediaList(Long memberId, int page, int size) {
 
@@ -88,6 +90,36 @@ public class BookmarkService {
         // Bookmark -> DTO로 변환
         List<BookmarkMediaResponse> dataList = bookmarkPage.getContent().stream()
                 .map(BookmarkMediaResponse::from)
+                .toList();
+
+        // pageInfo 생성
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                bookmarkPage.getNumber(),
+                bookmarkPage.getTotalPages(),
+                bookmarkPage.getSize()
+        );
+
+        return PageResponse.toPageResponse(pageInfo, dataList);
+    }
+
+
+    // 숏폼 리스트 조회
+    @Transactional(readOnly = true)
+    public PageResponse<BookmarkShortFormResponse> getBookmarkShortFormList(Long memberId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        // SHORT_FORM 타입만 조회
+        Page<Bookmark> bookmarkPage = bookmarkRepository.findByMemberIdAndStatusAndMedia_MediaType(
+                memberId,
+                Status.ACTIVE,
+                MediaType.SHORT_FORM,
+                pageable
+        );
+
+        // DTO 변환
+        List<BookmarkShortFormResponse> dataList = bookmarkPage.getContent().stream()
+                .map(BookmarkShortFormResponse::from)
                 .toList();
 
         // pageInfo 생성

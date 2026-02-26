@@ -17,8 +17,14 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
     Optional<Bookmark> findByMemberIdAndMediaId(Long memberId, Long mediaId);
 
-    // 콘텐츠 목록 조회 (CONTENTS, SERIES)
+    // 콘텐츠 북마크 목록 조회 (CONTENTS, SERIES)
+    @EntityGraph(attributePaths = {"media"})
     Page<Bookmark> findByMemberIdAndStatusAndMedia_MediaTypeIn(
             Long memberId, Status status, List<MediaType> mediaTypes, Pageable pageable);
+
+    // 숏폼 북마크 목록 (SHORT_FORM)
+    @EntityGraph(attributePaths = {"media"})
+    Page<Bookmark> findByMemberIdAndStatusAndMedia_MediaType(
+            Long memberId, Status status, MediaType mediaType, Pageable pageable);
 
 }

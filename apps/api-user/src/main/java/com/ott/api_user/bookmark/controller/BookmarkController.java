@@ -1,6 +1,7 @@
 package com.ott.api_user.bookmark.controller;
 
 import com.ott.api_user.bookmark.dto.response.BookmarkMediaResponse;
+import com.ott.api_user.bookmark.dto.response.BookmarkShortFormResponse;
 import com.ott.common.web.response.PageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +36,7 @@ public class BookmarkController implements BookmarkAPI  {
         return ResponseEntity.ok(SuccessResponse.of(null));
     }
 
-    // 북마크 리스트 조회
+    // 북마크한 콘텐츠 or 시리즈 리스트 조회
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<BookmarkMediaResponse>>> getBookmarkMediaList(
             @RequestParam(defaultValue = "0") int page,
@@ -44,5 +45,16 @@ public class BookmarkController implements BookmarkAPI  {
 
         return ResponseEntity.ok(SuccessResponse.of(
                 bookmarkService.getBookmarkMediaList(memberId, page, size)));
+    }
+
+    // 북마크한 숏폼 리스트 조회
+    @Override
+    public ResponseEntity<SuccessResponse<PageResponse<BookmarkShortFormResponse>>> getBookmarkShortFormList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal Long memberId) {
+
+        return ResponseEntity.ok(SuccessResponse.of(
+                bookmarkService.getBookmarkShortFormList(memberId, page, size)));
     }
 }
