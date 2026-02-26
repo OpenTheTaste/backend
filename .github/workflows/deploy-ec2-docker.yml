@@ -85,21 +85,13 @@ jobs:
           IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
           PROJECT_NAME: oplust
           DB_NAME: oplust
-          RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          API_USER_ENV: ${{ secrets.API_USER_ENV }}
-          API_ADMIN_ENV: ${{ secrets.API_ADMIN_ENV }}
-          TRANSCODER_ENV: ${{ secrets.TRANSCODER_ENV }}
+          SSM_RDS_ENDPOINT_PARAM: /oplust/common/rds-endpoint
+          SSM_DB_USERNAME_PARAM: /oplust/common/db-username
+          SSM_DB_PASSWORD_PARAM: /oplust/common/db-password
         run: |
           set -euo pipefail
 
           IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
-
-          if [ -z "${RDS_ENDPOINT}" ] || [ -z "${DB_USERNAME}" ] || [ -z "${DB_PASSWORD}" ]; then
-            echo "RDS_ENDPOINT, DB_USERNAME, DB_PASSWORD secrets are required" >&2
-            exit 1
-          fi
 
           deploy_service() {
             local target_tag="$1"
@@ -107,7 +99,7 @@ jobs:
             local container_name="$3"
             local env_file="$4"
             local port="$5"
-            local env_payload="$6"
+            local service_env_param="$6"
 
             local instance_id
             instance_id=$(aws ec2 describe-instances \
@@ -120,12 +112,6 @@ jobs:
               echo "No running instance found for tag: ${target_tag}" >&2
               exit 1
             fi
-
-            local full_env_payload
-            full_env_payload=$(printf 'SPRING_DATASOURCE_URL=jdbc:mysql://%s:3306/%s\nSPRING_DATASOURCE_USERNAME=%s\nSPRING_DATASOURCE_PASSWORD=%s\n%s' "${RDS_ENDPOINT}" "${DB_NAME}" "${DB_USERNAME}" "${DB_PASSWORD}" "${env_payload}")
-
-            local env_payload_b64
-            env_payload_b64="$(printf '%s' "$full_env_payload" | base64 -w0)"
 
             local run_cmd
             if [ -n "$port" ]; then
@@ -143,7 +129,14 @@ jobs:
               --parameters commands="[
                 \"set -e\",
                 \"sudo mkdir -p /etc/oplust\",
-                \"echo '${env_payload_b64}' | base64 -d | sudo tee ${env_file} >/dev/null\",
+                \"DB_HOST=\\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_RDS_ENDPOINT_PARAM' --query 'Parameter.Value' --output text)\",
+                \"DB_USER=\\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_USERNAME_PARAM' --query 'Parameter.Value' --output text)\",
+                \"DB_PASS=\\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_PASSWORD_PARAM' --with-decryption --query 'Parameter.Value' --output text)\",
+                \"SERVICE_ENV=\\$(aws ssm get-parameter --region $AWS_REGION --name '${service_env_param}' --with-decryption --query 'Parameter.Value' --output text)\",
+                \"echo \\\"SPRING_DATASOURCE_URL=jdbc:mysql://\\$DB_HOST:3306/${DB_NAME}\\\" | sudo tee ${env_file} >/dev/null\",
+                \"echo \\\"SPRING_DATASOURCE_USERNAME=\\$DB_USER\\\" | sudo tee -a ${env_file} >/dev/null\",
+                \"echo \\\"SPRING_DATASOURCE_PASSWORD=\\$DB_PASS\\\" | sudo tee -a ${env_file} >/dev/null\",
+                \"printf '%s\\n' \\\"\\$SERVICE_ENV\\\" | sudo tee -a ${env_file} >/dev/null\",
                 \"sudo chmod 600 ${env_file}\",
                 \"aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY\",
                 \"sudo docker pull ${image_uri}\",
@@ -189,6 +182,6 @@ jobs:
             exit 1
           }
 
-          deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "${API_USER_ENV}"
-          deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "${API_ADMIN_ENV}"
-          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "" "${TRANSCODER_ENV}"
+          deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/api-user/env"
+          deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/api-admin/env"
+          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "" "/oplust/transcoder/env"
