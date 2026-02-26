@@ -23,7 +23,7 @@ public class UploadHelper {
         try {
             return ExtensionEnum.resolveImageContentType(fileName);
         } catch (IllegalArgumentException ex) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "지원하지 않는 이미지 확장자입니다.");
+            throw new BusinessException(ErrorCode.UNSUPPORTED_IMAGE_EXTENSION);
         }
     }
 
@@ -31,7 +31,7 @@ public class UploadHelper {
         try {
             return ExtensionEnum.resolveVideoContentType(fileName);
         } catch (IllegalArgumentException ex) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "지원하지 않는 동영상 확장자입니다.");
+            throw new BusinessException(ErrorCode.UNSUPPORTED_VIDEO_EXTENSION);
         }
     }
 
@@ -51,7 +51,7 @@ public class UploadHelper {
             sanitizedBaseName = "file";
         }
         if (sanitizedExtension.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "파일 확장자가 올바르지 않습니다.");
+            throw new BusinessException(ErrorCode.INVALID_FILE_EXTENSION);
         }
         return sanitizedBaseName + "." + sanitizedExtension;
     }
