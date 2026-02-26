@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 import java.util.List;
@@ -30,13 +31,14 @@ public record ContentsUploadRequest(
         @NotNull
         PublicStatus publicStatus,
 
-        @Schema(type = "String", description = "카테고리명", example = "드라마")
-        @NotBlank
-        String categoryName,
+        @Schema(type = "Long", description = "카테고리 ID", example = "1")
+        @NotNull
+        @Positive
+        Long categoryId,
 
-        @Schema(type = "List<String>", description = "태그명 목록", example = "[\"가족\", \"코미디\"]")
+        @Schema(type = "List<Long>", description = "태그 ID 목록", example = "[1, 2]")
         @NotEmpty
-        List<@NotBlank String> tagNameList,
+        List<@NotNull @Positive Long> tagIdList,
 
         @Schema(type = "Integer", description = "영상 길이(초)", example = "3600")
         @PositiveOrZero

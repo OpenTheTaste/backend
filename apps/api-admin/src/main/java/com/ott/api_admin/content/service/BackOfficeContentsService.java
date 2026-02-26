@@ -149,7 +149,7 @@ public class BackOfficeContentsService {
                 s3PresignService.toObjectUrl(masterPlaylistObjectKey)
         );
 
-        mediaTagLinker.linkTags(media, request.categoryName(), request.tagNameList());
+        mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeContentsMapper.toContentsUploadResponse(
                 contentsId,

@@ -141,7 +141,7 @@ public class BackOfficeSeriesService {
                 s3PresignService.toObjectUrl(posterObjectKey),
                 s3PresignService.toObjectUrl(thumbnailObjectKey)
         );
-        mediaTagLinker.linkTags(media, request.categoryName(), request.tagNameList());
+        mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeSeriesMapper.toSeriesUploadResponse(
                 seriesId,
