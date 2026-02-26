@@ -21,7 +21,7 @@ import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@Validated
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/bookmarks")

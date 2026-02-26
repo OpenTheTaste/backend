@@ -10,6 +10,7 @@ import com.ott.domain.bookmark.domain.Bookmark;
 import com.ott.domain.bookmark.repository.BookmarkRepository;
 import com.ott.domain.common.MediaType;
 import com.ott.domain.common.Status;
+import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.member.domain.Member;
@@ -30,12 +31,16 @@ public class BookmarkService {
     private final BookmarkRepository bookmarkRepository;
     private final MemberRepository memberRepository;
     private final MediaRepository mediaRepository;
+    private final ContentsRepository contentsRepository;
+
 
     /**
      * 북마크 수정
-     * 해당 유저의 ACTIVE 북마크가 있을 경우 -> 상태 DELETE + 카운트 감소
-     * 해당 유저의 media의 북마크가 없을 경우 -> insert 상태 ACTIVE + 카운트 증가
-     * 해당 유저의 media의 북마크가 있는데 DELETE 일 경우 -> ACTIVE 변경 + 카운트 증가
+     * CONTENTS  → 시리즈 에피소드면 부모 Series.media로 처리
+     * CONTENTS  → 시리즈가 아닐 경우 자기 자신 그대로 처리
+     * SHORT_FORM → 자기 자신 그대로 처리
+     * SERIES    → 자기 자신 그대로 처리
+     * 해당 메소드로 bookmark 테이블에는 시리즈 / 단편 시나리오 / 숏폼만 저장됨
      */
     @Transactional
     public void editBookmark(Long memberId, Long mediaId) {
@@ -43,18 +48,21 @@ public class BookmarkService {
         Media findMedia = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUND));
 
+        // 실제 북마크 처리할 타겟 미디어 결정
+        Media targetMedia = resolveTargetMedia(findMedia);
+
         // 해당 유저가 해당 미디어에 대해서 북마크를 했는지 여부 체크
-        bookmarkRepository.findByMemberIdAndMediaId(memberId, mediaId)
+        bookmarkRepository.findByMemberIdAndMediaId(memberId, targetMedia.getId())
                 .ifPresentOrElse(
                         bookmark -> {
                             // 이미 해당 미디어에 대해서 북마크한 경우 -> DELETE 변경 이후 + 카운트 감소
                             if (bookmark.getStatus() == Status.ACTIVE) {
                                 bookmark.updateStatus(Status.DELETE);
-                                findMedia.decreaseBookmarkCount();
+                                targetMedia.decreaseBookmarkCount();
                             } else {
                                 // 해당 미디어에 대해 북마크를 안한 경우 -> ACTIVE 변경 이후 + 카운트 증가
                                 bookmark.updateStatus(Status.ACTIVE);
-                                findMedia.increaseBookmarkCount();
+                                targetMedia.increaseBookmarkCount();
                             }
                         },
                         () -> {
@@ -64,21 +72,22 @@ public class BookmarkService {
 
                             bookmarkRepository.save(Bookmark.builder()
                                     .member(findMember)
-                                    .media(findMedia)
+                                    .media(targetMedia)
                                     .build()); // 상태 default가 ACTIVE임
 
-                            findMedia.increaseBookmarkCount();
+                            targetMedia.increaseBookmarkCount();
                         }
                 );
     }
 
     // 북마크 리스트 조회
+    // 이미 DB상에는 시리즈 원본 / 시나리오 / 숏폼만 저장되어 있음
     @Transactional(readOnly = true)
-    public PageResponse<BookmarkMediaResponse> getBookmarkMediaList(Long memberId, int page, int size) {
+    public PageResponse<BookmarkMediaResponse> getBookmarkMediaList(Long memberId, Integer page, Integer size) {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        // 해당 유저의 ACTIVE인 북마크한 콘텐츠 OR 시리즈 타입 목록 페이징 조회 (fetch Join)
+        // ACTIVE && bookmark.media.mediaType 기준으로 CONTENTS, SERIES 필터링
         Page<Bookmark> bookmarkPage =
                 bookmarkRepository.findByMemberIdAndStatusAndMedia_MediaTypeInOrderByCreatedDateDesc(
                         memberId,
@@ -105,7 +114,7 @@ public class BookmarkService {
 
     // 숏폼 리스트 조회
     @Transactional(readOnly = true)
-    public PageResponse<BookmarkShortFormResponse> getBookmarkShortFormList(Long memberId, int page, int size) {
+    public PageResponse<BookmarkShortFormResponse> getBookmarkShortFormList(Long memberId, Integer page, Integer size) {
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -130,5 +139,24 @@ public class BookmarkService {
         );
 
         return PageResponse.toPageResponse(pageInfo, dataList);
+    }
+
+
+    /**
+     * mediaType에 따라 실제 북마크 처리할 타겟 Media 반환
+     * CONTENTS  → series 소속이면 series.media 반환
+     * CONTENTS  → series 소속이 아니면 자기 자신 media 반환
+     * SHORT_FORM → 자기 자신 media 반환
+     * SERIES    → 자기 자신 media 반환
+     */
+    private Media resolveTargetMedia(Media media) {
+        return switch (media.getMediaType()) {
+            case CONTENTS -> contentsRepository.findByMediaId(media.getId())
+                    .filter(contents -> contents.getSeries() != null)
+                    .map(contents -> contents.getSeries().getMedia())
+                    .orElse(media);
+
+            case SERIES, SHORT_FORM -> media;
+        };
     }
 }
