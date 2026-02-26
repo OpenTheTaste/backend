@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ott.api_user.comment.dto.CommentResponse;
+import com.ott.api_user.comment.service.CommentService;
 import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.common.dto.ContentListElement;
 import com.ott.api_user.content.dto.ContentDetailResponse;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/contents")
 public class ContentController implements ContentApi {
+
         private final ContentService contentService;
 
         @Override
@@ -34,17 +37,13 @@ public class ContentController implements ContentApi {
         // 플레이 리스트 API (/contents/{contentsId}/playlist?source={SOURCE})
         @Override
         public ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
-                        @PathVariable(value = "contentsId") Long contentId,
+                        @PathVariable(value = "contentsId") Long contentsId,
                         @RequestParam(value = "source", required = false) ContentSource source,
                         @RequestParam(value = "page") Integer pageParam,
                         @RequestParam(value = "size") Integer sizeParam,
                         @AuthenticationPrincipal Long memberId) {
                 return ResponseEntity.ok(
-                                SuccessResponse
-                                                .of(contentService.getContentPlayList(contentId, source, pageParam,
-                                                                sizeParam, memberId)));
+                                SuccessResponse.of(contentService.getContentPlayList(contentsId, source, pageParam,
+                                                sizeParam, memberId)));
         }
-
-        // 댓글 조회 API
-
 }

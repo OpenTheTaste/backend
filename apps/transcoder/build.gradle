@@ -2,8 +2,7 @@ apply plugin: 'org.springframework.boot'
 
 dependencies {
 	implementation project(':modules:domain')
-	implementation project(':modules:infra')
+	implementation project(':modules:infra-db')
 	implementation project(':modules:common-web')
-	implementation project(':modules:common-security')
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 }

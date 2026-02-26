@@ -1,5 +1,5 @@
-
 services:
+  # ============ DB ============
   mysql:
     image: mysql:8.0
     container_name: ott-mysql
@@ -10,7 +10,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_CHARACTER_SET_SERVER: utf8mb4
       MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
-
     ports:
       - "3307:3306"
     volumes:
@@ -21,7 +20,7 @@ services:
       timeout: 5s
       retries: 20
 
-  # ============ Flyway 마이그레이션 담당 (먼저 기동) ============
+  # ============ Flyway 마이그레이션 해당 (먼저 기동) ============
   api-user:
     build:
       context: .
@@ -34,6 +33,12 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       JWT_SECRET_BASE64: ${JWT_SECRET_BASE64}
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_S3_PUBLIC_BASE_URL: ${AWS_S3_PUBLIC_BASE_URL}
+      AWS_S3_PRESIGN_EXPIRE_SECONDS: ${AWS_S3_PRESIGN_EXPIRE_SECONDS}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
       FRONTEND_URL: ${FRONTEND_URL}
@@ -41,16 +46,15 @@ services:
       mysql:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 30s
 
-
-  # ============ Flyway 완류 이후 빌드하는 앱 ============
+  # ============ Flyway 완료 이후 빌드하는 앱 ============
   api-admin:
-    build: # 이미지를 다운받는게 아니라 해당 경로에서 빌드
+    build:
       context: .
       dockerfile: apps/api-admin/Dockerfile
     container_name: ott-api-admin
@@ -61,12 +65,35 @@ services:
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       JWT_SECRET_BASE64: ${JWT_SECRET_BASE64}
+      AWS_REGION: ${AWS_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      AWS_S3_PUBLIC_BASE_URL: ${AWS_S3_PUBLIC_BASE_URL}
+      AWS_S3_PRESIGN_EXPIRE_SECONDS: ${AWS_S3_PRESIGN_EXPIRE_SECONDS}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     depends_on:
       mysql:
         condition: service_healthy
       api-user:
         condition: service_healthy
 
+  # ============ Message Queue ============
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ott-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # ============ Transcoder 워커 ============
   transcoder:
     build:
       context: .
@@ -78,13 +105,26 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+
+      TRANSCODER_MESSAGING_PROVIDER: ${TRANSCODER_MESSAGING_PROVIDER}
+      TRANSCODER_FFMPEG_ENGINE: ${TRANSCODER_FFMPEG_ENGINE}
+      FFMPEG_PATH: ${FFMPEG_PATH}
+      TRANSCODER_TEMP_DIR: ${TRANSCODER_TEMP_DIR}
+      TRANSCODER_SEGMENT_DURATION: ${TRANSCODER_SEGMENT_DURATION}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      STORAGE_OUTPUT_DIR: ${STORAGE_OUTPUT_DIR}
     depends_on:
       mysql:
         condition: service_healthy
       api-user:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   mysql-data:
-
-  

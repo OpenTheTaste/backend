@@ -47,4 +47,6 @@ public interface ContentsRepository extends JpaRepository<Contents, Long>, Conte
         @Query("SELECT c FROM Contents c JOIN FETCH c.media m WHERE c.id = :contentsId AND c.status = :status AND m.publicStatus = :publicStatus")
         Optional<Contents> findByIdWithMedia(@Param("contentsId") Long contentsId, @Param("status") Status status,
                         @Param("publicStatus") PublicStatus publicStatus);
+
+        boolean findByIdAndStatus(Long id, Status status);
 }

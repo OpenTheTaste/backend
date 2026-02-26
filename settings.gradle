@@ -8,7 +8,8 @@ include(
 
         // Modules
         ":modules:domain",
-        ":modules:infra",
+        ":modules:infra-db",
+        ":modules:infra-s3",
         ":modules:common-web",
         ":modules:common-security"
 )

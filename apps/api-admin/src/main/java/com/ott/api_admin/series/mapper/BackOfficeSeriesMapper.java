@@ -3,6 +3,7 @@ package com.ott.api_admin.series.mapper;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
+import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.series.domain.Series;
@@ -50,6 +51,22 @@ public class BackOfficeSeriesMapper {
                 series.getActors(),
                 media.getPosterUrl(),
                 media.getThumbnailUrl()
+        );
+    }
+
+    public SeriesUploadResponse toSeriesUploadResponse(
+            Long seriesId,
+            String posterObjectKey,
+            String thumbnailObjectKey,
+            String posterUploadUrl,
+            String thumbnailUploadUrl
+    ) {
+        return new SeriesUploadResponse(
+                seriesId,
+                posterObjectKey,
+                thumbnailObjectKey,
+                posterUploadUrl,
+                thumbnailUploadUrl
         );
     }
 

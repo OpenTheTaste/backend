@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Series API", description = "시리즈 관련 API입니다.")
+@Tag(name = "Series", description = "시리즈 조회 API")
 public interface SeriesApi {
         @Operation(summary = "시리즈 상세 조회", description = "특정 시리즈의 상세 정보를 조회합니다.(시리즈 상세 페이지)")
         @ApiResponses(value = {
@@ -43,22 +43,6 @@ public interface SeriesApi {
 
                         @ApiResponse(responseCode = "400", description = "요청 파라미터 오류 (page/size 누락 또는 형식 오류)", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-                        }),
-
-                        @ApiResponse(responseCode = "401", description = "인증 실패 (토큰 누락/만료/유효하지 않음)", content = {
-                                        @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-                        }),
-
-                        @ApiResponse(responseCode = "403", description = "접근 권한 없음", content = {
-                                        @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-                        }),
-
-                        @ApiResponse(responseCode = "404", description = "시리즈를 찾을 수 없음", content = {
-                                        @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
-                        }),
-
-                        @ApiResponse(responseCode = "500", description = "서버 내부 오류", content = {
-                                        @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
                         })
         })
 
@@ -72,5 +56,6 @@ public interface SeriesApi {
                         @Parameter(description = "페이지 크기", example = "24") @RequestParam(defaultValue = "24") Integer size,
 
                         @Parameter(hidden = true) Long memberId);
+
         // 추후 이어보기 지점 추가
 }
