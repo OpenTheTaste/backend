@@ -25,9 +25,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Bookmark API", description = "북마크 관련 API입니다.")
 public interface BookmarkAPI {
-    @Operation(summary = "북마크 편집", description = "미디어에 대한 북마크를 수정합니다.")
+    @Operation(summary = "북마크 수정", description = "미디어에 대한 북마크를 수정합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "북마크 수정 성공"),
+            @ApiResponse(responseCode = "204", description = "북마크 수정 성공"),
             @ApiResponse(responseCode = "404", description = "미디어 또는 사용자를 찾을 수 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class))),
