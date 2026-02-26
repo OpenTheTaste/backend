@@ -218,7 +218,7 @@ public class BackOfficeShortFormService {
 
     private void validateExclusiveTarget(Long seriesId, Long contentsId) {
         if ((seriesId == null && contentsId == null) || (seriesId != null && contentsId != null)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "seriesId와 contentsId 중 하나만 제공해야 합니다.");
         }
     }
 
@@ -238,7 +238,7 @@ public class BackOfficeShortFormService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
         //시리즈에 속한 콘텐츠 제외
         if(contents.getSeries()!=null){
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다.");
         }
         return contents;
     }
@@ -250,7 +250,7 @@ public class BackOfficeShortFormService {
         if (contents != null) {
             return contents.getMedia().getId();
         }
-        throw new BusinessException(ErrorCode.INVALID_INPUT);
+        throw new BusinessException(ErrorCode.INVALID_INPUT, "숏폼 원본 미디어를 찾을 수 없습니다.");
     }
 
     private void inheritOriginMediaTags(Media targetMedia, Long originMediaId) {
