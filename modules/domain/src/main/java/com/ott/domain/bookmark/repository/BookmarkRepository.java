@@ -19,12 +19,12 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
     // 콘텐츠 북마크 목록 조회 (CONTENTS, SERIES)
     @EntityGraph(attributePaths = {"media"})
-    Page<Bookmark> findByMemberIdAndStatusAndMedia_MediaTypeIn(
+    Page<Bookmark> findByMemberIdAndStatusAndMedia_MediaTypeInOrderByCreatedDateDesc(
             Long memberId, Status status, List<MediaType> mediaTypes, Pageable pageable);
 
     // 숏폼 북마크 목록 (SHORT_FORM)
     @EntityGraph(attributePaths = {"media"})
-    Page<Bookmark> findByMemberIdAndStatusAndMedia_MediaType(
+    Page<Bookmark> findByMemberIdAndStatusAndMedia_MediaTypeOrderByCreatedDateDesc(
             Long memberId, Status status, MediaType mediaType, Pageable pageable);
 
 }

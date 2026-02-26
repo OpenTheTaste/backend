@@ -80,7 +80,7 @@ public class BookmarkService {
 
         // 해당 유저의 ACTIVE인 북마크한 콘텐츠 OR 시리즈 타입 목록 페이징 조회 (fetch Join)
         Page<Bookmark> bookmarkPage =
-                bookmarkRepository.findByMemberIdAndStatusAndMedia_MediaTypeIn(
+                bookmarkRepository.findByMemberIdAndStatusAndMedia_MediaTypeInOrderByCreatedDateDesc(
                         memberId,
                         Status.ACTIVE,
                         List.of(MediaType.CONTENTS, MediaType.SERIES),
@@ -110,7 +110,7 @@ public class BookmarkService {
         Pageable pageable = PageRequest.of(page, size);
 
         // SHORT_FORM 타입만 조회
-        Page<Bookmark> bookmarkPage = bookmarkRepository.findByMemberIdAndStatusAndMedia_MediaType(
+        Page<Bookmark> bookmarkPage = bookmarkRepository.findByMemberIdAndStatusAndMedia_MediaTypeOrderByCreatedDateDesc(
                 memberId,
                 Status.ACTIVE,
                 MediaType.SHORT_FORM,
