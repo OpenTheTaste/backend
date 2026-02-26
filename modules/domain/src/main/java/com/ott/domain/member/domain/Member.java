@@ -79,4 +79,9 @@ public class Member extends BaseEntity {
 
         this.role = targetRole;
     }
+
+    // 닉네임 변경
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
 }
