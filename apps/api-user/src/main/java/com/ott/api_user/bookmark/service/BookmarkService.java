@@ -25,7 +25,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class BookmarkService {
 
     private final BookmarkRepository bookmarkRepository;
@@ -38,6 +37,7 @@ public class BookmarkService {
      * 해당 유저의 media의 북마크가 없을 경우 -> insert 상태 ACTIVE + 카운트 증가
      * 해당 유저의 media의 북마크가 있는데 DELETE 일 경우 -> ACTIVE 변경 + 카운트 증가
      */
+    @Transactional
     public void editBookmark(Long memberId, Long mediaId) {
 
         Media findMedia = mediaRepository.findById(mediaId)
