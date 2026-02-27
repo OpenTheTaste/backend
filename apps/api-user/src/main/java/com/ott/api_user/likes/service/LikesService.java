@@ -10,7 +10,6 @@ import com.ott.domain.media.domain.Media;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.repository.MemberRepository;
-import com.ott.domain.short_form.repository.ShortFormRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +22,6 @@ public class LikesService {
     private final MemberRepository memberRepository;
     private final MediaRepository mediaRepository;
     private final ContentsRepository contentsRepository;
-    private final ShortFormRepository shortFormRepository;
 
 
     /**
@@ -37,7 +35,7 @@ public class LikesService {
     public void editLikes(Long memberId, Long mediaId) {
 
         Media findMedia = mediaRepository.findById(mediaId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUNT));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUND));
 
         // 실제 좋아요 처리할 미디어 결정
         Media targetMedia = resolveTargetMedia(findMedia);

@@ -6,6 +6,7 @@ import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
 import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
 import com.ott.api_admin.series.mapper.BackOfficeSeriesMapper;
+import com.ott.api_admin.upload.support.MediaTagLinker;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
@@ -28,9 +29,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -43,6 +44,7 @@ public class BackOfficeSeriesService {
     private final SeriesRepository seriesRepository;
     private final S3PresignService s3PresignService;
     private final UploadHelper uploadHelper;
+    private final MediaTagLinker mediaTagLinker;
 
     @Transactional(readOnly = true)
     public PageResponse<SeriesListResponse> getSeries(int page, int size, String searchWord) {
@@ -139,6 +141,7 @@ public class BackOfficeSeriesService {
                 s3PresignService.toObjectUrl(posterObjectKey),
                 s3PresignService.toObjectUrl(thumbnailObjectKey)
         );
+        mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeSeriesMapper.toSeriesUploadResponse(
                 seriesId,
@@ -149,4 +152,3 @@ public class BackOfficeSeriesService {
         );
     }
 }
-

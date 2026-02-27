@@ -70,6 +70,18 @@ public class Media extends BaseEntity {
         this.thumbnailUrl = thumbnailUrl;
     }
 
+    // 북마크 증가 메소드
+    public void increaseBookmarkCount() {
+        this.bookmarkCount++;
+    }
+
+    // 북마크 감소 메소드
+    public void decreaseBookmarkCount() {
+        if (this.bookmarkCount > 0) {
+            this.bookmarkCount--;
+        }
+    }
+
     public void increaseLikesCount() {
         this.likesCount++;
     }

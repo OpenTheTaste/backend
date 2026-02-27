@@ -23,7 +23,7 @@ public class UploadHelper {
         try {
             return ExtensionEnum.resolveImageContentType(fileName);
         } catch (IllegalArgumentException ex) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
+            throw new BusinessException(ErrorCode.UNSUPPORTED_IMAGE_EXTENSION);
         }
     }
 
@@ -31,7 +31,7 @@ public class UploadHelper {
         try {
             return ExtensionEnum.resolveVideoContentType(fileName);
         } catch (IllegalArgumentException ex) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
+            throw new BusinessException(ErrorCode.UNSUPPORTED_VIDEO_EXTENSION);
         }
     }
 
@@ -51,7 +51,7 @@ public class UploadHelper {
             sanitizedBaseName = "file";
         }
         if (sanitizedExtension.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
+            throw new BusinessException(ErrorCode.INVALID_FILE_EXTENSION);
         }
         return sanitizedBaseName + "." + sanitizedExtension;
     }
