@@ -1,6 +1,7 @@
 package com.ott.api_user.content.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,5 +51,5 @@ public interface ContentApi {
                         @Parameter(description = "진입 맥락 (TRENDING, HISTORY, TAG 등)", example = "TAG") @RequestParam(value = "source", required = false) ContentSource source,
                         @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(value = "page", defaultValue = "0") Integer pageParam,
                         @Parameter(description = "페이지 크기", example = "20") @RequestParam(value = "size", defaultValue = "20") Integer sizeParam,
-                        @Parameter(hidden = true) Long memberId);
+                        @Parameter(hidden = true) @AuthenticationPrincipal Long memberId);
 }

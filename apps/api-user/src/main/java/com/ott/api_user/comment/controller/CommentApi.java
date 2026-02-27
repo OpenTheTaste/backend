@@ -24,7 +24,7 @@ public interface CommentApi {
         @Operation(summary = "콘텐츠 댓글 목록 조회", description = "콘텐츠의 댓글 목록을 페이징하여 최신순으로 조회합니다.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공", content = {
-                                        @Content(mediaType = "application/json", schema = @Schema(implementation = ContentDetailResponse.class)) }),
+                                        @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class)) }),
                         @ApiResponse(responseCode = "404", description = "콘텐츠를 찾을 수 없음", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
         })

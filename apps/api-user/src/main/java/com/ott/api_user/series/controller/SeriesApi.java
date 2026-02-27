@@ -32,7 +32,7 @@ public interface SeriesApi {
         @GetMapping("/{seriesId}")
         ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
                         @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable("seriesId") Long seriesId,
-                        @Parameter(hidden = true) Long memberId // 토큰에서 추출 (스웨거에서는 숨김)
+                        @Parameter(hidden = true) @AuthenticationPrincipal Long memberId // 토큰에서 추출 (스웨거에서는 숨김)
         );
 
         @Operation(summary = "시리즈 콘텐츠 목록 조회", description = "특정 시리즈에 속한 콘텐츠(에피소드) 목록을 페이징하여 조회합니다.")
@@ -58,7 +58,7 @@ public interface SeriesApi {
 
                         @Parameter(description = "페이지 크기", example = "24") @RequestParam(defaultValue = "24") Integer size,
 
-                        @Parameter(hidden = true) Long memberId);
+                        @Parameter(hidden = true) @AuthenticationPrincipal Long memberId);
 
         // 추후 이어보기 지점 추가
 }
