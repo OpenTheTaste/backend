@@ -10,7 +10,5 @@ import java.util.Optional;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     @EntityGraph(attributePaths = {"member", "contents", "contents.media"})
-    Optional<Comment> findWithDetailsByIdAndStatus(Long id, Status status);
-
     Optional<Comment> findByIdAndStatus(Long id, Status status);
 }

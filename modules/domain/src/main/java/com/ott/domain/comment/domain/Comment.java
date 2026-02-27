@@ -43,4 +43,12 @@ public class Comment extends BaseEntity {
 
     @Column(name = "is_spoiler", nullable = false)
     private Boolean isSpoiler;
+
+
+    // 댓글 수정
+    public void update(String content, Boolean isSpoiler) {
+        this.content = content;
+        this.isSpoiler = isSpoiler;
+    }
 }
+
