@@ -23,7 +23,7 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
             WHERE mt.media.id = :mediaId
             AND t.status = :status
             AND mt.status = :status
-            """) // 태그 삭제 x, 태그 연결 `
+            """)
     List<String> findTagNamesByMediaId(@Param("mediaId") Long mediaId, @Param("status") Status status);
 
     // 모든 카테고리에 있는 태그 조회
