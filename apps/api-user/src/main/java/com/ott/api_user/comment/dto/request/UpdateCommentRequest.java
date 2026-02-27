@@ -16,6 +16,6 @@ public class UpdateCommentRequest {
     @Schema(type= "String", example = "아 ㅋㅋ 밤티하둥_수정123", description = "댓글")
     private String content;
 
-    @Schema(type= "Boolean", example = "true", description = "스포일러 포함 여부, 디폴트 false")
+    @Schema(type= "Boolean", example = "true", description = "스포일러 포함 여부")
     private Boolean isSpoiler;
 }

@@ -12,7 +12,7 @@ import lombok.*;
 public class CreateCommentRequest {
 
     @NotNull(message = "콘텐츠 ID는 필수 입니다.")
-    @Schema(type= "Long", example = "1", description = "댓글 ID")
+    @Schema(type= "Long", example = "1", description = "콘텐츠 ID")
     private Long contentId;
 
     @NotBlank(message = "댓글 내용은 필수 입니다.")

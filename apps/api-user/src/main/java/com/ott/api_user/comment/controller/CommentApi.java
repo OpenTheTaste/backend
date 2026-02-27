@@ -99,7 +99,7 @@ public interface CommentApi {
     ResponseEntity<SuccessResponse<PageResponse<MyCommentResponse>>> getMyComments(
             @PositiveOrZero @Parameter(description = "페이지 번호 (0부터 시작)", schema = @Schema(type = "integer", defaultValue = "0")) @RequestParam(defaultValue = "0") Integer page,
             @PositiveOrZero @Parameter(description = "페이지 크기", schema = @Schema(type = "integer", defaultValue = "20")) @RequestParam(defaultValue = "20") Integer size,
-            @Parameter(hidden = true) Long memberId
+            @AuthenticationPrincipal @Parameter(hidden = true) Long memberId
     );
 
 }

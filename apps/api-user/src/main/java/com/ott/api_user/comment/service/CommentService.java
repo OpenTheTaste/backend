@@ -50,7 +50,7 @@ public class CommentService {
                         .content(request.getContent())
                         .isSpoiler(request.getIsSpoiler())
                         .build()
-        );;
+        );
 
         return CommentResponse.from(saved);
 
@@ -78,7 +78,7 @@ public class CommentService {
         Comment comment = commentRepository.findByIdAndStatus(commentId, Status.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
 
-        // 본인만 수정 가능
+        // 본인만 삭제 가능 -> softDelete
         if (!comment.getMember().getId().equals(memberId)) {
             throw new BusinessException(ErrorCode.COMMENT_FORBIDDEN);
         }
