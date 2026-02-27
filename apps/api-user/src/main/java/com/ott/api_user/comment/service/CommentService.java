@@ -3,6 +3,7 @@ package com.ott.api_user.comment.service;
 import com.ott.api_user.comment.dto.request.CreateCommentRequest;
 import com.ott.api_user.comment.dto.request.UpdateCommentRequest;
 import com.ott.api_user.comment.dto.response.CommentResponse;
+import com.ott.api_user.comment.dto.response.MyCommentResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
@@ -85,6 +86,28 @@ public class CommentService {
         comment.updateStatus(Status.DELETE);
     }
 
+    // 댓글 조회 - 본인 댓글만 조회 가능(최신순)
+    public PageResponse<MyCommentResponse> getMyComments(
+            Long memberId,
+            Integer page,
+            Integer size) {
+
+        PageRequest pageable = PageRequest.of(page, size);
+
+        Page<Comment> commentPage = commentRepository.findMyComments(memberId, Status.ACTIVE, pageable);
+
+        List<MyCommentResponse> responseList = commentPage.getContent().stream()
+                .map(MyCommentResponse::from)
+                .toList();
+
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                commentPage.getNumber(),
+                commentPage.getTotalPages(),
+                commentPage.getSize()
+        );
+
+        return PageResponse.toPageResponse(pageInfo, responseList);
+    }
 
 
 }
