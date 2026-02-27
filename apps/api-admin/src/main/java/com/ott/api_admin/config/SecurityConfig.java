@@ -37,8 +37,8 @@ public class SecurityConfig {
                         .accessDeniedHandler(jwtAccessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/back-office/actuator/health/**",
-                                "/back-office/actuator/info",
+                                "/actuator/health/**",
+                                "/actuator/info",
                                 "/back-office/login",
                                 "/back-office/reissue",
                                 "/back-office/swagger-ui/**",
