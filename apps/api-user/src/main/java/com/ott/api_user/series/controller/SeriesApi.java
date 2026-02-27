@@ -41,7 +41,7 @@ public interface SeriesApi {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))
                         }),
 
-                        @ApiResponse(responseCode = "400", description = "요청 파라미터 오류 (page/size 누락 또는 형식 오류)", content = {
+                        @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
                         })
         })
