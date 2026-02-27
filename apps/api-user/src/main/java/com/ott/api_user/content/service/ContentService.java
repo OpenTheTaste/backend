@@ -88,8 +88,7 @@ public class ContentService {
                         case RECOMMEND -> getRecommendPlaylist(memberId, pageable, mediaId); // 3. OO 님이 좋아하실만한 리스트
                         case TAG -> getTagPlaylist(mediaId, pageable); // 4. 같은 태그 가진 영상
                         case BOOKMARK -> getBookmarkPlaylist(memberId, pageable, mediaId); // 5. 내 북마크 목록
-                        case SEARCH -> getRecommendPlaylist(memberId, pageable, mediaId); // 6. 검색 진입은 추천 리스트로 대체
-                        default -> getTrendingPlaylist(pageable, mediaId); // 기본값은 인기 차트
+                        default -> getRecommendPlaylist(memberId, pageable, mediaId); // 기본값은 OO님이 좋아하실만한 콘텐츠
                 };
 
                 List<ContentListElement> contentList = playListPage.getContent().stream()
