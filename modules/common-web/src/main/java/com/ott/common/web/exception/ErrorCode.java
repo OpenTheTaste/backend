@@ -49,11 +49,11 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "B005", "카테고리를 찾을 수 없습니다."),
     TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B006", "태그를 찾을 수 없습니다."),
     MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B007", "미디어를 찾을 수 없습니다."),
-    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B008", "북마크를 찾을 수 없습니다")
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B008", "북마크를 찾을 수 없습니다"),
 
     UNSUPPORTED_IMAGE_EXTENSION(HttpStatus.BAD_REQUEST, "B009", "지원하지 않는 이미지 확장자입니다."),
-    UNSUPPORTED_VIDEO_EXTENSION(HttpStatus.BAD_REQUEST, "B0010", "지원하지 않는 동영상 확장자입니다."),
-    INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "B0011", "파일 확장자가 올바르지 않습니다."),
+    UNSUPPORTED_VIDEO_EXTENSION(HttpStatus.BAD_REQUEST, "B010", "지원하지 않는 동영상 확장자입니다."),
+    INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "B011", "파일 확장자가 올바르지 않습니다."),
     INVALID_TAG_CATEGORY(HttpStatus.NOT_FOUND, "B012", "유효한 카테고리를 찾을 수 없습니다."),
     INVALID_TAG_SELECTION(HttpStatus.BAD_REQUEST, "B013", "카테고리에 맞지 않거나 존재하지 않는 태그가 포함되어 있습니다."),
     DUPLICATE_TAG_IN_LIST(HttpStatus.BAD_REQUEST, "B014", "태그 목록에 중복된 값이 있습니다."),
