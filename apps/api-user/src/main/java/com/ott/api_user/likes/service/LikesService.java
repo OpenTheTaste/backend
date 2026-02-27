@@ -26,7 +26,7 @@ public class LikesService {
     /**
      * 좋아요 버튼
      * CONTENTS → 시리즈 에피소드면 부모 Series.media로 처리
-     * CONTENTS → 시리즈가 아닐경우 자기 자신 그래도 처리
+     * CONTENTS → 시리즈가 아닐경우 자기 자신 그대로 처리
      * SHORT_FORM → 그대로 처리
      * SERIES → 그대로 처리
      */

@@ -30,7 +30,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 List<Media> mediaList = queryFactory
                                 .selectFrom(media)
                                 .where(
-                                                media.mediaType.eq(mediaType),
+                                                mediaTypeEq(mediaType),
                                                 titleContains(searchWord))
                                 .orderBy(media.createdDate.desc())
                                 .offset(pageable.getOffset())
@@ -41,7 +41,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .select(media.count())
                                 .from(media)
                                 .where(
-                                                media.mediaType.eq(mediaType),
+                                                mediaTypeEq(mediaType),
                                                 titleContains(searchWord));
 
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);

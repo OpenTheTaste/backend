@@ -40,6 +40,9 @@ public interface SeriesApi {
                         @ApiResponse(responseCode = "200", description = "시리즈 콘텐츠 목록 조회 성공", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))
                         }),
+                        @ApiResponse(responseCode = "404", description = "시리즈를 찾을 수 없음", content = {
+                                        @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+                        }),
 
                         @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
