@@ -30,16 +30,25 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final ContentsRepository contentsRepository;
 
-    public PageResponse<CommentResponse> getContentsCommentList(Long contentsId, int page, int size) {
+    public PageResponse<CommentResponse> getContentsCommentList(Long contentsId, int page, int size,
+            boolean includeSpoiler) {
 
-        if (!contentsRepository.findByIdAndStatus(contentsId, Status.ACTIVE)) {
+        if (!contentsRepository.existsByIdAndStatus(contentsId, Status.ACTIVE)) {
             throw new BusinessException(ErrorCode.CONTENT_NOT_FOUND);
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
-        Page<Comment> commentPage = commentRepository.findByContentsIdAndStatusWithMember(contentsId, Status.ACTIVE,
-                pageable);
+        Page<Comment> commentPage;
+
+        if (includeSpoiler) {
+            // 토글 ON: 스포일러 포함 전체 조회
+            commentPage = commentRepository.findByContentsIdAndStatusWithMember(contentsId, Status.ACTIVE, pageable);
+        } else {
+            // 토글 OFF (기본): 스포일러 없는 댓글만 조회
+            commentPage = commentRepository.findByContentsIdAndStatusAndIsSpoilerFalseWithMember(contentsId,
+                    Status.ACTIVE, pageable);
+        }
 
         List<CommentResponse> responseList = commentPage.getContent().stream()
                 .map(CommentResponse::from)

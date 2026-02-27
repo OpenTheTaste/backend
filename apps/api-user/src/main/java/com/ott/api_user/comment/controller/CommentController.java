@@ -24,10 +24,11 @@ public class CommentController implements CommentApi {
             @PathVariable(value = "contentsId") Long contentsId,
             @RequestParam(value = "page", defaultValue = "0") Integer pageParam,
             @RequestParam(value = "size", defaultValue = "20") Integer sizeParam,
+            @RequestParam(value = "includeSpoiler", defaultValue = "false") boolean includeSpoiler,
             @AuthenticationPrincipal Long memberId) {
         return ResponseEntity.ok(
                 SuccessResponse.of(commentService.getContentsCommentList(contentsId, pageParam,
-                        sizeParam))); //
+                        sizeParam, includeSpoiler))); //
 
     }
 }

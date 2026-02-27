@@ -11,9 +11,16 @@ import com.ott.domain.common.Status;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // 작성자, 댓글
+    // 1. 스포 포함 토글 ON -> 전체 댓글 조회
     @Query("SELECT c FROM Comment c JOIN FETCH c.member WHERE c.contents.id = :contentsId AND c.status = :status")
     Page<Comment> findByContentsIdAndStatusWithMember(
+            @Param("contentsId") Long contentsId,
+            @Param("status") Status status,
+            Pageable pageable);
+
+    // 2. 스포 포함 토글 OFF -> 스포 없는 댓글만 조회
+    @Query("SELECT c FROM Comment c JOIN FETCH c.member WHERE c.contents.id = :contentsId AND c.status = :status AND c.isSpoiler = false")
+    Page<Comment> findByContentsIdAndStatusAndIsSpoilerFalseWithMember(
             @Param("contentsId") Long contentsId,
             @Param("status") Status status,
             Pageable pageable);

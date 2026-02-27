@@ -23,6 +23,7 @@ import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.domain.Role;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
+import com.ott.infra.s3.service.S3PresignService;
 import com.ott.domain.short_form.domain.ShortForm;
 import com.ott.domain.short_form.repository.ShortFormRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

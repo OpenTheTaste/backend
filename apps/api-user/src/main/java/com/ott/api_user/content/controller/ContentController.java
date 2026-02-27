@@ -34,7 +34,7 @@ public class ContentController implements ContentApi {
                                 SuccessResponse.of(contentService.getContentDetail(contentsId, memberId)));
         }
 
-        // 플레이 리스트 API (/contents/{contentsId}/playlist?source={SOURCE})
+        // 재생목록(플레이리스트) 리스트 API (/contents/{contentsId}/playlist?source={SOURCE})
         @Override
         public ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
                         @PathVariable(value = "contentsId") Long contentsId,
