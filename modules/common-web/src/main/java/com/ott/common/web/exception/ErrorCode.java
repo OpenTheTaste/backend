@@ -49,9 +49,8 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "B005", "카테고리를 찾을 수 없습니다."),
     TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B006", "태그를 찾을 수 없습니다."),
     MEDIA_NOT_FOUNT(HttpStatus.NOT_FOUND, "B007", "미디어를 찾을 수 없습니다."),
-    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B008", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요");
-
-    ;
+    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B008", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요"),
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B009", "북마크를 찾을 수 없습니다");
 
     private final HttpStatus status;
     private final String code;

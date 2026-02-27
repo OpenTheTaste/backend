@@ -18,9 +18,6 @@ public class ContentDetailResponse {
     @Schema(description = "콘텐츠 ID", example = "1")
     private Long id;
 
-    @Schema(description = "미디어 타입 (SERIES, CONTENTS)", example = "SERIES")
-    private MediaType mediaType;
-
     @Schema(description = "콘텐츠 제목", example = "비밀의 숲")
     private String title;
 
@@ -51,13 +48,12 @@ public class ContentDetailResponse {
     @Schema(description = "기존 이어보기 지점(없으면 0)", example = "150")
     private Integer positionSec;
 
-    public static ContentDetailResponse of(MediaType mediaType, Contents contents, List<String> tags,
+    public static ContentDetailResponse from(Contents contents, List<String> tags,
             List<String> categories, Boolean isBookmarked, Boolean isLiked, String masterPlaylistUrl,
             Integer positionSec) {
 
         return ContentDetailResponse.builder()
                 .id(contents.getId())
-                .mediaType(mediaType)
                 .title(contents.getMedia().getTitle())
                 .description(contents.getMedia().getDescription())
                 .actors(contents.getActors())

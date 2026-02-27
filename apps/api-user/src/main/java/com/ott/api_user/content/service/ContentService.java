@@ -56,11 +56,9 @@ public class ContentService {
 
                 String masterPlaylistUrl = contents.getMasterPlaylistUrl();
 
-                MediaType mediaType = MediaType.CONTENTS; // 재생 화면이므로 무조건 CONTENTS로 고정 (시리즈 아님)
-
                 Integer positionSec = 0;
 
-                return ContentDetailResponse.of(mediaType, contents, tags, categories, isBookmarked, isLiked,
+                return ContentDetailResponse.from(contents, tags, categories, isBookmarked, isLiked,
                                 masterPlaylistUrl,
                                 positionSec);
 
