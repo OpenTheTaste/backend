@@ -1,10 +1,10 @@
 package com.ott.api_admin.shortform.service;
 
+import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
 import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
-import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
 import com.ott.api_admin.shortform.mapper.BackOfficeShortFormMapper;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.exception.BusinessException;
@@ -201,6 +201,9 @@ public class BackOfficeShortFormService {
                                 s3PresignService.toObjectUrl(originObjectKey),
                                 s3PresignService.toObjectUrl(masterPlaylistObjectKey));
 
+                Long originMediaId = resolveOriginMediaId(series, contents);
+                inheritOriginMediaTags(media, originMediaId);
+
                 return backOfficeShortFormMapper.toShortFormUploadResponse(
                                 shortFormId,
                                 posterObjectKey,
@@ -217,7 +220,7 @@ public class BackOfficeShortFormService {
 
         private void validateExclusiveTarget(Long seriesId, Long contentsId) {
                 if ((seriesId == null && contentsId == null) || (seriesId != null && contentsId != null)) {
-                        throw new BusinessException(ErrorCode.INVALID_INPUT);
+                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
                 }
         }
 
@@ -233,7 +236,37 @@ public class BackOfficeShortFormService {
                 if (contentsId == null) {
                         return null;
                 }
-                return contentsRepository.findById(contentsId)
+                Contents contents = contentsRepository.findById(contentsId)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                // 시리즈에 속한 콘텐츠는 숏폼 원본으로 허용하지 않습니다.
+                if (contents.getSeries() != null) {
+                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_CONTENTS_TARGET);
+                }
+                return contents;
+        }
+
+        private Long resolveOriginMediaId(Series series, Contents contents) {
+                if (series != null) {
+                        return series.getMedia().getId();
+                }
+                if (contents != null) {
+                        return contents.getMedia().getId();
+                }
+                throw new BusinessException(ErrorCode.SHORTFORM_ORIGIN_MEDIA_NOT_FOUND);
+        }
+
+        private void inheritOriginMediaTags(Media targetMedia, Long originMediaId) {
+                List<MediaTag> originMediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(originMediaId);
+                if (originMediaTagList.isEmpty()) {
+                        return;
+                }
+
+                List<MediaTag> targetMediaTagList = originMediaTagList.stream()
+                                .map(originMediaTag -> MediaTag.builder()
+                                                .media(targetMedia)
+                                                .tag(originMediaTag.getTag())
+                                                .build())
+                                .toList();
+                mediaTagRepository.saveAll(targetMediaTagList);
         }
 }

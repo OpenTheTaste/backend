@@ -45,7 +45,7 @@ public class BookmarkService {
         public void editBookmark(Long memberId, Long mediaId) {
 
                 Media findMedia = mediaRepository.findById(mediaId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUNT));
+                                .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUND));
 
                 // 실제 북마크 처리할 타겟 미디어 결정
                 Media targetMedia = resolveTargetMedia(findMedia);

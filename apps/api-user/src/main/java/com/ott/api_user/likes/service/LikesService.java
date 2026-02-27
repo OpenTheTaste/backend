@@ -34,7 +34,7 @@ public class LikesService {
     public void editLikes(Long memberId, Long mediaId) {
 
         Media findMedia = mediaRepository.findById(mediaId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUNT));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUND));
 
         // 실제 좋아요 처리할 미디어 결정
         Media targetMedia = resolveTargetMedia(findMedia);

@@ -11,6 +11,8 @@ import com.ott.domain.common.Status;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
+  Optional<Category> findByNameAndStatus(String name, Status status);
+
   @Query("""
       SELECT DISTINCT c.name
       FROM MediaTag mt

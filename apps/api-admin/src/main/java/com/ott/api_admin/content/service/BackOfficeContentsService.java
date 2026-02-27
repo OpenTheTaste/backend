@@ -5,6 +5,7 @@ import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
 import com.ott.api_admin.content.mapper.BackOfficeContentsMapper;
+import com.ott.api_admin.upload.support.MediaTagLinker;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
@@ -43,13 +44,19 @@ public class BackOfficeContentsService {
     private final SeriesRepository seriesRepository;
     private final S3PresignService s3PresignService;
     private final UploadHelper uploadHelper;
+    private final MediaTagLinker mediaTagLinker;
 
     @Transactional(readOnly = true)
     public PageResponse<ContentsListResponse> getContents(int page, int size, String searchWord, PublicStatus publicStatus) {
         Pageable pageable = PageRequest.of(page, size);
 
         // 미디어 중 콘텐츠 대상 페이징
-        Page<Media> mediaPage = mediaRepository.findMediaListByMediaTypeAndSearchWordAndPublicStatus(pageable, MediaType.CONTENTS, searchWord, publicStatus);
+        Page<Media> mediaPage = mediaRepository.findMediaListByMediaTypeAndSearchWordAndPublicStatus(
+                pageable,
+                MediaType.CONTENTS,
+                searchWord,
+                publicStatus
+        );
 
         List<ContentsListResponse> responseList = mediaPage.getContent().stream()
                 .map(backOfficeContentsMapper::toContentsListResponse)
@@ -65,7 +72,6 @@ public class BackOfficeContentsService {
 
     @Transactional(readOnly = true)
     public ContentsDetailResponse getContentsDetail(Long mediaId) {
-        // 1. Contents + Media + Uploader + Series + Series.media 한 번에 조회
         Contents contents = contentsRepository.findWithMediaAndUploaderByMediaId(mediaId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
 
@@ -142,6 +148,8 @@ public class BackOfficeContentsService {
                 s3PresignService.toObjectUrl(originObjectKey),
                 s3PresignService.toObjectUrl(masterPlaylistObjectKey)
         );
+
+        mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeContentsMapper.toContentsUploadResponse(
                 contentsId,
