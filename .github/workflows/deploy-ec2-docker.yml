@@ -129,8 +129,8 @@ jobs:
               --parameters commands="[
                 \"set -e\",
                 \"sudo mkdir -p /etc/oplust\",
-                \"DB_HOST=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_RDS_ENDPOINT_PARAM' --query 'Parameter.Value' --output text)\",
-                \"DB_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_USERNAME_PARAM' --query 'Parameter.Value' --output text)\",
+                \"DB_HOST=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_RDS_ENDPOINT_PARAM' --with-decryption --query 'Parameter.Value' --output text)\",
+                \"DB_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_USERNAME_PARAM' --with-decryption --query 'Parameter.Value' --output text)\",
                 \"DB_PASS=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_PASSWORD_PARAM' --with-decryption --query 'Parameter.Value' --output text)\",
                 \"SERVICE_ENV=\$(aws ssm get-parameter --region $AWS_REGION --name '${service_env_param}' --with-decryption --query 'Parameter.Value' --output text)\",
                 \"echo \\\"SPRING_DATASOURCE_URL=jdbc:mysql://\$DB_HOST:3306/${DB_NAME}\\\" | sudo tee ${env_file} >/dev/null\",
