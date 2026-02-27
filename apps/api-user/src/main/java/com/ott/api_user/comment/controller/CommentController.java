@@ -7,9 +7,8 @@ import com.ott.api_user.comment.dto.response.MyCommentResponse;
 import com.ott.api_user.comment.service.CommentService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +27,8 @@ public class CommentController implements CommentApi {
            @RequestBody CreateCommentRequest request,
            @AuthenticationPrincipal Long memberId) {
 
-        return ResponseEntity.ok(SuccessResponse.of(commentService.createComment(memberId, request)));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(SuccessResponse.of(commentService.createComment(memberId, request)));
     }
 
     // 댓글 수정
