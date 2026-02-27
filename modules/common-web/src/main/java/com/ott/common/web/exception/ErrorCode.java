@@ -48,7 +48,8 @@ public enum ErrorCode {
     INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B004", "허용되지 않는 역할 변경입니다"),
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "B005", "카테고리를 찾을 수 없습니다."),
     TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B006", "태그를 찾을 수 없습니다."),
-    MEDIA_NOT_FOUNT(HttpStatus.NOT_FOUND, "B007", "미디어를 찾을 수 없습니다.")
+    MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B007", "미디어를 찾을 수 없습니다."),
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B009", "북마크를 찾을 수 없습니다")
 
 
 
