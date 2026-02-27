@@ -33,9 +33,15 @@ import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 
+import java.util.Optional;
+
 public interface ContentsRepository extends JpaRepository<Contents, Long>, ContentsRepositoryCustom {
 
     @EntityGraph(attributePaths = { "media" })
     Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
             PublicStatus publicStatus, Pageable pageable);
+
+    // 좋아요 처리 시 series 소속 여부 확인용
+    @EntityGraph(attributePaths = {"series", "series.media"})
+    Optional<Contents> findByMediaId(Long mediaId);
 }
