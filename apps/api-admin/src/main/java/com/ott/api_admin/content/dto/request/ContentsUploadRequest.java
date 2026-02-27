@@ -3,8 +3,12 @@ package com.ott.api_admin.content.dto.request;
 import com.ott.domain.common.PublicStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+
+import java.util.List;
 
 @Schema(type = "Object", description = "콘텐츠 업로드 요청")
 public record ContentsUploadRequest(
@@ -26,6 +30,15 @@ public record ContentsUploadRequest(
         @Schema(type = "String", description = "공개 상태", example = "PUBLIC")
         @NotNull
         PublicStatus publicStatus,
+
+        @Schema(type = "Long", description = "카테고리 ID", example = "1")
+        @NotNull
+        @Positive
+        Long categoryId,
+
+        @Schema(type = "List<Long>", description = "태그 ID 목록", example = "[1, 2]")
+        @NotEmpty
+        List<@NotNull @Positive Long> tagIdList,
 
         @Schema(type = "Integer", description = "영상 길이(초)", example = "3600")
         @PositiveOrZero
