@@ -4,6 +4,7 @@ import com.ott.api_admin.auth.dto.request.AdminLoginRequest;
 import com.ott.api_admin.auth.dto.response.AdminLoginResponse;
 import com.ott.api_admin.auth.dto.response.AdminTokenResponse;
 import com.ott.api_admin.auth.service.AdminAuthService;
+import com.ott.api_admin.common.CookieUtil;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.SuccessResponse;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminAuthController implements AdminAuthApi {
 
     private final AdminAuthService adminAuthService;
+    private final CookieUtil cookie;
 
     @Value("${jwt.access-token-expiry}")
     private int accessTokenExpiry;
@@ -43,8 +45,8 @@ public class AdminAuthController implements AdminAuthApi {
         AdminLoginResponse loginResponse = adminAuthService.login(request);
 
         // 둘 다 쿠키로
-        addCookie(response, "accessToken", loginResponse.getAccessToken(), accessTokenExpiry);
-        addCookie(response, "refreshToken", loginResponse.getRefreshToken(), refreshTokenExpiry);
+        cookie.addCookie(response, "accessToken", loginResponse.getAccessToken(), accessTokenExpiry);
+        cookie.addCookie(response, "refreshToken", loginResponse.getRefreshToken(), refreshTokenExpiry);
 
         // Body에는 memberId, role만 (토큰은 @JsonIgnore)
         return SuccessResponse.of(loginResponse).asHttp(HttpStatus.OK);
@@ -63,8 +65,8 @@ public class AdminAuthController implements AdminAuthApi {
 
         AdminTokenResponse tokenResponse = adminAuthService.reissue(refreshToken);
 
-        addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
-        addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
+        cookie.addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
+        cookie.addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
 
         return ResponseEntity.noContent().build();
     }
@@ -78,8 +80,8 @@ public class AdminAuthController implements AdminAuthApi {
         Long memberId = (Long) authentication.getPrincipal();
         adminAuthService.logout(memberId);
 
-        deleteCookie(response, "accessToken");
-        deleteCookie(response, "refreshToken");
+        cookie.deleteCookie(response, "accessToken");
+        cookie.deleteCookie(response, "refreshToken");
 
         return ResponseEntity.noContent().build();
     }
@@ -92,23 +94,5 @@ public class AdminAuthController implements AdminAuthApi {
             }
         }
         return null;
-    }
-
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // 배포 시 true
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
-    }
-
-    private void deleteCookie(HttpServletResponse response, String name) {
-        Cookie cookie = new Cookie(name, null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // 배포 시 true
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
     }
 }
