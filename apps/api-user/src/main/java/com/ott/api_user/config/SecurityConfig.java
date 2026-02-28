@@ -44,13 +44,11 @@ public class SecurityConfig {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable) // csrf 비활성화, Authorization 헤더로 보냄
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .cors(AbstractHttpConfigurer::disable)
-
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT 기반 인증
+                .formLogin(AbstractHttpConfigurer::disable) // 카카오 OAtuh2 + JWT기반이라 기본 로그인 폼 안씀
+                .httpBasic(AbstractHttpConfigurer::disable) // 카카오 OAtuh2 + JWT기반이라 Basic 인증 안씀
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(sm ->
+                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT 기반 인증이라 세션 유지 x
 
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint) // 401
@@ -61,7 +59,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/actuator/health/**",
                                 "/actuator/info",
-                                "/auth/**",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/auth/reissue",
@@ -69,10 +66,12 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
-                                ).permitAll()
+                        ).permitAll()
 
-                        // 나머지 url에 대해서는 인증 필요
-                        .anyRequest().authenticated()
+                        /*
+                        역할이 MEMBER인 유저만 그 외 EndPoint 접근 가능하도록 설정
+                         */
+                        .anyRequest().hasRole("MEMBER")
                 )
 
                 // OAuth2 카카오 로그인
@@ -83,7 +82,9 @@ public class SecurityConfig {
                         .failureHandler(oAuth2FailureHandler)
                 )
 
-                // UsernamePasswordAuthenticationFilter 보다 먼저 실행
+                // Spring Security보다 먼저 실행
+                // 쿠키에서 AccessToken을 꺼내와서 검증 이후 SecurityContext에 인증 정보 박제
+                // 해당 과정에서 memberId, ROLE을 context에 넣어줌
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -93,18 +94,19 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // allowedOrigins -> 허용할 Origin 내역
+        // allowedOrigins -> 허용할 도메인 내역
         // allowCredentials -> 브라우저가 요청에 인증정보를 포함하는 것을 허용하겠냐
         // credentials가 true일 경우 Allow-origin의 경우 구체적인 경로를 명시해야됨
 
-        config.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
-//        config.setAllowedOrigins(List.of(frontedUrl));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "https://www.openthetaste.cloud"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+        config.setAllowedHeaders(List.of("*")); // 모든 헤더 다 받는데 우리 서비스에서는 안씀
+        config.setAllowCredentials(true); // 쿠키 요청을 포함
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
+        source.registerCorsConfiguration("/**", config); // 위 설정을 모든 경로에 적용
         return source;
     }
 
