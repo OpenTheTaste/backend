@@ -33,7 +33,7 @@ public class CommentController implements CommentApi {
 
     // 댓글 수정
     @Override
-    @PutMapping("/{commentId}")
+    @PatchMapping("/{commentId}")
     public ResponseEntity<SuccessResponse<CommentResponse>> updateComment(
             @PathVariable Long commentId,
             @RequestBody UpdateCommentRequest request,
@@ -45,13 +45,13 @@ public class CommentController implements CommentApi {
     // 댓글 삭제
     @Override
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<SuccessResponse<Void>> deleteComment(
+    public ResponseEntity<Void> deleteComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal Long memberId) {
 
         commentService.deleteComment(memberId, commentId);
 
-        return ResponseEntity.ok(SuccessResponse.of(null));
+        return ResponseEntity.noContent().build();
     }
 
     // 댓글 조회 - 본인 댓글만 조회 가능, 최신순 정렬

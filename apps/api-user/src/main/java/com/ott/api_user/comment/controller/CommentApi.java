@@ -62,7 +62,7 @@ public interface CommentApi {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PutMapping("/{commentId}")
+    @PatchMapping("/{commentId}")
     ResponseEntity<SuccessResponse<CommentResponse>> updateComment(
             @Positive @Parameter(description = "댓글 ID") @PathVariable Long commentId,
             @Valid @RequestBody UpdateCommentRequest request,
@@ -71,7 +71,7 @@ public interface CommentApi {
 
     @Operation(summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
+            @ApiResponse(responseCode = "204", description = "댓글 삭제 성공"),
             @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class))),
@@ -83,22 +83,25 @@ public interface CommentApi {
                             schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{commentId}")
-    ResponseEntity<SuccessResponse<Void>> deleteComment(
+    ResponseEntity<Void> deleteComment(
             @Positive @Parameter(description = "댓글 ID") @PathVariable Long commentId,
             @AuthenticationPrincipal @Parameter(hidden = true) Long memberId
     );
 
     @Operation(summary = "내가 작성한 댓글 목록 조회", description = "내가 작성한 댓글 목록을 최신순으로 조회합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = MyCommentResponse.class))),
+
             @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/me")
     ResponseEntity<SuccessResponse<PageResponse<MyCommentResponse>>> getMyComments(
-            @PositiveOrZero @Parameter(description = "페이지 번호 (0부터 시작)", schema = @Schema(type = "integer", defaultValue = "0")) @RequestParam(defaultValue = "0") Integer page,
-            @PositiveOrZero @Parameter(description = "페이지 크기", schema = @Schema(type = "integer", defaultValue = "20")) @RequestParam(defaultValue = "20") Integer size,
+            @PositiveOrZero @Parameter(description = "페이지 번호 (0부터 시작)", schema = @Schema(type = "Integer", defaultValue = "0")) @RequestParam(defaultValue = "0") Integer page,
+            @Positive @Parameter(description = "페이지 크기", schema = @Schema(type = "Integer", defaultValue = "20")) @RequestParam(defaultValue = "20") Integer size,
             @AuthenticationPrincipal @Parameter(hidden = true) Long memberId
     );
 
