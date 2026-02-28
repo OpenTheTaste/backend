@@ -20,6 +20,7 @@ public class CreateCommentRequest {
     @Schema(type= "String", example = "아 ㅋㅋ 밤티하둥", description = "댓글")
     private String content;
 
+    @NotNull(message = "스포 유무 입력은 필수 입니다.")
     @Schema(type= "Boolean", example = "true", description = "스포 유무, 디폴트 false")
     private Boolean isSpoiler = false;
 

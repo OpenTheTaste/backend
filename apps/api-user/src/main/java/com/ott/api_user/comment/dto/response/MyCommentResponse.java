@@ -29,7 +29,7 @@ public class MyCommentResponse {
     @Schema(type = "String", example = "김마루", description = "작성자 닉네임")
     private String writerNickname;
 
-    @Schema(type = "LocalDateTime", description = "작성일시")
+    @Schema(type = "string", format = "date-time", example = "2024-01-01T00:00:00", description = "작성일시")
     private LocalDateTime createdDate;
 
     public static MyCommentResponse from(Comment comment) {
