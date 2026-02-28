@@ -50,6 +50,9 @@ public class Member extends BaseEntity {
     @Column(name = "refresh_token")
     private String refreshToken;
 
+    @Column(name = "onboarding_completed", nullable = false)
+    private boolean onboardingCompleted;
+
     public static Member createKakaoMember(String providerId, String email, String nickname) {
         return Member.builder()
                 .provider(Provider.KAKAO)
@@ -83,5 +86,10 @@ public class Member extends BaseEntity {
     // 닉네임 변경
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    // 온보딩 여부
+    public void completeOnboarding() {
+        this.onboardingCompleted = true;
     }
 }
