@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class KakaoAuthService {
 
     private final MemberRepository memberRepository;
-    private final PreferredTagRepository preferredTagRepository;
 
     // 카카오 사용자 정보로 회원 조회 or 신규 생성
     // 기존 회원일 경우 프로필 동기화 필요
@@ -47,9 +46,9 @@ public class KakaoAuthService {
                 ));
     }
 
-    // 신규 회원 판별 -> 태그 소유 유무로 판단
-    public boolean isNewMember(Long memberId) {
-        return !preferredTagRepository.existsByMemberId(memberId);
+    // 신규 회원 판별 -> 컬럼으로 판별
+    public boolean isNewMember(Member member) {
+        return !member.isOnboardingCompleted();
     }
 
     // refresh token 저장
