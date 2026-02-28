@@ -4,7 +4,7 @@ import com.ott.api_admin.auth.dto.request.AdminLoginRequest;
 import com.ott.api_admin.auth.dto.response.AdminLoginResponse;
 import com.ott.api_admin.auth.dto.response.AdminTokenResponse;
 import com.ott.api_admin.auth.service.AdminAuthService;
-import com.ott.api_admin.common.CookieUtil;
+import com.ott.common.security.util.CookieUtil;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.SuccessResponse;

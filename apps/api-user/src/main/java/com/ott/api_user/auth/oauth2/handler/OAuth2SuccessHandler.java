@@ -1,7 +1,7 @@
 package com.ott.api_user.auth.oauth2.handler;
 
 import com.ott.api_user.auth.service.KakaoAuthService;
-import com.ott.api_user.common.CookieUtil;
+import com.ott.common.security.util.CookieUtil;
 import com.ott.common.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

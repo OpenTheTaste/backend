@@ -3,7 +3,7 @@ package com.ott.api_user.auth.controller;
 
 import com.ott.api_user.auth.dto.TokenResponse;
 import com.ott.api_user.auth.service.AuthService;
-import com.ott.api_user.common.CookieUtil;
+import com.ott.common.security.util.CookieUtil;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import jakarta.servlet.http.Cookie;

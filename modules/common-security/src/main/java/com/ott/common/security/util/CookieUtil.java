@@ -1,9 +1,10 @@
-package com.ott.api_user.common;
+package com.ott.common.security.util;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
+
 @Component
 public class CookieUtil {
 
