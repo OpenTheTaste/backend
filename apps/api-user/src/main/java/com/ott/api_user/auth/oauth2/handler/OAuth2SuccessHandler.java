@@ -1,8 +1,8 @@
 package com.ott.api_user.auth.oauth2.handler;
 
 import com.ott.api_user.auth.service.KakaoAuthService;
+import com.ott.api_user.common.CookieUtil;
 import com.ott.common.security.jwt.JwtTokenProvider;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,6 +30,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     private final JwtTokenProvider jwtTokenProvider;
     private final KakaoAuthService kakaoAuthService;
+    private final CookieUtil cookieUtil;
 
     @Value("${app.frontend-url}")
     private String frontedUrl;
@@ -69,31 +69,17 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         kakaoAuthService.saveRefreshToken(memberId, refreshToken);
 
         // 쿠키로 저장
-        addCookie(response, "accessToken", accessToken, accessTokenExpiry);
-        addCookie(response, "refreshToken", refreshToken, refreshTokenExpiry);
+        cookieUtil.addCookie(response, "accessToken", accessToken, accessTokenExpiry);
+        cookieUtil.addCookie(response, "refreshToken", refreshToken, refreshTokenExpiry);
 
 
-        // 리다이렉트에는 쿼리 파라미터로 isNewMember만 전달
-        String redirectUri = request.getParameter("redirect_uri");
-        if (redirectUri == null || redirectUri.isBlank()) {
-            redirectUri = frontedUrl + "/auth/logincheck"; // 배포 후 변경 예정
-        }
-
-        String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                .queryParam("isNewMember", isNewMember)
-                .build()
-                .toUriString();
+        // 리다이렉트에는 isNewMember에 따라서 경로 변경
+        String targetUrl = isNewMember
+                ? frontedUrl + "/auth/userinfo"
+                : frontedUrl + "/";
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
 
     }
 
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);     // JS 접근 차단 -> 크로스 사이트 스크립트 공격 대비
-        cookie.setSecure(false);      // 배포 서버에서는 true로 변경
-        cookie.setPath("/");          // 모든 경로에서 전송
-        cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
-    }
 }
