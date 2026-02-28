@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "좋아요 API", description = "좋아요 관련 API입니다.")
+@Tag(name = "Likes API", description = "좋아요 API")
 public interface LikesAPI {
 
     @Operation(summary = "좋아요 API", description = "좋아요 상태를 변경합니다.  등록/취소 모두 이 API를 사용합니다.")
