@@ -2,6 +2,7 @@ package com.ott.api_user.series.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,9 +14,11 @@ import com.ott.api_user.series.service.SeriesService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 
-import io.micrometer.core.ipc.http.HttpSender.Response;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/series")
@@ -34,8 +37,8 @@ public class SeriesController implements SeriesApi {
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<SeriesContentsResponse>>> getSeriesContents(
             @PathVariable(value = "seriesId") Long seriesId,
-            @RequestParam(value = "page") Integer pageParam,
-            @RequestParam(value = "size") Integer sizeParam,
+            @RequestParam(value = "page") @Min(0) Integer pageParam,
+            @RequestParam(value = "size") @Positive Integer sizeParam,
             @AuthenticationPrincipal Long memberId) {
 
         return ResponseEntity.ok(

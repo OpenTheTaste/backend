@@ -2,31 +2,32 @@ package com.ott.api_user.content.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.ott.api_user.comment.dto.CommentResponse;
-import com.ott.api_user.comment.service.CommentService;
 import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.common.dto.ContentListElement;
-import com.ott.api_user.content.dto.ContentDetailResponse;
-import com.ott.api_user.content.service.ContentService;
+import com.ott.api_user.content.dto.ContentsDetailResponse;
+import com.ott.api_user.content.service.ContentsService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/contents")
-public class ContentController implements ContentApi {
+public class ContentsController implements ContentsApi {
 
-        private final ContentService contentService;
+        private final ContentsService contentService;
 
         @Override
-        public ResponseEntity<SuccessResponse<ContentDetailResponse>> getContentDetail(
+        public ResponseEntity<SuccessResponse<ContentsDetailResponse>> getContentDetail(
                         @PathVariable(value = "contentsId") Long contentsId,
                         @AuthenticationPrincipal Long memberId) {
 
@@ -39,8 +40,8 @@ public class ContentController implements ContentApi {
         public ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
                         @PathVariable(value = "contentsId") Long contentsId,
                         @RequestParam(value = "source", required = false) ContentSource source,
-                        @RequestParam(value = "page") Integer pageParam,
-                        @RequestParam(value = "size") Integer sizeParam,
+                        @RequestParam(value = "page") @Min(0) Integer pageParam,
+                        @RequestParam(value = "size") @Positive Integer sizeParam,
                         @AuthenticationPrincipal Long memberId) {
                 return ResponseEntity.ok(
                                 SuccessResponse.of(contentService.getContentPlayList(contentsId, source, pageParam,

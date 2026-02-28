@@ -24,7 +24,7 @@ public class CommentResponse {
     private String content;
 
     @Schema(description = "스포일러 여부", example = "true")
-    private Boolean isSpoiler;
+    private boolean isSpoiler;
 
     @Schema(description = "작성 일시")
     private LocalDateTime createdAt;

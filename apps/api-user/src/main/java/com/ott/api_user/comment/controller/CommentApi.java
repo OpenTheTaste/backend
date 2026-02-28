@@ -6,13 +6,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ott.api_user.comment.dto.CommentResponse;
-import com.ott.api_user.content.dto.ContentDetailResponse;
+import com.ott.api_user.content.dto.ContentsDetailResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,6 +24,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface CommentApi {
         @Operation(summary = "콘텐츠 댓글 목록 조회", description = "콘텐츠의 댓글 목록을 페이징하여 최신순으로 조회합니다.")
         @ApiResponses(value = {
+                        @ApiResponse(responseCode = "0", description = "조회 성공 - 콘텐츠 댓글 목록 구성", content = {
+                                        @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = CommentResponse.class))) }),
                         @ApiResponse(responseCode = "200", description = "댓글 목록 조회 성공", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class)) }),
                         @ApiResponse(responseCode = "404", description = "콘텐츠를 찾을 수 없음", content = {

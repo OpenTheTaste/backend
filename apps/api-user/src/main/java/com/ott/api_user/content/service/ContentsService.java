@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.common.dto.ContentListElement;
-import com.ott.api_user.content.dto.ContentDetailResponse;
+import com.ott.api_user.content.dto.ContentsDetailResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ContentService {
+public class ContentsService {
         private final ContentsRepository contentsRepository;
         // private final PlaybackRepository playbackRepository;
 
@@ -40,37 +40,34 @@ public class ContentService {
         private final TagRepository tagRepository;
         private final CategoryRepository categoryRepository;
 
+        
         // 재생 상세
-        public ContentDetailResponse getContentDetail(Long contentsId, Long memberId) {
-                Contents contents = contentsRepository.findByIdWithMedia(contentsId, Status.ACTIVE, PublicStatus.PUBLIC)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+        public ContentsDetailResponse getContentDetail(Long contentsId, Long memberId) {
+                Contents contents = contentsRepository.findByIdAndStatusAndMedia_PublicStatus(contentsId, Status.ACTIVE, PublicStatus.PUBLIC)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
 
                 Long mediaId = contents.getMedia().getId();
 
                 List<String> tags = tagRepository.findTagNamesByMediaId(mediaId, Status.ACTIVE);
                 List<String> categories = categoryRepository.findCategoryNamesByMediaId(mediaId, Status.ACTIVE);
 
-                Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId,
-                                Status.ACTIVE);
+                Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId,Status.ACTIVE);
                 Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId, Status.ACTIVE);
 
                 String masterPlaylistUrl = contents.getMasterPlaylistUrl();
 
                 Integer positionSec = 0;
 
-                return ContentDetailResponse.from(contents, tags, categories, isBookmarked, isLiked,
-                                masterPlaylistUrl,
-                                positionSec);
+                return ContentsDetailResponse.from(contents, tags, categories, isBookmarked, isLiked,masterPlaylistUrl, positionSec);
 
         }
 
         // 해당 콘텐츠를 어디서 진입했는지에 따라
         // 콘텐츠의 재생목록이 달라짐.
-        public PageResponse<ContentListElement> getContentPlayList(Long contentsId, ContentSource source,
-                        int page, int size, Long memberId) {
+        public PageResponse<ContentListElement> getContentPlayList(Long contentsId, ContentSource source, int page,
+                        int size, Long memberId) {
 
-                Contents currentContents = contentsRepository.findByIdWithMedia(contentsId, Status.ACTIVE,
-                                PublicStatus.PUBLIC)
+                Contents currentContents = contentsRepository.findByIdAndStatusAndMedia_PublicStatus(contentsId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
 
                 if (currentContents.getSeries() != null) {
@@ -91,14 +88,10 @@ public class ContentService {
                         default -> getRecommendPlaylist(memberId, pageable, mediaId); // 기본값은 OO님이 좋아하실만한 콘텐츠
                 };
 
-                List<ContentListElement> contentList = playListPage.getContent().stream()
-                                .map(ContentListElement::from).collect(Collectors.toList());
+                List<ContentListElement> contentList = playListPage.getContent().stream().map(ContentListElement::from)
+                                .collect(Collectors.toList());
 
-                PageInfo pageInfo = PageInfo.builder()
-                                .currentPage(playListPage.getNumber())
-                                .totalPage(playListPage.getTotalPages())
-                                .pageSize(playListPage.getSize())
-                                .build();
+                PageInfo pageInfo = PageInfo.toPageInfo(page, page, size);
 
                 return PageResponse.toPageResponse(pageInfo, contentList);
         }

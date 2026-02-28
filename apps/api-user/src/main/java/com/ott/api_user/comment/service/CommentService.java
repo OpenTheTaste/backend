@@ -17,7 +17,6 @@ import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.comment.domain.Comment;
 import com.ott.domain.comment.repository.CommentRepository;
-import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
@@ -27,11 +26,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CommentService {
+
     private final CommentRepository commentRepository;
     private final ContentsRepository contentsRepository;
 
-    public PageResponse<CommentResponse> getContentsCommentList(Long contentsId, int page, int size,
-            boolean includeSpoiler) {
+
+    public PageResponse<CommentResponse> getContentsCommentList(Long contentsId, int page, int size, boolean includeSpoiler) {
 
         if (!contentsRepository.existsByIdAndStatus(contentsId, Status.ACTIVE)) {
             throw new BusinessException(ErrorCode.CONTENT_NOT_FOUND);
@@ -39,16 +39,7 @@ public class CommentService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
-        Page<Comment> commentPage;
-
-        if (includeSpoiler) {
-            // 토글 ON: 스포일러 포함 전체 조회
-            commentPage = commentRepository.findByContentsIdAndStatusWithMember(contentsId, Status.ACTIVE, pageable);
-        } else {
-            // 토글 OFF (기본): 스포일러 없는 댓글만 조회
-            commentPage = commentRepository.findByContentsIdAndStatusAndIsSpoilerFalseWithMember(contentsId,
-                    Status.ACTIVE, pageable);
-        }
+        Page<Comment> commentPage = commentRepository.findByContents_IdAndStatusWithSpoilerCondition(contentsId, Status.ACTIVE, includeSpoiler, pageable);
 
         List<CommentResponse> responseList = commentPage.getContent().stream()
                 .map(CommentResponse::from)

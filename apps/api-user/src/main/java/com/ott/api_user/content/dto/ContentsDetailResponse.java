@@ -14,7 +14,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Schema(description = "컨텐츠 상세(재생) 조회 응답 DTO")
-public class ContentDetailResponse {
+public class ContentsDetailResponse {
     @Schema(description = "콘텐츠 ID", example = "1")
     private Long id;
 
@@ -48,11 +48,11 @@ public class ContentDetailResponse {
     @Schema(description = "기존 이어보기 지점(없으면 0)", example = "150")
     private Integer positionSec;
 
-    public static ContentDetailResponse from(Contents contents, List<String> tags,
+    public static ContentsDetailResponse from(Contents contents, List<String> tags,
             List<String> categories, Boolean isBookmarked, Boolean isLiked, String masterPlaylistUrl,
             Integer positionSec) {
 
-        return ContentDetailResponse.builder()
+        return ContentsDetailResponse.builder()
                 .id(contents.getId())
                 .title(contents.getMedia().getTitle())
                 .description(contents.getMedia().getDescription())
