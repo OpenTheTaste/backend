@@ -18,7 +18,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
-@Validated
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/contents")
@@ -40,8 +40,8 @@ public class ContentsController implements ContentsApi {
         public ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
                         @PathVariable(value = "contentsId") Long contentsId,
                         @RequestParam(value = "source", required = false) ContentSource source,
-                        @RequestParam(value = "page") @Min(0) Integer pageParam,
-                        @RequestParam(value = "size") @Positive Integer sizeParam,
+                        @RequestParam(value = "page") Integer pageParam,
+                        @RequestParam(value = "size") Integer sizeParam,
                         @AuthenticationPrincipal Long memberId) {
                 return ResponseEntity.ok(
                                 SuccessResponse.of(contentService.getContentPlayList(contentsId, source, pageParam,

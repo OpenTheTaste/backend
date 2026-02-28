@@ -18,7 +18,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
-@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/series")
@@ -37,8 +36,8 @@ public class SeriesController implements SeriesApi {
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<SeriesContentsResponse>>> getSeriesContents(
             @PathVariable(value = "seriesId") Long seriesId,
-            @RequestParam(value = "page") @Min(0) Integer pageParam,
-            @RequestParam(value = "size") @Positive Integer sizeParam,
+            @RequestParam(value = "page") Integer pageParam,
+            @RequestParam(value = "size") Integer sizeParam,
             @AuthenticationPrincipal Long memberId) {
 
         return ResponseEntity.ok(
