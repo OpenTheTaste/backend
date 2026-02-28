@@ -43,4 +43,17 @@ public class Comment extends BaseEntity {
 
     @Column(name = "is_spoiler", nullable = false)
     private Boolean isSpoiler;
+
+
+    // 댓글 수정
+    public void update(String content, Boolean isSpoiler) {
+
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("댓글 내용이 비어있습니다.");
+        }
+
+        this.content = content;
+        this.isSpoiler = isSpoiler;
+    }
 }
+
