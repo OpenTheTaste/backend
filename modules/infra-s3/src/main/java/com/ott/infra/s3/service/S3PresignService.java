@@ -26,8 +26,7 @@ public class S3PresignService {
             @Value("${aws.region:ap-northeast-2}") String region,
             @Value("${aws.s3.bucket:local-bucket}") String bucket,
             @Value("${aws.s3.public-base-url:}") String publicBaseUrl,
-            @Value("${aws.s3.presign-expire-seconds:600}") long expireSeconds
-    ) {
+            @Value("${aws.s3.presign-expire-seconds:600}") long expireSeconds) {
         this.s3Presigner = s3Presigner;
         this.region = region;
         this.bucket = bucket;

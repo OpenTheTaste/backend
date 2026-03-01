@@ -31,16 +31,15 @@ public class AuthService {
         // refresh 토큰 유효성 검증
         ErrorCode errorCode = jwtTokenProvider.validateAndGetErrorCode(refreshToken);
 
-        if(errorCode != null) {
-            throw  new BusinessException(errorCode);
+        if (errorCode != null) {
+            throw new BusinessException(errorCode);
         }
 
         // DB에 저장된 토큰과 일치 여부 확인
         Long memberId = jwtTokenProvider.getMemberId(refreshToken);
         Member member = findMemberById(memberId);
 
-
-        if(!refreshToken.equals(member.getRefreshToken())) {
+        if (!refreshToken.equals(member.getRefreshToken())) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
 
@@ -60,13 +59,12 @@ public class AuthService {
     }
 
     /**
-     * 로그아웃  - Refresh 토큰 삭제
+     * 로그아웃 - Refresh 토큰 삭제
      */
     public void logout(Long memberId) {
         Member member = findMemberById(memberId);
         member.clearRefreshToken();
     }
-
 
     // Optipnal 처리를 위해 사용
     private Member findMemberById(Long memberId) {

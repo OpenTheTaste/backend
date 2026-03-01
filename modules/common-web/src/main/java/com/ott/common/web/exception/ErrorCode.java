@@ -61,7 +61,8 @@ public enum ErrorCode {
     INVALID_SHORTFORM_CONTENTS_TARGET(HttpStatus.BAD_REQUEST, "B016", "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다."),
     SHORTFORM_ORIGIN_MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B017", "숏폼 원본 미디어를 찾을 수 없습니다."),
     BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B018", "북마크를 찾을 수 없습니다"),
-    ;
+    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B019", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요");
+
 
     private final HttpStatus status;
     private final String code;
