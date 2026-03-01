@@ -43,11 +43,10 @@ public class SeriesService {
         // private final PlaybackRepository playbackRepository;
 
         // 시리즈 상세 조회
-        public SeriesDetailResponse getSeriesDetail(Long seriesId, Long memberId) {
-                Series series = seriesRepository.findByIdWithMedia(seriesId, Status.ACTIVE, PublicStatus.PUBLIC)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+        public SeriesDetailResponse getSeriesDetail(Long mediaId, Long memberId) {
 
-                Long mediaId = series.getMedia().getId();
+                Series series = seriesRepository.findByMediaIdAndStatusAndPublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
 
                 List<String> tags = tagRepository.findTagNamesByMediaId(mediaId, Status.ACTIVE);
                 List<String> categories = categoryRepository.findCategoryNamesByMediaId(mediaId, Status.ACTIVE);
@@ -61,20 +60,21 @@ public class SeriesService {
 
         // 시리즈 콘텐츠 목록 조회 (페이징)
         // 반환 타입 제네릭으로 수정
-        public PageResponse<SeriesContentsResponse> getSeriesContents(Long seriesId, int page, int size,
+        public PageResponse<SeriesContentsResponse> getSeriesContents(Long mediaId, int page, int size,
                         Long memberId) {
 
-                seriesRepository.findByIdWithMedia(seriesId, Status.ACTIVE, PublicStatus.PUBLIC)
+                Series series = seriesRepository.findByMediaIdAndStatusAndPublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+                
+                Long targetSeriesId = series.getId();
 
                 Pageable pageable = PageRequest.of(page, size);
 
+               
                 Page<Contents> contentsPage = contentsRepository
-                                .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(
-                                                seriesId, Status.ACTIVE, PublicStatus.PUBLIC, pageable);
+                                .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(targetSeriesId, Status.ACTIVE, PublicStatus.PUBLIC, pageable);               
 
-                List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream()
-                                .map(SeriesContentsResponse::from).collect(Collectors.toList());
+                List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream().map(SeriesContentsResponse::from).collect(Collectors.toList());
 
                 PageInfo pageInfo = PageInfo.builder()
                                 .currentPage(contentsPage.getNumber())

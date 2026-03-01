@@ -54,15 +54,27 @@ public interface ContentsRepository extends JpaRepository<Contents, Long>, Conte
         @EntityGraph(attributePaths = {"media"})
         Optional<Contents> findByIdAndStatus(Long id, Status status);
 
+        // @Query("""
+        //         SELECT c FROM Contents c
+        //         JOIN FETCH c.media m
+        //         WHERE c.id = :contentsId
+        //         AND c.status = :status
+        //         AND m.publicStatus = :publicStatus
+        //         """)
+        // Optional<Contents> findByIdAndStatusAndMedia_PublicStatus(
+        //         @Param("contentsId") Long contentsId,
+        //         @Param("status") Status status,
+        //         @Param("publicStatus") PublicStatus publicStatus);
+
         @Query("""
                 SELECT c FROM Contents c
                 JOIN FETCH c.media m
-                WHERE c.id = :contentsId
+                WHERE m.id = :mediaId
                 AND c.status = :status
                 AND m.publicStatus = :publicStatus
                 """)
-        Optional<Contents> findByIdAndStatusAndMedia_PublicStatus(
-                @Param("contentsId") Long contentsId,
+        Optional<Contents> findByMediaIdAndStatusAndMedia_PublicStatus(
+                @Param("mediaId") Long mediaId,
                 @Param("status") Status status,
                 @Param("publicStatus") PublicStatus publicStatus);
 

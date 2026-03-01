@@ -28,23 +28,10 @@ public class ContentsController implements ContentsApi {
 
         @Override
         public ResponseEntity<SuccessResponse<ContentsDetailResponse>> getContentDetail(
-                        @PathVariable(value = "contentsId") Long contentsId,
+                        @PathVariable(value = "mediaId") Long mediaId,
                         @AuthenticationPrincipal Long memberId) {
 
                 return ResponseEntity.ok(
-                                SuccessResponse.of(contentService.getContentDetail(contentsId, memberId)));
+                                SuccessResponse.of(contentService.getContentDetail(mediaId, memberId)));
         }
-
-        // // 재생목록(플레이리스트) 리스트 API (/contents/{contentsId}/playlist?source={SOURCE})
-        // @Override
-        // public ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
-        //                 @PathVariable(value = "contentsId") Long contentsId,
-        //                 @RequestParam(value = "source", required = false) ContentSource source,
-        //                 @RequestParam(value = "page") Integer pageParam,
-        //                 @RequestParam(value = "size") Integer sizeParam,
-        //                 @AuthenticationPrincipal Long memberId) {
-        //         return ResponseEntity.ok(
-        //                         SuccessResponse.of(contentService.getContentPlayList(contentsId, source, pageParam,
-        //                                         sizeParam, memberId)));
-        // }
 }

@@ -12,7 +12,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Schema(description = "시리즈 내 콘텐츠(에피소드) 목록 아이템 응답 DTO")
 public class SeriesContentsResponse {
-    @Schema(type = "Long", example = "1", description = "콘텐츠 고유 ID")
+    @Schema(type = "Long", example = "1", description = "미디어 고유 ID")
     private Long id;
 
     @Schema(type = "String", example = "더 글로리 시즌 1: 1화", description = "콘텐츠 제목")
@@ -36,7 +36,7 @@ public class SeriesContentsResponse {
         Integer positionSec = 0;
 
         return SeriesContentsResponse.builder()
-                .id(content.getId())
+                .id(content.getMedia().getId())
                 .duration(content.getDuration())
                 .title(content.getMedia().getTitle())
                 .description(content.getMedia().getDescription())

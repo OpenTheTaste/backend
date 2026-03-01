@@ -32,9 +32,9 @@ public interface SeriesApi {
                         @ApiResponse(responseCode = "404", description = "시리즈를 찾을 수 없음", content = {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
         })
-        @GetMapping("/{seriesId}")
+        @GetMapping("/{mediaId}")
         ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
-                        @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable("seriesId") Long seriesId,
+                        @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId,
                         @Parameter(hidden = true) @AuthenticationPrincipal Long memberId // 토큰에서 추출 (스웨거에서는 숨김)
         );
 
@@ -50,9 +50,9 @@ public interface SeriesApi {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
         })
 
-        @GetMapping("/{seriesId}/contents")
+        @GetMapping("/{mediaId}/contents")
         ResponseEntity<SuccessResponse<PageResponse<SeriesContentsResponse>>> getSeriesContents(
-                        @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable("seriesId") Long seriesId,
+                        @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId,
                         @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") Integer page,
                         @Parameter(description = "페이지 크기", example = "24") @RequestParam(defaultValue = "24") Integer size,
                         @Parameter(hidden = true) @AuthenticationPrincipal Long memberId);

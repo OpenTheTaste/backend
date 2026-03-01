@@ -15,7 +15,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Schema(description = "컨텐츠 상세(재생) 조회 응답 DTO")
 public class ContentsDetailResponse {
-    @Schema(description = "콘텐츠 ID", example = "1")
+    @Schema(description = "미디어 고유 ID", example = "1")
     private Long id;
 
     @Schema(description = "콘텐츠 제목", example = "비밀의 숲")
@@ -53,7 +53,7 @@ public class ContentsDetailResponse {
             Integer positionSec) {
 
         return ContentsDetailResponse.builder()
-                .id(contents.getId())
+                .id(contents.getMedia().getId())
                 .title(contents.getMedia().getTitle())
                 .description(contents.getMedia().getDescription())
                 .actors(contents.getActors())
