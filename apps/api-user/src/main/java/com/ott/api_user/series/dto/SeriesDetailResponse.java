@@ -27,10 +27,7 @@ public class SeriesDetailResponse {
     @Schema(description = "출연진", example = "송혜교, 이도현, 임지연")
     private String actors;
 
-    @Schema(description = "시리즈 포스터 이미지 URL", example = "https://cdn.ott.com/posters/101.jpg")
-    private String posterUrl;
-
-    @Schema(description = "썸네일 이미지 URL", example = "https://cdn.ott.com/thumbnails/101.jpg")
+    @Schema(description = "가로형 썸네일 이미지 URL", example = "https://cdn.ott.com/thumbnails/101.jpg")
     private String thumbnailUrl;
 
     @Schema(description = "카테고리", example = "드라마")
@@ -53,7 +50,6 @@ public class SeriesDetailResponse {
                 .actors(series.getActors())
                 .title(series.getMedia().getTitle())
                 .description(series.getMedia().getDescription())
-                .posterUrl(series.getMedia().getPosterUrl())
                 .thumbnailUrl(series.getMedia().getThumbnailUrl())
                 .category(categories.isEmpty() ? null : categories.get(0))
                 .tags(tags)

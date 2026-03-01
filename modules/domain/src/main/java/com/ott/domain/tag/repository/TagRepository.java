@@ -26,7 +26,6 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
             """)
     List<String> findTagNamesByMediaId(@Param("mediaId") Long mediaId, @Param("status") Status status);
 
-
     // 모든 카테고리에 있는 태그 조회
     List<Tag> findAllByCategoryAndStatus(Category category, Status status);
 
