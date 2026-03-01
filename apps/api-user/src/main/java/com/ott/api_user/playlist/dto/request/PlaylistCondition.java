@@ -14,7 +14,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-// 요청 DTO
+// 플레이리스트 공통 요청 DTO
+// 진입점, 플레이리스트 or 재생목록 (둘은 재사용, 현재 컨텐츠 id 에 따라) 에 따라 들어오는 파라미터를 공통으로 사용
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,7 +28,7 @@ public class PlaylistCondition {
     @Schema(description = "사용자 고유 ID", example = "1")
     private Long memberId;
 
-    @Schema(description = "현재 컨텐츠의 Id", example = "1")
+    @Schema(description = "현재 컨텐츠의 Id", example = "1") // 상세 페이지 진입 시 재생목록에서 제외
     private Long excludeMediaId;
 
     @Schema(description = "태그 고유 ID", example = "1")

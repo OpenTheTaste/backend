@@ -39,21 +39,21 @@ public interface ContentsApi {
                         @Parameter(description = "콘텐츠 ID", required = true, example = "1") @PathVariable("contentsId") Long contentsId,
                         @Parameter(hidden = true) @AuthenticationPrincipal Long memberId);
 
-        // 맥락 (진입점) 기반 플레이리스트 조회 - 해당 API 는 홈화면의 플레이리스트 조회 API 와 별도로 작성한다?? 아니면 재사용
-        @Operation(summary = "진입점 기반 재생 목록 조회", description = "재생 화면 하단/우측에 노출되는 맞춤형 추천 리스트(재생 목록)를 조회합니다.")
-        @ApiResponses(value = {
-                        @ApiResponse(responseCode = "0", description = "조회 성공 - 재생 목록 구성", content = {
-                                        @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ContentListElement.class))) }),
-                        @ApiResponse(responseCode = "200", description = "플레이리스트 조회 성공", content = {
-                                        @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class)) }),
-                        @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", content = {
-                                        @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
-        })
-        @GetMapping("/{contentsId}/playlist")
-        ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
-                        @Parameter(description = "현재 재생 중인 콘텐츠 ID", required = true, example = "10") @PathVariable("contentsId") Long contentsId,
-                        @Parameter(description = "진입 맥락 (TRENDING, HISTORY, TAG 등)", example = "TAG") @RequestParam(value = "source", required = false) ContentSource source,
-                        @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(value = "page", defaultValue = "0") Integer pageParam,
-                        @Parameter(description = "페이지 크기", example = "20") @RequestParam(value = "size", defaultValue = "20") Integer sizeParam,
-                        @Parameter(hidden = true) @AuthenticationPrincipal Long memberId);
+        // // 맥락 (진입점) 기반 플레이리스트 조회 - 해당 API 는 홈화면의 플레이리스트 조회 API 와 별도로 작성한다?? 아니면 재사용
+        // @Operation(summary = "진입점 기반 재생 목록 조회", description = "재생 화면 하단/우측에 노출되는 맞춤형 추천 리스트(재생 목록)를 조회합니다.")
+        // @ApiResponses(value = {
+        //                 @ApiResponse(responseCode = "0", description = "조회 성공 - 재생 목록 구성", content = {
+        //                                 @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ContentListElement.class))) }),
+        //                 @ApiResponse(responseCode = "200", description = "플레이리스트 조회 성공", content = {
+        //                                 @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class)) }),
+        //                 @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", content = {
+        //                                 @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
+        // })
+        // @GetMapping("/{contentsId}/playlist")
+        // ResponseEntity<SuccessResponse<PageResponse<ContentListElement>>> getContentPlayList(
+        //                 @Parameter(description = "현재 재생 중인 콘텐츠 ID", required = true, example = "10") @PathVariable("contentsId") Long contentsId,
+        //                 @Parameter(description = "진입 맥락 (TRENDING, HISTORY, TAG 등)", example = "TAG") @RequestParam(value = "source", required = false) ContentSource source,
+        //                 @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(value = "page", defaultValue = "0") Integer pageParam,
+        //                 @Parameter(description = "페이지 크기", example = "20") @RequestParam(value = "size", defaultValue = "20") Integer sizeParam,
+        //                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId);
 }

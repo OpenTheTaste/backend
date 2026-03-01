@@ -11,7 +11,8 @@ public enum ContentSource {
     HISTORY("HISTORY"), // 최근 시청 중인 콘텐츠에서 진입 시
     TAG("TAG"), // 특정 태그(예: #스릴러) 클릭 시
     RECOMMEND("RECOMMEND"), // "OO님이 좋아할 만한 리스트"에서 진입 시
-    SEARCH("SEARCH"); // 검색 결과에서 진입 시
+    SEARCH("SEARCH"), // 검색 결과에서 진입 시
+    SERIES("SERISE"); // 시리즈 상세 페이지에서 진입 시 
 
     private final String value;
 }
