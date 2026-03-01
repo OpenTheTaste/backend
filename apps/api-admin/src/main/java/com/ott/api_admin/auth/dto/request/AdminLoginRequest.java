@@ -13,10 +13,10 @@ public class AdminLoginRequest {
 
     @Email
     @NotBlank
-    @Schema(description = "관리자 이메일", example = "admin@ott.com")
+    @Schema(type= "String",description = "관리자 이메일", example = "admin@ott.com")
     private String email;
 
     @NotBlank
-    @Schema(description = "비밀번호", example = "password123")
+    @Schema(type="String", description = "비밀번호", example = "password123")
     private String password;
 }
