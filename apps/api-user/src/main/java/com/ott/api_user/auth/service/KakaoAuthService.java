@@ -33,17 +33,14 @@ public class KakaoAuthService {
                 .map(existingMember -> {
                     existingMember.updateKakaoProfile(
                             kakaoUserInfo.getEmail(),
-                            kakaoUserInfo.getNickname()
-                    );
+                            kakaoUserInfo.getNickname());
                     return existingMember;
                 })
                 .orElseGet(() -> memberRepository.save(
                         Member.createKakaoMember(
                                 kakaoUserInfo.getProviderId(),
                                 kakaoUserInfo.getEmail(),
-                                kakaoUserInfo.getNickname()
-                        )
-                ));
+                                kakaoUserInfo.getNickname())));
     }
 
     // 신규 회원 판별 -> 컬럼으로 판별
@@ -57,6 +54,5 @@ public class KakaoAuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         member.updateRefreshToken(refreshToken);
     }
-
 
 }

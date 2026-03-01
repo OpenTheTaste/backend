@@ -3,11 +3,13 @@ package com.ott.api_user.comment.controller;
 import com.ott.api_user.comment.dto.request.CreateCommentRequest;
 import com.ott.api_user.comment.dto.request.UpdateCommentRequest;
 import com.ott.api_user.comment.dto.response.CommentResponse;
+import com.ott.api_user.comment.dto.response.ContentsCommentResponse;
 import com.ott.api_user.comment.dto.response.MyCommentResponse;
-import com.ott.api_user.comment.service.CommentService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
+
 import lombok.RequiredArgsConstructor;
+import com.ott.api_user.comment.service.CommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -64,4 +66,16 @@ public class CommentController implements CommentApi {
         return ResponseEntity.ok(SuccessResponse.of(commentService.getMyComments(memberId, page, size)));
     }
 
+    @Override
+    public ResponseEntity<SuccessResponse<PageResponse<ContentsCommentResponse>>> getContentCommentsList(
+            @PathVariable(value = "contentsId") Long contentsId,
+            @RequestParam(value = "page", defaultValue = "0") Integer pageParam,
+            @RequestParam(value = "size", defaultValue = "20")  Integer sizeParam,
+            @RequestParam(value = "includeSpoiler", defaultValue = "false") boolean includeSpoiler) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(commentService.getContentsCommentList(contentsId, pageParam,
+                        sizeParam, includeSpoiler)));
+
+    }
 }
+

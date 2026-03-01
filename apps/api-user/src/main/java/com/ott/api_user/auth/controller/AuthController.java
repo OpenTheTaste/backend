@@ -3,7 +3,6 @@ package com.ott.api_user.auth.controller;
 
 import com.ott.api_user.auth.dto.TokenResponse;
 import com.ott.api_user.auth.service.AuthService;
-import com.ott.common.security.util.CookieUtil;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import jakarta.servlet.http.Cookie;
@@ -13,9 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -30,7 +30,6 @@ public class AuthController implements AuthApi {
 
     @Value("${jwt.refresh-token-expiry}")
     private int refreshTokenExpiry;
-
 
     // Access Token 재발급
     @PostMapping("reissue")
@@ -88,6 +87,22 @@ public class AuthController implements AuthApi {
         return null;
     }
 
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);    // 배포 시 true 변경
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAge);
+        response.addCookie(cookie);
+    }
 
+    private void deleteCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);    // 배포 시 true 변경
+        cookie.setPath("/");
+        cookie.setMaxAge(0);        // 즉시 삭제
+        response.addCookie(cookie);
+    }
 
 }

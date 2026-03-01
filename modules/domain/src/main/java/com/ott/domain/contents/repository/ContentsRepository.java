@@ -1,5 +1,7 @@
 package com.ott.domain.contents.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,6 +31,9 @@ import org.springframework.data.jpa.repository.EntityGraph;
 // }
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
@@ -37,15 +42,29 @@ import java.util.Optional;
 
 public interface ContentsRepository extends JpaRepository<Contents, Long>, ContentsRepositoryCustom {
 
-    @EntityGraph(attributePaths = { "media" })
-    Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
-            PublicStatus publicStatus, Pageable pageable);
+        @EntityGraph(attributePaths = { "media" })
+        Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
+                        PublicStatus publicStatus, Pageable pageable);
 
-    // 좋아요 처리 시 series 소속 여부 확인용
-    @EntityGraph(attributePaths = {"series", "series.media"})
-    Optional<Contents> findByMediaId(Long mediaId);
+        // 좋아요 처리 시 series 소속 여부 확인용
+        @EntityGraph(attributePaths = {"series", "series.media"})
+        Optional<Contents> findByMediaId(Long mediaId);
 
-    // 댓글 작성 시 콘텐츠 조회
-    @EntityGraph(attributePaths = {"media"})
-    Optional<Contents> findByIdAndStatus(Long id, Status status);
+        // 댓글 작성 시 콘텐츠 조회
+        @EntityGraph(attributePaths = {"media"})
+        Optional<Contents> findByIdAndStatus(Long id, Status status);
+
+        @Query("""
+                SELECT c FROM Contents c
+                JOIN FETCH c.media m
+                WHERE c.id = :contentsId
+                AND c.status = :status
+                AND m.publicStatus = :publicStatus
+                """)
+        Optional<Contents> findByIdAndStatusAndMedia_PublicStatus(
+                @Param("contentsId") Long contentsId,
+                @Param("status") Status status,
+                @Param("publicStatus") PublicStatus publicStatus);
+
+        boolean existsByIdAndStatus(Long id, Status status);
 }
