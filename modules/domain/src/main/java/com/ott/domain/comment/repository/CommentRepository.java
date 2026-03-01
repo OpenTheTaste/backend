@@ -1,16 +1,24 @@
 package com.ott.domain.comment.repository;
 
+import com.ott.domain.comment.domain.Comment;
+import com.ott.domain.common.Status;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import java.util.Optional;
 import com.ott.domain.comment.domain.Comment;
 import com.ott.domain.common.Status;
 
-public interface CommentRepository extends JpaRepository<Comment, Long> {
-        @Query("""
+public interface CommentRepository extends JpaRepository<Comment, Long>, CommentRepositoryCustom {
+
+     @EntityGraph(attributePaths = {"member", "contents", "contents.media"})
+     Optional<Comment> findByIdAndStatus(Long id, Status status);
+
+     @Query("""
                         SELECT c FROM Comment c
                         JOIN FETCH c.member m
                         WHERE c.contents.id = :contentsId
@@ -24,5 +32,4 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
                         Pageable pageable
 
         );
-
 }

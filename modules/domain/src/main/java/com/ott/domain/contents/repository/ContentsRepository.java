@@ -47,8 +47,12 @@ public interface ContentsRepository extends JpaRepository<Contents, Long>, Conte
                         PublicStatus publicStatus, Pageable pageable);
 
         // 좋아요 처리 시 series 소속 여부 확인용
-        @EntityGraph(attributePaths = { "series", "series.media" })
+        @EntityGraph(attributePaths = {"series", "series.media"})
         Optional<Contents> findByMediaId(Long mediaId);
+
+        // 댓글 작성 시 콘텐츠 조회
+        @EntityGraph(attributePaths = {"media"})
+        Optional<Contents> findByIdAndStatus(Long id, Status status);
 
         @Query("""
                 SELECT c FROM Contents c
@@ -58,9 +62,9 @@ public interface ContentsRepository extends JpaRepository<Contents, Long>, Conte
                 AND m.publicStatus = :publicStatus
                 """)
         Optional<Contents> findByIdAndStatusAndMedia_PublicStatus(
-                        @Param("contentsId") Long contentsId,
-                        @Param("status") Status status,
-                        @Param("publicStatus") PublicStatus publicStatus);
+                @Param("contentsId") Long contentsId,
+                @Param("status") Status status,
+                @Param("publicStatus") PublicStatus publicStatus);
 
         boolean existsByIdAndStatus(Long id, Status status);
 }

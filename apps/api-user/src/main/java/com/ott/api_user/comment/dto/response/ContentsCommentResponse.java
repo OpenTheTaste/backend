@@ -1,4 +1,4 @@
-package com.ott.api_user.comment.dto;
+package com.ott.api_user.comment.dto.response;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +13,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Schema(description = "댓글 조회 응답 DTO")
-public class CommentResponse {
+public class ContentsCommentResponse {
     @Schema(description = "댓글 고유 ID", example = "1")
     private Long commentId;
 
@@ -29,8 +29,8 @@ public class CommentResponse {
     @Schema(description = "작성 일시")
     private LocalDateTime createdAt;
 
-    public static CommentResponse from(Comment comment) {
-        return CommentResponse.builder()
+    public static ContentsCommentResponse from(Comment comment) {
+        return ContentsCommentResponse.builder()
                 .commentId(comment.getId())
                 .nickname(comment.getMember().getNickname())
                 .content(comment.getContent())

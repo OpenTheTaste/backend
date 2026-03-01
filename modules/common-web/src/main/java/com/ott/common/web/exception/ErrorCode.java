@@ -49,8 +49,8 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "B005", "카테고리를 찾을 수 없습니다."),
     TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B006", "태그를 찾을 수 없습니다."),
     MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B007", "미디어를 찾을 수 없습니다."),
-    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B008", "북마크를 찾을 수 없습니다"),
-
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B008", "댓글을 찾을 수 없습니다."),
+    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "B009", "본인이 작성한 댓글만 수정/삭제할 수 있습니다."),
     UNSUPPORTED_IMAGE_EXTENSION(HttpStatus.BAD_REQUEST, "B009", "지원하지 않는 이미지 확장자입니다."),
     UNSUPPORTED_VIDEO_EXTENSION(HttpStatus.BAD_REQUEST, "B010", "지원하지 않는 동영상 확장자입니다."),
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "B011", "파일 확장자가 올바르지 않습니다."),
@@ -60,8 +60,9 @@ public enum ErrorCode {
     INVALID_SHORTFORM_TARGET(HttpStatus.BAD_REQUEST, "B015", "seriesId와 contentsId 중 하나만 제공해야 합니다."),
     INVALID_SHORTFORM_CONTENTS_TARGET(HttpStatus.BAD_REQUEST, "B016", "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다."),
     SHORTFORM_ORIGIN_MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B017", "숏폼 원본 미디어를 찾을 수 없습니다."),
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B018", "북마크를 찾을 수 없습니다"),
+    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B019", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요");
 
-    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B018", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요");
 
     private final HttpStatus status;
     private final String code;
