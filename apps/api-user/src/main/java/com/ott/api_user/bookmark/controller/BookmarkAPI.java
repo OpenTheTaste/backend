@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Bookmark API", description = "북마크 관련 API입니다.")
+@Tag(name = "Bookmark API", description = "북마크 API")
 public interface BookmarkAPI {
     @Operation(summary = "북마크 수정", description = "미디어에 대한 북마크를 수정합니다.")
     @ApiResponses(value = {
