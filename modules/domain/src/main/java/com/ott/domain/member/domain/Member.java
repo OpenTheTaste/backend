@@ -1,6 +1,7 @@
 package com.ott.domain.member.domain;
 
 import com.ott.domain.common.BaseEntity;
+import com.ott.domain.common.Status;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -91,5 +92,18 @@ public class Member extends BaseEntity {
     // 온보딩 여부
     public void completeOnboarding() {
         this.onboardingCompleted = true;
+    }
+
+    // 회원 탈퇴 - Soft Delete (refreshToken 초기화 + status DELETE)
+    public void withdraw() {
+        this.refreshToken = null;
+        this.updateStatus(Status.DELETE);
+    }
+
+    // 탈퇴(DELETE) 상태인 경우에만 ACTIVE로 복구
+    public void reactivate() {
+        if (this.getStatus() == Status.DELETE) {
+            this.updateStatus(Status.ACTIVE);
+        }
     }
 }

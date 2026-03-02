@@ -88,4 +88,14 @@ public class MemberController implements MemberApi {
     ) {
         return ResponseEntity.ok(SuccessResponse.of(memberService.getWatchHistoryPlaylist(memberId, page)));
     }
+
+    // 회원 탈퇴 - 현재 soft delete
+    // 현재 회원 탈퇴를 진행해도 JWT가 현재 stateless라서 만료 시간 까지 API 호출이 가능함
+    // 추후 redis 블랙리스트 같은 기술을 도입해야됨
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> withdraw(
+            @AuthenticationPrincipal Long memberId) {
+        memberService.withdraw(memberId);
+        return ResponseEntity.noContent().build();
+    }
 }

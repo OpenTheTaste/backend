@@ -1,5 +1,6 @@
 package com.ott.api_user.member.service;
 
+import com.ott.api_user.auth.client.KakaoUnlinkClient;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.*;
@@ -9,10 +10,15 @@ import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
+import com.ott.domain.bookmark.repository.BookmarkRepository;
+import com.ott.domain.comment.repository.CommentRepository;
 import com.ott.domain.common.Status;
+import com.ott.domain.likes.repository.LikesRepository;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.member.domain.Member;
+import com.ott.domain.member.domain.Provider;
 import com.ott.domain.member.repository.MemberRepository;
+import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.preferred_tag.domain.PreferredTag;
 import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
 import com.ott.domain.tag.domain.Tag;
@@ -43,6 +49,13 @@ public class MemberService {
     private final TagRepository tagRepository;
     private final WatchHistoryRepository watchHistoryRepository;
     private final MediaRepository mediaRepository;
+
+    // 회원 탈퇴 시 soft delete
+    private final KakaoUnlinkClient kakaoUnlinkClient;
+    private final BookmarkRepository bookmarkRepository;
+    private final LikesRepository likesRepository;
+    private final PlaybackRepository playbackRepository;
+    private final CommentRepository commentRepository;
 
     /**
      * 마이 페이지 조회 : 닉네임, 선호태그 List 반환
@@ -258,5 +271,37 @@ public class MemberService {
         );
 
         return PageResponse.toPageResponse(pageInfo, dataList);
+    }
+
+
+    /**
+     * 회원 탈퇴
+     * 1. 카카오 회원인 경우 카카오 연결 끊기
+     * 2. 연관 데이터 Soft Delete
+     * 3. 회원 Soft Delete + refreshToken 초기화
+     */
+    @Transactional
+    public void withdraw(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 1. 카카오 연결 끊기
+        if (member.getProvider() == Provider.KAKAO) {
+            kakaoUnlinkClient.unlink(member.getProviderId());
+        }
+
+        // 벌크 쿼리 이후 영속성 컨텍스트가 초기화 되기 때문에 member.withdraw 먼저 수행
+        // JPA가 변경 감지를 못해서 순서 변경
+        // 2. 회원 Soft Delete
+        member.withdraw();
+
+        // 3. 연관 데이터 Soft Delete
+        preferredTagRepository.softDeleteAllByMemberId(memberId);
+        bookmarkRepository.softDeleteAllByMemberId(memberId);
+        likesRepository.softDeleteAllByMemberId(memberId);
+        watchHistoryRepository.softDeleteAllByMemberId(memberId);
+        playbackRepository.softDeleteAllByMemberId(memberId);
+        commentRepository.softDeleteAllByMemberId(memberId);
+
     }
 }
