@@ -1,9 +1,11 @@
 package com.ott.api_admin.series.service;
 
 import com.ott.api_admin.series.dto.request.SeriesUploadRequest;
+import com.ott.api_admin.series.dto.request.SeriesUpdateRequest;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
+import com.ott.api_admin.series.dto.response.SeriesUpdateResponse;
 import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
 import com.ott.api_admin.series.mapper.BackOfficeSeriesMapper;
 import com.ott.api_admin.upload.support.MediaTagLinker;
@@ -27,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -149,6 +152,58 @@ public class BackOfficeSeriesService {
                 thumbnailObjectKey,
                 s3PresignService.createPutPresignedUrl(posterObjectKey, uploadHelper.resolveImageContentType(sanitizedPosterFileName)),
                 s3PresignService.createPutPresignedUrl(thumbnailObjectKey, uploadHelper.resolveImageContentType(sanitizedThumbnailFileName))
+        );
+    }
+
+    @Transactional
+    public SeriesUpdateResponse updateSeriesUpload(Long mediaId, SeriesUpdateRequest request) {
+        Series series = seriesRepository.findWithMediaAndUploaderByMediaId(mediaId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+
+        Media media = series.getMedia();
+        media.updateMetadata(request.title(), request.description(), request.publicStatus());
+        series.updateActors(request.actors());
+
+        Long seriesId = series.getId();
+        String posterObjectKey = null;
+        String thumbnailObjectKey = null;
+        String posterUploadUrl = null;
+        String thumbnailUploadUrl = null;
+
+        String nextPosterUrl = media.getPosterUrl();
+        String nextThumbnailUrl = media.getThumbnailUrl();
+
+        if (StringUtils.hasText(request.posterFileName())) {
+            String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
+            posterObjectKey = uploadHelper.buildObjectKey("series", seriesId, "poster", sanitizedPosterFileName);
+            nextPosterUrl = s3PresignService.toObjectUrl(posterObjectKey);
+            posterUploadUrl = s3PresignService.createPutPresignedUrl(
+                    posterObjectKey,
+                    uploadHelper.resolveImageContentType(sanitizedPosterFileName)
+            );
+        }
+
+        if (StringUtils.hasText(request.thumbnailFileName())) {
+            String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
+            thumbnailObjectKey = uploadHelper.buildObjectKey("series", seriesId, "thumbnail", sanitizedThumbnailFileName);
+            nextThumbnailUrl = s3PresignService.toObjectUrl(thumbnailObjectKey);
+            thumbnailUploadUrl = s3PresignService.createPutPresignedUrl(
+                    thumbnailObjectKey,
+                    uploadHelper.resolveImageContentType(sanitizedThumbnailFileName)
+            );
+        }
+
+        media.updateImageKeys(nextPosterUrl, nextThumbnailUrl);
+
+        mediaTagRepository.deleteAllByMedia_Id(media.getId());
+        mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
+
+        return backOfficeSeriesMapper.toSeriesUpdateResponse(
+                seriesId,
+                posterObjectKey,
+                thumbnailObjectKey,
+                posterUploadUrl,
+                thumbnailUploadUrl
         );
     }
 }

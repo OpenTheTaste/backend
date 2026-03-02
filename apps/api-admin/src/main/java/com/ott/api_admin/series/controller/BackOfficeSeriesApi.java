@@ -1,9 +1,11 @@
 package com.ott.api_admin.series.controller;
 
+import com.ott.api_admin.series.dto.request.SeriesUpdateRequest;
 import com.ott.api_admin.series.dto.request.SeriesUploadRequest;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
+import com.ott.api_admin.series.dto.response.SeriesUpdateResponse;
 import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -90,7 +93,7 @@ public interface BackOfficeSeriesApi {
             )
     })
     ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
-            @Parameter(description = "미디어 ID", required = true, example = "1") @PathVariable Long mediaId
+            @Parameter(description = "미디어 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId
     );
 
     @Operation(summary = "시리즈 메타데이터 업로드", description = "시리즈 메타데이터를 생성하고 S3 업로드용 Presigned URL을 반환합니다.")
@@ -111,5 +114,28 @@ public interface BackOfficeSeriesApi {
     ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
             @Parameter(description = "SeriesUploadRequest를 참고해주세요.", required = true)
             @RequestBody SeriesUploadRequest request
+    );
+
+    @Operation(summary = "시리즈 수정", description = "시리즈 메타데이터를 수정하고 필요 시 포스터/썸네일 교체용 Presigned URL을 발급합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "시리즈 수정 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = SeriesUpdateResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "시리즈 수정 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<SeriesUpdateResponse>> updateSeriesUpload(
+            @Parameter(description = "수정 대상 미디어 ID", required = true, example = "1")
+            @PathVariable("mediaId") Long mediaId,
+
+            @Parameter(description = "SeriesUpdateRequest를 참고해주세요.", required = true)
+            @Valid @RequestBody SeriesUpdateRequest request
     );
 }

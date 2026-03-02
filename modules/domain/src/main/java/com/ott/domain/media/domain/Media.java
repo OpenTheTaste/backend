@@ -70,6 +70,12 @@ public class Media extends BaseEntity {
         this.thumbnailUrl = thumbnailUrl;
     }
 
+    public void updateMetadata(String title, String description, PublicStatus publicStatus) {
+        this.title = title;
+        this.description = description;
+        this.publicStatus = publicStatus;
+    }
+
     // 북마크 증가 메소드
     public void increaseBookmarkCount() {
         this.bookmarkCount++;
