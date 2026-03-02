@@ -64,6 +64,7 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                         .and(tag.status.eq(ACTIVE)))
                 .where(
                         watchHistory.member.id.eq(memberId),
+                        watchHistory.status.eq(ACTIVE), // delete 된거 조회 x
                         watchHistory.lastWatchedAt.goe(startDate),
                         watchHistory.lastWatchedAt.lt(endDate)
                 )
@@ -90,6 +91,7 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                         .and(tag.status.eq(ACTIVE)))
                 .where(
                         watchHistory.member.id.eq(memberId),
+                        watchHistory.status.eq(ACTIVE), // delete 된거 조회 x
                         tag.id.eq(tagId),
                         watchHistory.lastWatchedAt.goe(startDate),
                         watchHistory.lastWatchedAt.lt(endDate)
@@ -117,7 +119,10 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                                 .and(playback.member.id.eq(memberId))
                                 .and(playback.status.eq(ACTIVE))
                 )
-                .where(watchHistory.member.id.eq(memberId))
+                .where(
+                        watchHistory.member.id.eq(memberId),
+                        watchHistory.status.eq(ACTIVE) // delete 된거 조회 x
+                )
                 .orderBy(watchHistory.lastWatchedAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -126,7 +131,10 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
         JPAQuery<Long> countQuery = queryFactory
                 .select(watchHistory.count())
                 .from(watchHistory)
-                .where(watchHistory.member.id.eq(memberId));
+                .where(
+                        watchHistory.member.id.eq(memberId),
+                        watchHistory.status.eq(ACTIVE)
+                        );
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
