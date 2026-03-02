@@ -1,8 +1,10 @@
 package com.ott.api_admin.content.controller;
 
+import com.ott.api_admin.content.dto.request.ContentsUpdateRequest;
 import com.ott.api_admin.content.dto.request.ContentsUploadRequest;
 import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
+import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,7 +68,7 @@ public interface BackOfficeContentsApi {
             )
     })
     ResponseEntity<SuccessResponse<ContentsDetailResponse>> getContentsDetail(
-            @Parameter(description = "조회할 콘텐츠의 미디어 ID", required = true) @PathVariable Long mediaId
+            @Parameter(description = "조회할 콘텐츠의 미디어 ID", required = true) @PathVariable("mediaId") Long mediaId
     );
 
     @Operation(summary = "콘텐츠 메타데이터 업로드", description = "콘텐츠 메타데이터를 생성하고 S3 업로드용 Presigned URL을 반환합니다.")
@@ -85,6 +88,29 @@ public interface BackOfficeContentsApi {
     })
     ResponseEntity<SuccessResponse<ContentsUploadResponse>> createContentsUpload(
             @Parameter(description = "ContentsUploadRequest를 참고해주세요.", required = true)
-            @RequestBody ContentsUploadRequest request
+            @Valid @RequestBody ContentsUploadRequest request
+    );
+
+    @Operation(summary = "콘텐츠 수정", description = "콘텐츠 메타데이터를 수정하고 필요 시 파일 교체용 Presigned URL을 발급합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "콘텐츠 수정 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ContentsUpdateResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "콘텐츠 수정 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<ContentsUpdateResponse>> updateContentsUpload(
+            @Parameter(description = "수정 대상 콘텐츠의 미디어 ID", required = true, example = "1")
+            @PathVariable("mediaId") Long mediaId,
+
+            @Parameter(description = "ContentsUpdateRequest를 참고해주세요.", required = true)
+            @Valid @RequestBody ContentsUpdateRequest request
     );
 }

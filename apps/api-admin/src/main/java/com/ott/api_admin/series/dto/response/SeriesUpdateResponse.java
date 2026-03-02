@@ -13,10 +13,10 @@ public record SeriesUpdateResponse(
         @Schema(type = "String", description = "썸네일 Object Key (교체하지 않으면 null)", example = "series/10/thumbnail/thumb-new.jpg")
         String thumbnailObjectKey,
 
-        @Schema(type = "String", description = "포스터 업로드 URL (교체하지 않으면 null)", example = "series/10/thumbnail/poster-new-new.jpg/~")
+        @Schema(type = "String", description = "포스터 업로드 URL(교체하지 않으면 null)", example = "https://oplust-content.s3.ap-northeast-2.amazonaws.com/series/10/poster/poster-new.jpg?X-Amz-.../~")
         String posterUploadUrl,
 
-        @Schema(type = "String", description = "썸네일 업로드 URL (교체하지 않으면 null)", example = "series/10/thumbnail/thumb-new.jpg/~")
+        @Schema(type = "String", description = "썸네일 업로드 URL(교체하지 않으면 null)", example = "https://oplust-content.s3.ap-northeast-2.amazonaws.com/series/10/thumbnail/thumb-new.jpg?X-Amz-.../~")
         String thumbnailUploadUrl
 ) {
 }
