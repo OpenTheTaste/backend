@@ -2,14 +2,13 @@ package com.ott.api_user.member.controller;
 
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
-import com.ott.api_user.member.dto.response.MyPageResponse;
-import com.ott.api_user.member.dto.response.TagContentResponse;
-import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse;
-import com.ott.api_user.member.dto.response.TagRankingResponse;
+import com.ott.api_user.member.dto.response.*;
 import com.ott.api_user.member.service.MemberService;
+import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -71,11 +70,22 @@ public class MemberController implements MemberApi {
     }
 
     // 태그 별 추천 리스트 조회
+    @Override
     @GetMapping("/me/taglist/{tagId}")
     public ResponseEntity<SuccessResponse<List<TagContentResponse>>> getRecommendContentsByTag(
             @AuthenticationPrincipal Long memberId,
             @Positive @PathVariable Long tagId
     ) {
         return ResponseEntity.ok(SuccessResponse.of(memberService.getRecommendContentsByTag(memberId, tagId)));
+    }
+
+    // 과거 시청 이력 조회, 10개씩 조회
+    @Override
+    @GetMapping("/me/history/playlist")
+    public ResponseEntity<SuccessResponse<PageResponse<RecentWatchResponse>>> getWatchHistoryPlaylist(
+            @AuthenticationPrincipal Long memberId,
+            @PositiveOrZero @RequestParam(defaultValue = "0") Integer page
+    ) {
+        return ResponseEntity.ok(SuccessResponse.of(memberService.getWatchHistoryPlaylist(memberId, page)));
     }
 }

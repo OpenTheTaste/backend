@@ -1,8 +1,12 @@
 package com.ott.domain.watch_history.repository;
 
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +14,7 @@ import java.util.List;
 import static com.ott.domain.common.Status.ACTIVE;
 import static com.ott.domain.contents.domain.QContents.contents;
 import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
+import static com.ott.domain.playback.domain.QPlayback.playback;
 import static com.ott.domain.tag.domain.QTag.tag;
 import static com.ott.domain.watch_history.domain.QWatchHistory.watchHistory;
 
@@ -92,6 +97,38 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .fetchOne();
 
         return result != null ? result : 0L;
+    }
+
+    // 특정 회원의 전체 시청이력 페이징 조회 (최신순)
+    @Override
+    public Page<RecentWatchProjection> findWatchHistoryByMemberId(Long memberId, Pageable pageable) {
+
+        List<RecentWatchProjection> content = queryFactory
+                .select(Projections.constructor(RecentWatchProjection.class,
+                        contents.id,
+                        contents.media.posterUrl,
+                        playback.positionSec.coalesce(0),
+                        contents.duration
+                ))
+                .from(watchHistory)
+                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .leftJoin(playback).on(
+                        playback.contents.id.eq(contents.id)
+                                .and(playback.member.id.eq(memberId))
+                                .and(playback.status.eq(ACTIVE))
+                )
+                .where(watchHistory.member.id.eq(memberId))
+                .orderBy(watchHistory.lastWatchedAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(watchHistory.count())
+                .from(watchHistory)
+                .where(watchHistory.member.id.eq(memberId));
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
 }

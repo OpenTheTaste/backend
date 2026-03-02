@@ -2,14 +2,13 @@ package com.ott.api_user.member.service;
 
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
-import com.ott.api_user.member.dto.response.MyPageResponse;
-import com.ott.api_user.member.dto.response.TagContentResponse;
-import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse;
+import com.ott.api_user.member.dto.response.*;
 import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse.MonthlyCount;
-import com.ott.api_user.member.dto.response.TagRankingResponse;
 import com.ott.api_user.member.dto.response.TagRankingResponse.TagRankItem;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.common.web.response.PageInfo;
+import com.ott.common.web.response.PageResponse;
 import com.ott.domain.common.Status;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.member.domain.Member;
@@ -18,9 +17,13 @@ import com.ott.domain.preferred_tag.domain.PreferredTag;
 import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
 import com.ott.domain.tag.domain.Tag;
 import com.ott.domain.tag.repository.TagRepository;
+import com.ott.domain.watch_history.repository.RecentWatchProjection;
 import com.ott.domain.watch_history.repository.TagRankingProjection;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -175,6 +178,7 @@ public class MemberService {
     /**
      * 마이페이지 - 특정 태그의 이번 달 vs 저번 달 시청 count 비교
      */
+    @Transactional(readOnly = true)
     public TagMonthlyCompareResponse getTagMonthlyCompare(Long memberId, Long tagId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -216,7 +220,8 @@ public class MemberService {
                 .build();
     }
 
-    // 마이페이지에서의 추천 태그 별 추천 콘텐츠 제공
+    // 태그별 추천 콘텐츠 목록 조회 (최대 20개)
+    @Transactional(readOnly = true)
     public List<TagContentResponse> getRecommendContentsByTag(Long memberId, Long tagId) {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -228,5 +233,30 @@ public class MemberService {
                 .stream()
                 .map(TagContentResponse::from)
                 .toList();
+    }
+
+    // 전체 시청이력 플레이리스트 페이징 조회 (최신순, 10개씩)
+    @Transactional(readOnly = true)
+    public PageResponse<RecentWatchResponse> getWatchHistoryPlaylist(Long memberId, Integer page) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        PageRequest pageable = PageRequest.of(page, 10);
+
+        Page<RecentWatchProjection> watchPage =
+                watchHistoryRepository.findWatchHistoryByMemberId(memberId, pageable);
+
+        List<RecentWatchResponse> dataList = watchPage.getContent()
+                .stream()
+                .map(RecentWatchResponse::from)
+                .toList();
+
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                watchPage.getNumber(),
+                watchPage.getTotalPages(),
+                watchPage.getSize()
+        );
+
+        return PageResponse.toPageResponse(pageInfo, dataList);
     }
 }
