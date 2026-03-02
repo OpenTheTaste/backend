@@ -64,6 +64,13 @@ public class ShortForm extends BaseEntity {
         this.masterPlaylistUrl = masterPlaylistUrl;
     }
 
+    public void updateMetadata(Series series, Contents contents, Integer duration, Integer videoSize) {
+        this.series = series;
+        this.contents = contents;
+        this.duration = duration;
+        this.videoSize = videoSize;
+    }
+
     public Optional<Media> findOriginMedia() {
         if (series != null) return Optional.of(series.getMedia());
         if (contents != null) return Optional.of(contents.getMedia());

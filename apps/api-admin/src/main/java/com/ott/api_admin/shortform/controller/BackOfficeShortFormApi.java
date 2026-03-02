@@ -3,7 +3,9 @@ package com.ott.api_admin.shortform.controller;
 import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormUpdateResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
+import com.ott.api_admin.shortform.dto.request.ShortFormUpdateRequest;
 import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
@@ -17,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -82,7 +85,7 @@ public interface BackOfficeShortFormApi {
             ),
     })
     ResponseEntity<SuccessResponse<ShortFormDetailResponse>> getShortFormDetail(
-            @Parameter(description = "조회할 숏폼의 미디어 ID", required = true) @PathVariable Long mediaId,
+            @Parameter(description = "조회할 숏폼의 미디어 ID", required = true) @PathVariable("mediaId") Long mediaId,
             Authentication authentication
     );
 
@@ -104,5 +107,29 @@ public interface BackOfficeShortFormApi {
     ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
             @Parameter(description = "ShortFormUploadRequest 참고해주세요.", required = true)
             @RequestBody ShortFormUploadRequest request
+    );
+
+    @Operation(summary = "숏폼 수정", description = "숏폼 메타데이터를 수정하고 필요 시 파일 교체용 Presigned URL을 발급합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "숏폼 수정 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ShortFormUpdateResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "숏폼 수정 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN, EDITOR 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<ShortFormUpdateResponse>> updateShortFormUpload(
+            @Parameter(description = "수정 대상 숏폼 미디어 ID", required = true, example = "1")
+            @PathVariable("mediaId") Long mediaId,
+
+            @Parameter(description = "ShortFormUpdateRequest 참고해주세요.", required = true)
+            @Valid @RequestBody ShortFormUpdateRequest request,
+            Authentication authentication
     );
 }

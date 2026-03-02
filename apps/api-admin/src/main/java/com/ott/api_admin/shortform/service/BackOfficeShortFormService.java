@@ -1,9 +1,11 @@
 package com.ott.api_admin.shortform.service;
 
 import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
+import com.ott.api_admin.shortform.dto.request.ShortFormUpdateRequest;
 import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormUpdateResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
 import com.ott.api_admin.shortform.mapper.BackOfficeShortFormMapper;
 import com.ott.api_admin.upload.support.UploadHelper;
@@ -33,6 +35,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -216,6 +219,86 @@ public class BackOfficeShortFormService {
                                                 uploadHelper.resolveImageContentType(sanitizedThumbnailFileName)),
                                 s3PresignService.createPutPresignedUrl(originObjectKey,
                                                 uploadHelper.resolveVideoContentType(sanitizedOriginFileName)));
+        }
+
+        @Transactional
+        public ShortFormUpdateResponse updateShortFormUpload(Long mediaId, ShortFormUpdateRequest request, Authentication authentication) {
+                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByMediaId(mediaId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+
+                Media media = shortForm.getMedia();
+                Long memberId = (Long) authentication.getPrincipal();
+                boolean isEditor = authentication.getAuthorities().stream()
+                                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
+                if (isEditor && !media.getUploader().getId().equals(memberId)) {
+                        throw new BusinessException(ErrorCode.FORBIDDEN);
+                }
+
+                validateExclusiveTarget(request.seriesId(), request.contentsId());
+                Series series = resolveSeries(request.seriesId());
+                Contents contents = resolveContents(request.contentsId());
+
+                media.updateMetadata(request.title(), request.description(), request.publicStatus());
+                shortForm.updateMetadata(series, contents, request.duration(), request.videoSize());
+
+                Long shortFormId = shortForm.getId();
+                String posterObjectKey = null;
+                String thumbnailObjectKey = null;
+                String originObjectKey = null;
+                String posterUploadUrl = null;
+                String thumbnailUploadUrl = null;
+                String originUploadUrl = null;
+
+                String nextPosterUrl = media.getPosterUrl();
+                String nextThumbnailUrl = media.getThumbnailUrl();
+                String nextOriginUrl = shortForm.getOriginUrl();
+                String nextMasterPlaylistUrl = shortForm.getMasterPlaylistUrl();
+                String masterPlaylistObjectKey = "short-forms/" + shortFormId + "/transcoded/master.m3u8";
+
+                if (StringUtils.hasText(request.posterFileName())) {
+                        String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
+                        posterObjectKey = uploadHelper.buildObjectKey("short-forms", shortFormId, "poster", sanitizedPosterFileName);
+                        nextPosterUrl = s3PresignService.toObjectUrl(posterObjectKey);
+                        posterUploadUrl = s3PresignService.createPutPresignedUrl(
+                                        posterObjectKey,
+                                        uploadHelper.resolveImageContentType(sanitizedPosterFileName));
+                }
+
+                if (StringUtils.hasText(request.thumbnailFileName())) {
+                        String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
+                        thumbnailObjectKey = uploadHelper.buildObjectKey("short-forms", shortFormId, "thumbnail", sanitizedThumbnailFileName);
+                        nextThumbnailUrl = s3PresignService.toObjectUrl(thumbnailObjectKey);
+                        thumbnailUploadUrl = s3PresignService.createPutPresignedUrl(
+                                        thumbnailObjectKey,
+                                        uploadHelper.resolveImageContentType(sanitizedThumbnailFileName));
+                }
+
+                if (StringUtils.hasText(request.originFileName())) {
+                        String sanitizedOriginFileName = uploadHelper.sanitizeFileName(request.originFileName());
+                        originObjectKey = uploadHelper.buildObjectKey("short-forms", shortFormId, "origin", sanitizedOriginFileName);
+                        nextOriginUrl = s3PresignService.toObjectUrl(originObjectKey);
+                        nextMasterPlaylistUrl = s3PresignService.toObjectUrl(masterPlaylistObjectKey);
+                        originUploadUrl = s3PresignService.createPutPresignedUrl(
+                                        originObjectKey,
+                                        uploadHelper.resolveVideoContentType(sanitizedOriginFileName));
+                }
+
+                media.updateImageKeys(nextPosterUrl, nextThumbnailUrl);
+                shortForm.updateStorageKeys(nextOriginUrl, nextMasterPlaylistUrl);
+
+                Long originMediaId = resolveOriginMediaId(series, contents);
+                mediaTagRepository.deleteAllByMedia_Id(media.getId());
+                inheritOriginMediaTags(media, originMediaId);
+
+                return backOfficeShortFormMapper.toShortFormUpdateResponse(
+                                shortFormId,
+                                posterObjectKey,
+                                thumbnailObjectKey,
+                                originObjectKey,
+                                masterPlaylistObjectKey,
+                                posterUploadUrl,
+                                thumbnailUploadUrl,
+                                originUploadUrl);
         }
 
         private void validateExclusiveTarget(Long seriesId, Long contentsId) {
