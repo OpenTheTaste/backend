@@ -16,9 +16,9 @@ public class AdminLoginResponse {
     @JsonIgnore  // 쿠키로 전달 — JSON 응답에서 제외
     private String refreshToken;
 
-    @Schema(description = "회원 ID", example = "1")
+    @Schema(type = "Long", description = "회원 ID", example = "1")
     private Long memberId;
 
-    @Schema(description = "회원 역할", example = "ADMIN")
+    @Schema(type= "String", description = "회원 역할", example = "ADMIN")
     private String role;
 }
