@@ -3,6 +3,8 @@ package com.ott.api_user.member.service;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.MyPageResponse;
+import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse;
+import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse.MonthlyCount;
 import com.ott.api_user.member.dto.response.TagRankingResponse;
 import com.ott.api_user.member.dto.response.TagRankingResponse.TagRankItem;
 import com.ott.common.web.exception.BusinessException;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -164,4 +168,43 @@ public class MemberService {
         return TagRankingResponse.builder().rankings(rankItems).build();
     }
 
+
+    /**
+     * 마이페이지 - 특정 태그의 이번 달 vs 저번 달 시청 count 비교
+     */
+    public TagMonthlyCompareResponse getTagMonthlyCompare(Long memberId, Long tagId) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Tag findTag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND));
+
+        // 이번 달 범위
+        YearMonth currentYearMonth = YearMonth.now();
+        LocalDateTime currentStart = currentYearMonth.atDay(1).atStartOfDay();
+        LocalDateTime currentEnd   = currentYearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+        // 저번 달 범위
+        YearMonth prevYearMonth = currentYearMonth.minusMonths(1);
+        LocalDateTime prevStart = prevYearMonth.atDay(1).atStartOfDay();
+        LocalDateTime prevEnd   = prevYearMonth.atEndOfMonth().atTime(23, 59, 59);
+
+        Long currentCount  = watchHistoryRepository.countByMemberIdAndTagIdAndWatchedBetween(memberId, tagId, currentStart, currentEnd);
+        Long previousCount = watchHistoryRepository.countByMemberIdAndTagIdAndWatchedBetween(memberId, tagId, prevStart, prevEnd);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+
+        return TagMonthlyCompareResponse.builder()
+                .tagId(findTag.getId())
+                .tagName(findTag.getName())
+                .currentMonth(MonthlyCount.builder()
+                        .yearMonth(currentYearMonth.format(formatter))
+                        .count(currentCount)
+                        .build())
+                .previousMonth(MonthlyCount.builder()
+                        .yearMonth(prevYearMonth.format(formatter))
+                        .count(previousCount)
+                        .build())
+                .build();
+    }
 }

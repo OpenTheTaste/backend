@@ -66,4 +66,32 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .orderBy(watchHistory.count().desc())
                 .fetch();
     }
+
+    // 특정 회원의 특정 태그에 대한 기간 내 시청 count
+    @Override
+    public Long countByMemberIdAndTagIdAndWatchedBetween(
+            Long memberId,
+            Long tagId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+        Long result = queryFactory
+                .select(watchHistory.count())
+                .from(watchHistory)
+                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .join(mediaTag).on(mediaTag.media.id.eq(contents.media.id)
+                        .and(mediaTag.status.eq(ACTIVE)))
+                .join(tag).on(tag.id.eq(mediaTag.tag.id)
+                        .and(tag.status.eq(ACTIVE)))
+                .where(
+                        watchHistory.member.id.eq(memberId),
+                        tag.id.eq(tagId),
+                        watchHistory.lastWatchedAt.goe(startDate),
+                        watchHistory.lastWatchedAt.lt(endDate)
+                )
+                .fetchOne();
+
+        return result != null ? result : 0L;
+    }
+
 }

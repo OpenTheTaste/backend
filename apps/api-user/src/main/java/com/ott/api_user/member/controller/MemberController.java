@@ -3,10 +3,12 @@ package com.ott.api_user.member.controller;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.MyPageResponse;
+import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse;
 import com.ott.api_user.member.dto.response.TagRankingResponse;
 import com.ott.api_user.member.service.MemberService;
 import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -53,5 +55,15 @@ public class MemberController implements MemberApi {
             @AuthenticationPrincipal Long memberId
     ) {
         return ResponseEntity.ok(SuccessResponse.of(memberService.getTagRanking(memberId)));
+    }
+
+    // 유저 별 2달 간 특정 태그 조회
+    @Override
+    @GetMapping("/me/tag/ranking/{tagId}")
+    public ResponseEntity<SuccessResponse<TagMonthlyCompareResponse>> getTagMonthlyCompare(
+            @AuthenticationPrincipal Long memberId,
+            @Positive @PathVariable Long tagId
+    ) {
+        return ResponseEntity.ok(SuccessResponse.of(memberService.getTagMonthlyCompare(memberId, tagId)));
     }
 }
