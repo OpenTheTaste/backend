@@ -194,6 +194,14 @@ public class MemberService {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
+        // 저번 달 시청 기록이 없으면 null
+        MonthlyCount previousMonth = previousCount > 0
+                ? MonthlyCount.builder()
+                .yearMonth(prevYearMonth.format(formatter))
+                .count(previousCount)
+                .build()
+                : null;
+
         return TagMonthlyCompareResponse.builder()
                 .tagId(findTag.getId())
                 .tagName(findTag.getName())
@@ -201,10 +209,7 @@ public class MemberService {
                         .yearMonth(currentYearMonth.format(formatter))
                         .count(currentCount)
                         .build())
-                .previousMonth(MonthlyCount.builder()
-                        .yearMonth(prevYearMonth.format(formatter))
-                        .count(previousCount)
-                        .build())
+                .previousMonth(previousMonth)
                 .build();
     }
 }
