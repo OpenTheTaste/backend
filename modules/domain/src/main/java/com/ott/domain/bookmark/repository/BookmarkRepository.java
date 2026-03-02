@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.ott.domain.bookmark.domain.Bookmark;
 import com.ott.domain.common.Status;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,4 +30,8 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     Page<Bookmark> findByMemberIdAndStatusAndMedia_MediaTypeOrderByCreatedDateDesc(
             Long memberId, Status status, MediaType mediaType, Pageable pageable);
 
+    // 회원탈퇴 soft delete
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Bookmark b SET b.status = 'DELETE' WHERE b.member.id = :memberId")
+    void softDeleteAllByMemberId(@Param("memberId") Long memberId);
 }

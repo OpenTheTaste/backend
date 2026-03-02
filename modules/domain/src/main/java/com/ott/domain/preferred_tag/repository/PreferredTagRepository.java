@@ -31,4 +31,10 @@ public interface PreferredTagRepository extends JpaRepository<PreferredTag, Long
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM PreferredTag pt WHERE pt.member = :member")
     void deleteAllByMember(@Param("member") Member member);
+
+
+    // 회원 탈퇴 시 soft delete 사용
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PreferredTag pt SET pt.status = 'DELETE' WHERE pt.member.id = :memberId")
+    void softDeleteAllByMemberId(@Param("memberId") Long memberId);
 }
