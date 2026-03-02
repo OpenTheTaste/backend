@@ -142,7 +142,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 return queryFactory
                         .select(Projections.constructor(TagContentProjection.class,
                                 media.id,
-                                media.posterUrl
+                                media.posterUrl,
+                                media.mediaType
                         ))
                         .from(media)
                         .join(mediaTag).on(
