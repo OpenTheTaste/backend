@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.ott.domain.common.Status.ACTIVE;
 import static com.ott.domain.contents.domain.QContents.contents;
 import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
 import static com.ott.domain.tag.domain.QTag.tag;
@@ -34,6 +35,35 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                         watchHistory.lastWatchedAt.lt(endDate)
                 )
                 .groupBy(tag.id, tag.name)
+                .fetch();
+    }
+
+    // 특정 회원의 1달 시청이력 기반 태그 집계
+    @Override
+    public List<TagRankingProjection> findTopTagsByMemberIdAndWatchedBetween(
+            Long memberId,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    ) {
+        return queryFactory
+                .select(Projections.constructor(TagRankingProjection.class,
+                        tag.id,
+                        tag.name,
+                        watchHistory.count()
+                ))
+                .from(watchHistory)
+                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .join(mediaTag).on(mediaTag.media.id.eq(contents.media.id)
+                        .and(mediaTag.status.eq(ACTIVE)))
+                .join(tag).on(tag.id.eq(mediaTag.tag.id)
+                        .and(tag.status.eq(ACTIVE)))
+                .where(
+                        watchHistory.member.id.eq(memberId),
+                        watchHistory.lastWatchedAt.goe(startDate),
+                        watchHistory.lastWatchedAt.lt(endDate)
+                )
+                .groupBy(tag.id, tag.name)
+                .orderBy(watchHistory.count().desc())
                 .fetch();
     }
 }

@@ -3,6 +3,8 @@ package com.ott.api_user.member.service;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.MyPageResponse;
+import com.ott.api_user.member.dto.response.TagRankingResponse;
+import com.ott.api_user.member.dto.response.TagRankingResponse.TagRankItem;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.common.Status;
@@ -12,10 +14,14 @@ import com.ott.domain.preferred_tag.domain.PreferredTag;
 import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
 import com.ott.domain.tag.domain.Tag;
 import com.ott.domain.tag.repository.TagRepository;
+import com.ott.domain.watch_history.repository.TagRankingProjection;
+import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,6 +32,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PreferredTagRepository preferredTagRepository;
     private final TagRepository tagRepository;
+    private final WatchHistoryRepository watchHistoryRepository;
 
     /**
      * 마이 페이지 조회 : 닉네임, 선호태그 List 반환
@@ -87,7 +94,7 @@ public class MemberService {
     }
 
     /**
-     * 온보딩 화면 : 초기 1회만 노출되며
+     * 온보딩 화면 : 초기 1회만 노출됨
      */
     @Transactional
     public void setPreferredTags(Long memberId, SetPreferredTagRequest request) {
@@ -113,4 +120,48 @@ public class MemberService {
         findMember.completeOnboarding();
     }
 
+    /**
+     * 마이페이지 - 시청이력 기반 상위 태그 랭킹 조회 1달
+     * - 상위 4개: 개별 태그 항목
+     * - 나머지: count 합산하여 기타 항목으로 반환
+     */
+    @Transactional(readOnly = true)
+    public TagRankingResponse getTagRanking(Long memberId) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        // 집계일과 마감일 선정 1일~말일까지
+        LocalDateTime endDate = LocalDateTime.now();
+        LocalDateTime startDate = endDate.minusMonths(1);
+
+        List<TagRankingProjection> tagRankingProjections =
+                watchHistoryRepository.findTopTagsByMemberIdAndWatchedBetween(memberId, startDate, endDate);
+
+        List<TagRankItem> rankItems = new ArrayList<>();
+
+        // 시청이력이 없을 경우 빈 리스트가 전달됨
+        if (tagRankingProjections.isEmpty()) {
+            return TagRankingResponse.builder().rankings(rankItems).build();
+        }
+
+        int topN = Math.min(4, tagRankingProjections.size());
+
+        // 상위 4개 추가
+        for (int i = 0; i < topN; i++) {
+            TagRankingProjection projection = tagRankingProjections.get(i);
+            rankItems.add(TagRankItem.of(projection.getTagId(), projection.getTagName(), projection.getCount()));
+        }
+
+        // 나머지 → 기타로 합산
+        if (tagRankingProjections.size() > 4) {
+            long etcCount = tagRankingProjections.subList(4, tagRankingProjections.size())
+                    .stream()
+                    .mapToLong(TagRankingProjection::getCount)
+                    .sum();
+            rankItems.add(TagRankItem.ofEtc(etcCount));
+        }
+
+        return TagRankingResponse.builder().rankings(rankItems).build();
     }
+
+}
