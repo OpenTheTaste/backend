@@ -6,6 +6,8 @@ import com.ott.domain.media.domain.Media;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface MediaRepositoryCustom {
 
     Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType, String searchWord);
@@ -17,4 +19,6 @@ public interface MediaRepositoryCustom {
             MediaType mediaType, String searchWord, PublicStatus publicStatus, Long uploaderId);
 
     Page<Media> findOriginMediaListBySearchWord(Pageable pageable, String searchWord);
+
+    List<TagContentProjection> findRecommendContentsByTagId(Long tagId, int limit);
 }

@@ -3,6 +3,7 @@ package com.ott.api_user.member.service;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.MyPageResponse;
+import com.ott.api_user.member.dto.response.TagContentResponse;
 import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse;
 import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse.MonthlyCount;
 import com.ott.api_user.member.dto.response.TagRankingResponse;
@@ -10,6 +11,7 @@ import com.ott.api_user.member.dto.response.TagRankingResponse.TagRankItem;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.common.Status;
+import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.repository.MemberRepository;
 import com.ott.domain.preferred_tag.domain.PreferredTag;
@@ -37,6 +39,7 @@ public class MemberService {
     private final PreferredTagRepository preferredTagRepository;
     private final TagRepository tagRepository;
     private final WatchHistoryRepository watchHistoryRepository;
+    private final MediaRepository mediaRepository;
 
     /**
      * 마이 페이지 조회 : 닉네임, 선호태그 List 반환
@@ -211,5 +214,19 @@ public class MemberService {
                         .build())
                 .previousMonth(previousMonth)
                 .build();
+    }
+
+    // 마이페이지에서의 추천 태그 별 추천 콘텐츠 제공
+    public List<TagContentResponse> getRecommendContentsByTag(Long memberId, Long tagId) {
+        memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        tagRepository.findById(tagId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND));
+
+        return mediaRepository.findRecommendContentsByTagId(tagId, 20)
+                .stream()
+                .map(TagContentResponse::from)
+                .toList();
     }
 }

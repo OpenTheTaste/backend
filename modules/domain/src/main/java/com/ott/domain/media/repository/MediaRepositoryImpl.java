@@ -3,6 +3,7 @@ package com.ott.domain.media.repository;
 import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.media.domain.Media;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -16,8 +17,13 @@ import java.util.List;
 
 import com.querydsl.jpa.JPAExpressions;
 
+import static com.ott.domain.common.MediaType.CONTENTS;
+import static com.ott.domain.common.MediaType.SERIES;
+import static com.ott.domain.common.PublicStatus.PUBLIC;
+import static com.ott.domain.common.Status.ACTIVE;
 import static com.ott.domain.contents.domain.QContents.contents;
 import static com.ott.domain.media.domain.QMedia.media;
+import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
 
 @RequiredArgsConstructor
 public class MediaRepositoryImpl implements MediaRepositoryCustom {
@@ -101,7 +107,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         @Override
         public Page<Media> findOriginMediaListBySearchWord(Pageable pageable, String searchWord) {
-                BooleanExpression condition = media.mediaType.in(List.of(MediaType.SERIES, MediaType.CONTENTS))
+                BooleanExpression condition = media.mediaType.in(List.of(SERIES, CONTENTS))
                                 .and(
                                                 JPAExpressions.selectOne()
                                                                 .from(contents)
@@ -126,6 +132,38 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .where(condition, titleContains(searchWord));
 
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
+        }
+
+        /**
+         * 특정 태그에 속하는 추천 콘텐츠 조회
+         */
+        @Override
+        public List<TagContentProjection> findRecommendContentsByTagId(Long tagId, int limit) {
+                return queryFactory
+                        .select(Projections.constructor(TagContentProjection.class,
+                                media.id,
+                                media.posterUrl
+                        ))
+                        .from(media)
+                        .join(mediaTag).on(
+                                mediaTag.media.id.eq(media.id),
+                                mediaTag.tag.id.eq(tagId),
+                                mediaTag.status.eq(ACTIVE)
+                        )
+                        .leftJoin(contents).on(
+                                contents.media.id.eq(media.id),
+                                contents.series.isNull()
+                        )
+                        .where(
+                                media.status.eq(ACTIVE),
+                                media.publicStatus.eq(PUBLIC),
+                                // 시리즈 자체 OR 단편 콘텐츠 (시리즈 에피소드 제외)
+                                media.mediaType.eq(SERIES)
+                                        .or(media.mediaType.eq(CONTENTS).and(contents.id.isNotNull()))
+                        )
+                        .orderBy(media.bookmarkCount.desc())  // 북마크 많은 순 정렬
+                        .limit(limit)
+                        .fetch();
         }
 
         private BooleanExpression titleContains(String searchWord) {

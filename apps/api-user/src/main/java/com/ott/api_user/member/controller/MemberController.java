@@ -3,6 +3,7 @@ package com.ott.api_user.member.controller;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.MyPageResponse;
+import com.ott.api_user.member.dto.response.TagContentResponse;
 import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse;
 import com.ott.api_user.member.dto.response.TagRankingResponse;
 import com.ott.api_user.member.service.MemberService;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/member")
@@ -65,5 +68,14 @@ public class MemberController implements MemberApi {
             @Positive @PathVariable Long tagId
     ) {
         return ResponseEntity.ok(SuccessResponse.of(memberService.getTagMonthlyCompare(memberId, tagId)));
+    }
+
+    // 태그 별 추천 리스트 조회
+    @GetMapping("/me/taglist/{tagId}")
+    public ResponseEntity<SuccessResponse<List<TagContentResponse>>> getRecommendContentsByTag(
+            @AuthenticationPrincipal Long memberId,
+            @Positive @PathVariable Long tagId
+    ) {
+        return ResponseEntity.ok(SuccessResponse.of(memberService.getRecommendContentsByTag(memberId, tagId)));
     }
 }
