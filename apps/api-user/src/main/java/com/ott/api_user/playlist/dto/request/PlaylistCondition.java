@@ -3,9 +3,9 @@ package com.ott.api_user.playlist.dto.request;
 import org.hibernate.annotations.SourceType;
 
 import com.ott.api_user.common.ContentSource;
+import com.ott.domain.common.MediaType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.models.media.MediaType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,8 +22,11 @@ import lombok.ToString;
 @Schema(description = "플레이 리스트 공통 요청 DTO")
 public class PlaylistCondition {
 
-    @Schema(description = "진입점 소스 타입", example = "USER, RECOMMEND, SEARCH 등 ..")
+    @Schema(description = "진입점 소스 타입", example = "TRENDING, RECOMMEND, HISTORY 등 ..")
     private ContentSource contentSource;
+
+    @Schema(description = "미디어 타입", example = "SERIES, CONTENTS")
+    private MediaType mediaType;
 
     @Schema(description = "사용자 고유 ID", example = "1")
     private Long memberId;
@@ -34,7 +37,6 @@ public class PlaylistCondition {
     @Schema(description = "태그 고유 ID", example = "1")
     private Long tagId;
 
-    @Schema(description = "미디어 타입", example = "SERIES, CONTENTS")
-    private MediaType mediaType;
-
+    @Schema(description = "태그 랭킹 인덱스 (0, 1, 2)", example = "0")
+    private Integer index;
 }

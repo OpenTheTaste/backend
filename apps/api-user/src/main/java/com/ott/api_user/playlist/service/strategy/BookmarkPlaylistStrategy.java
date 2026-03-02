@@ -16,12 +16,11 @@ public class BookmarkPlaylistStrategy implements PlaylistStrategy {
 
     @Override
     public Page<Media> getPlaylist(PlaylistCondition condition, Pageable pageable) {
-        if (condition.getMemberId() == null) return Page.empty();
         
         return mediaRepository.findBookmarkedPlaylists(
-                condition.getMemberId(), 
-                condition.getExcludeMediaId(), 
-                pageable
+            condition.getMemberId(), 
+            condition.getExcludeMediaId(), 
+            pageable
         );
     }
 }

@@ -72,9 +72,8 @@ public class PlaylistService {
 
     private String determineStrategyKey(PlaylistCondition condition) {
         ContentSource source = condition.getContentSource();
-        if (source == null) return ContentSource.RECOMMEND.name();
 
-        // 검색 결과에서 진입 시 추천 리스트로 대체
+        // 검색 결과에서 상세로 진입한 시 재생목록은 추천으로 대체
         if (source == ContentSource.SEARCH && condition.getExcludeMediaId() != null) {
             return ContentSource.RECOMMEND.name();
         }

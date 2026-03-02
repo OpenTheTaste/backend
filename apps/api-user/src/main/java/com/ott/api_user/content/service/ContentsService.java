@@ -7,7 +7,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.ott.api_user.common.ContentSource;
-import com.ott.api_user.common.dto.ContentListElement;
 import com.ott.api_user.content.dto.ContentsDetailResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
@@ -59,5 +58,4 @@ public class ContentsService {
 
                 return ContentsDetailResponse.from(contents, tags, categories, isBookmarked, isLiked,masterPlaylistUrl, positionSec);
         }
-
 }

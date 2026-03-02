@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.ott.api_user.common.ContentSource;
-import com.ott.api_user.common.dto.ContentListElement;
 import com.ott.api_user.content.dto.ContentsDetailResponse;
 import com.ott.api_user.content.service.ContentsService;
 import com.ott.common.web.response.PageResponse;
