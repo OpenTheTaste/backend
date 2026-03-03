@@ -15,7 +15,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
+public interface BookmarkRepository extends JpaRepository<Bookmark, Long>, BookmarkRepositoryCustom {
     boolean existsByMemberIdAndMediaIdAndStatus(Long memberId, Long mediaId, Status status);
 
     Optional<Bookmark> findByMemberIdAndMediaId(Long memberId, Long mediaId);
