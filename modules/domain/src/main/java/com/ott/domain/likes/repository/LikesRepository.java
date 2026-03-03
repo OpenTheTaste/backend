@@ -28,13 +28,12 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
     @Query(value = """
     UPDATE media m
     JOIN (
-        SELECT l.media_id, COUNT(*) AS cnt
+        SELECT l.media_id
         FROM likes l
         WHERE l.member_id = :memberId
           AND l.status = 'ACTIVE'
-        GROUP BY l.media_id
     ) t ON t.media_id = m.id
-    SET m.likes_count = GREATEST(0, m.likes_count - t.cnt)
+    SET m.likes_count = GREATEST(0, m.likes_count - 1)
     """, nativeQuery = true)
     void decreaseLikesCountByMemberId(@Param("memberId") Long memberId);
 }
