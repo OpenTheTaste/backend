@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static com.ott.domain.contents.domain.QContents.contents;
 import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
@@ -35,5 +36,20 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 )
                 .groupBy(tag.id, tag.name)
                 .fetch();
+    }
+
+    @Override
+    public Optional<Long> findLatestContentMediaIdByMemberIdAndSeriesId(Long memberId, Long seriesId){
+        Long resultMediaId = queryFactory
+                .select(contents.media.id)
+                .from(watchHistory)
+                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .where(
+                        watchHistory.member.id.eq(memberId), 
+                        contents.series.id.eq(seriesId)
+                )
+                .orderBy(watchHistory.lastWatchedAt.desc())
+                .fetchFirst();
+        return Optional.ofNullable(resultMediaId);
     }
 }

@@ -1,6 +1,8 @@
 package com.ott.api_user.series.service;
 
+import java.lang.foreign.Linker.Option;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -28,18 +30,24 @@ import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.domain.tag.repository.TagRepository;
+import com.ott.domain.watch_history.domain.WatchHistory;
+import com.ott.domain.watch_history.repository.WatchHistoryRepository;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true) // 더티 체킹 비활성화
 public class SeriesService {
+
         private final SeriesRepository seriesRepository;
         private final ContentsRepository contentsRepository;
         private final TagRepository tagRepository;
         private final CategoryRepository categoryRepository;
         private final BookmarkRepository bookmarkRepository;
         private final LikesRepository likesRepository;
+        private final WatchHistoryRepository watchHistoryRepository;
+
         // private final PlaybackRepository playbackRepository;
 
         // 시리즈 상세 조회
@@ -54,8 +62,11 @@ public class SeriesService {
                 Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId,
                                 Status.ACTIVE);
                 Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId, Status.ACTIVE);
+                
+                // 마지막 시청지점이 있는지 조회 
+                Long resumMediaId = calculateResumeMediaId(series.getId(), memberId);
 
-                return SeriesDetailResponse.of(series, tags, categories, isBookmarked, isLiked);
+                return SeriesDetailResponse.of(series, tags, categories, isBookmarked, isLiked , resumMediaId);
         }
 
         // 시리즈 콘텐츠 목록 조회 (페이징)
@@ -84,4 +95,28 @@ public class SeriesService {
 
                 return PageResponse.toPageResponse(pageInfo, contentsList);
         }
+
+        // 시청 이력에 따른 ResumeMediaId 값 조회
+        private Long calculateResumeMediaId(Long seriesId, Long memberId){
+                 // 해당 멤버가 이 시리즈에서 마지막으로 본 에피소드의 mediaId를 QueryDSL로 조회
+                Optional<Long> lastWatchedMediaId = watchHistoryRepository.findLatestContentMediaIdByMemberIdAndSeriesId(memberId, seriesId);
+                
+                // 기록이 없으면 1화의 mediaId를 반환
+                return lastWatchedMediaId.orElseGet(() -> getFirstEpisodeMediaId(seriesId));
+        }
+
+
+
+        // 에피소드의 1화 MediaId 가져오기
+        private Long getFirstEpisodeMediaId(Long seriesId) {
+                Pageable limitOne = PageRequest.of(0, 1);
+                Page<Contents> firstContentPage = contentsRepository
+                        .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, limitOne);
+
+                if (firstContentPage.isEmpty()) {
+                        throw new BusinessException(ErrorCode.CONTENT_NOT_FOUND);} // 1화조차 없는 경우 예외 처리
+
+                return firstContentPage.getContent().get(0).getMedia().getId();
+        }
+    
 }
