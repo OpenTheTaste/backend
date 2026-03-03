@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -71,9 +72,10 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
     @Override
     @PostMapping("/upload")
     public ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
-            @Valid @RequestBody ShortFormUploadRequest request
+            @Valid @RequestBody ShortFormUploadRequest request,
+            @AuthenticationPrincipal Long memberId
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.createShortFormUpload(request)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.createShortFormUpload(request, memberId)));
     }
 
     @Override

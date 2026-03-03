@@ -13,6 +13,7 @@ import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -64,9 +65,10 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
     @Override
     @PostMapping("/upload")
     public ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
-            @Valid @RequestBody SeriesUploadRequest request
+            @Valid @RequestBody SeriesUploadRequest request,
+            @AuthenticationPrincipal Long memberId
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeSeriesService.createSeriesUpload(request)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeSeriesService.createSeriesUpload(request, memberId)));
     }
 
     @Override

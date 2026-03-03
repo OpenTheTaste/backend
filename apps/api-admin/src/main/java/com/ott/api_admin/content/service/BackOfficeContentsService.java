@@ -98,8 +98,8 @@ public class BackOfficeContentsService {
 
     @Transactional
     // 콘텐츠/미디어 레코드를 생성하고 S3 업로드용 Presigned URL을 발급합니다.
-    public ContentsUploadResponse createContentsUpload(ContentsUploadRequest request) {
-        Member uploader = uploadHelper.resolveUploader();
+    public ContentsUploadResponse createContentsUpload(ContentsUploadRequest request, Long memberId) {
+        Member uploader = uploadHelper.resolveUploader(memberId);
         Series series = resolveSeries(request.seriesId());
 
         // S3 object key 안정성을 위해 파일명을 정규화합니다.

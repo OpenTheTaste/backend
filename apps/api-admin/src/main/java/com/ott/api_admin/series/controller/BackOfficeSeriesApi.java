@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -113,7 +114,8 @@ public interface BackOfficeSeriesApi {
     })
     ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
             @Parameter(description = "SeriesUploadRequest를 참고해주세요.", required = true)
-            @RequestBody SeriesUploadRequest request
+            @RequestBody SeriesUploadRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
     );
 
     @Operation(summary = "시리즈 수정", description = "시리즈 메타데이터를 수정하고 필요 시 포스터/썸네일 교체용 Presigned URL을 발급합니다.")

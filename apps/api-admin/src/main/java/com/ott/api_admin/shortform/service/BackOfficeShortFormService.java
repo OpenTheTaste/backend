@@ -154,10 +154,10 @@ public class BackOfficeShortFormService {
         }
 
         @Transactional
-        public ShortFormUploadResponse createShortFormUpload(ShortFormUploadRequest request) {
+        public ShortFormUploadResponse createShortFormUpload(ShortFormUploadRequest request, Long memberId) {
                 validateExclusiveTarget(request.seriesId(), request.contentsId());
 
-                Member uploader = uploadHelper.resolveUploader();
+                Member uploader = uploadHelper.resolveUploader(memberId);
                 Series series = resolveSeries(request.seriesId());
                 Contents contents = resolveContents(request.contentsId());
                 String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());

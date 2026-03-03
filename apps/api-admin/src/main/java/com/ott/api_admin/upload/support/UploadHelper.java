@@ -5,8 +5,6 @@ import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
@@ -56,24 +54,7 @@ public class UploadHelper {
         return sanitizedBaseName + "." + sanitizedExtension;
     }
 
-    public Member resolveUploader() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Object principal = authentication.getPrincipal();
-        if (principal == null || "anonymousUser".equals(principal)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Long memberId;
-        try {
-            memberId = Long.valueOf(String.valueOf(principal));
-        } catch (NumberFormatException ex) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
+    public Member resolveUploader(Long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     }

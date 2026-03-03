@@ -111,8 +111,8 @@ public class BackOfficeSeriesService {
     }
 
     @Transactional
-    public SeriesUploadResponse createSeriesUpload(SeriesUploadRequest request) {
-        Member uploader = uploadHelper.resolveUploader();
+    public SeriesUploadResponse createSeriesUpload(SeriesUploadRequest request, Long memberId) {
+        Member uploader = uploadHelper.resolveUploader(memberId);
         String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
         String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
 

@@ -13,6 +13,7 @@ import com.ott.domain.common.PublicStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,9 +56,10 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
     @Override
     @PostMapping("/upload")
     public ResponseEntity<SuccessResponse<ContentsUploadResponse>> createContentsUpload(
-            @Valid @RequestBody ContentsUploadRequest request
+            @Valid @RequestBody ContentsUploadRequest request,
+            @AuthenticationPrincipal Long memberId
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeContentsService.createContentsUpload(request)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeContentsService.createContentsUpload(request, memberId)));
     }
 
     @Override
