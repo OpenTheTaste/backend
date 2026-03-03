@@ -1,4 +1,4 @@
-package com.ott.transcoder.inspection.validation;
+package com.ott.transcoder.inspection;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

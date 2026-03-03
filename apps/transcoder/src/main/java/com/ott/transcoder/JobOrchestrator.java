@@ -2,7 +2,7 @@ package com.ott.transcoder;
 
 import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
-import com.ott.transcoder.inspection.validation.DiskSpaceGuard;
+import com.ott.transcoder.inspection.DiskSpaceGuard;
 import com.ott.transcoder.pipeline.CommandPipeline;
 import com.ott.transcoder.queue.TranscodeMessage;
 import com.ott.transcoder.storage.VideoStorage;
@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * 작업 전체 흐름 조율
