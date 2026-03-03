@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.fatal.InvalidInputException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -45,12 +48,14 @@ public class FileValidator {
     public void validate(Path inputFile) {
         // 1. 파일 존재
         if (!Files.exists(inputFile)) {
-            throw new IllegalStateException("파일이 존재하지 않음 - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_FOUND,
+                    "파일이 존재하지 않음 - " + inputFile);
         }
 
         // 2. 읽기 권한
         if (!Files.isReadable(inputFile)) {
-            throw new IllegalStateException("파일 읽기 권한 없음 - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_READABLE,
+                    "파일 읽기 권한 없음 - " + inputFile);
         }
 
         // 3. 파일 크기
@@ -58,21 +63,24 @@ public class FileValidator {
         try {
             fileSize = Files.size(inputFile);
         } catch (IOException e) {
-            throw new IllegalStateException("파일 크기 확인 실패 - " + inputFile, e);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_READABLE,
+                    "파일 크기 확인 실패 - " + inputFile, e);
         }
 
         if (fileSize == 0) {
-            throw new IllegalStateException("파일 크기가 0 bytes - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_EMPTY,
+                    "파일 크기가 0 bytes - " + inputFile);
         }
         if (fileSize > maxFileSizeBytes) {
-            throw new IllegalStateException(
+            throw new InvalidInputException(TranscodeErrorCode.FILE_SIZE_EXCEEDED,
                     "파일 크기 상한 초과 - size: " + fileSize + " bytes, max: " + maxFileSizeBytes + " bytes");
         }
 
         // 4. 매직 바이트 검증
         String detectedFormat = detectFormatByMagicBytes(inputFile);
         if (detectedFormat == null) {
-            throw new IllegalStateException("알 수 없는 파일 포맷 (매직 바이트 불일치) - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.INVALID_FILE_FORMAT,
+                    "알 수 없는 파일 포맷 (매직 바이트 불일치) - " + inputFile);
         }
 
         // 5. 확장자 vs 매직 바이트 불일치 경고
@@ -97,7 +105,8 @@ public class FileValidator {
         try (InputStream is = Files.newInputStream(inputFile)) {
             bytesRead = is.read(header);
         } catch (IOException e) {
-            throw new IllegalStateException("매직 바이트 읽기 실패 - " + inputFile, e);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_READABLE,
+                    "매직 바이트 읽기 실패 - " + inputFile, e);
         }
 
         if (bytesRead < 8) {

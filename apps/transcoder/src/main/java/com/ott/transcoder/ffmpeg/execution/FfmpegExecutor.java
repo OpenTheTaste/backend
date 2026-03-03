@@ -2,7 +2,6 @@ package com.ott.transcoder.ffmpeg.execution;
 
 import com.ott.transcoder.ffmpeg.TranscodeProfile;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 /**
@@ -21,5 +20,5 @@ public interface FfmpegExecutor {
      * @param profile   트랜스코딩 설정 (해상도, 비트레이트, 코덱 등)
      * @return 생성된 미디어 플레이리스트(media.m3u8) 경로
      */
-    Path execute(Path inputFile, Path outputDir, TranscodeProfile profile) throws IOException, InterruptedException;
+    Path execute(Path inputFile, Path outputDir, TranscodeProfile profile);
 }

@@ -24,7 +24,7 @@ public class HlsTranscodePipeline implements CommandPipeline {
     private final VideoStorage videoStorage;
 
     @Override
-    public void execute(Long mediaId, Path inputFile, Path workDir, ProbeResult probeResult) throws Exception {
+    public void execute(Long mediaId, Path inputFile, Path workDir, ProbeResult probeResult) {
         log.info("HLS 트랜스코딩 시작 - mediaId: {}", mediaId);
 
         // plan

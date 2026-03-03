@@ -1,5 +1,7 @@
 package com.ott.transcoder.inspection.validation;
 
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.fatal.UnsupportedMediaException;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,39 +50,41 @@ public class StreamValidator {
     public void validate(ProbeResult probeResult) {
         // 1. 비디오 코덱 존재 및 지원 여부
         if (probeResult.videoCodec() == null || probeResult.videoCodec().isBlank()) {
-            throw new IllegalStateException("비디오 코덱 정보 없음");
+            throw new UnsupportedMediaException(TranscodeErrorCode.NO_VIDEO_STREAM,
+                    "비디오 코덱 정보 없음");
         }
         if (!SUPPORTED_VIDEO_CODEC_SET.contains(probeResult.videoCodec().toLowerCase())) {
-            throw new IllegalStateException(
+            throw new UnsupportedMediaException(TranscodeErrorCode.UNSUPPORTED_CODEC,
                     "지원하지 않는 비디오 코덱 - codec: " + probeResult.videoCodec());
         }
 
         // 2. 해상도 범위
         if (probeResult.width() < MIN_RESOLUTION || probeResult.height() < MIN_RESOLUTION) {
-            throw new IllegalStateException(
+            throw new UnsupportedMediaException(TranscodeErrorCode.INVALID_RESOLUTION,
                     "해상도가 너무 작음 - " + probeResult.width() + "x" + probeResult.height());
         }
         if (probeResult.width() > MAX_RESOLUTION || probeResult.height() > MAX_RESOLUTION) {
-            throw new IllegalStateException(
+            throw new UnsupportedMediaException(TranscodeErrorCode.INVALID_RESOLUTION,
                     "해상도가 너무 큼 - " + probeResult.width() + "x" + probeResult.height());
         }
 
         // 3. duration 유효성
         if (probeResult.durationSeconds() <= 0) {
-            throw new IllegalStateException(
+            throw new UnsupportedMediaException(TranscodeErrorCode.INVALID_DURATION,
                     "duration이 유효하지 않음 - " + probeResult.durationSeconds() + "s");
         }
         if (probeResult.durationSeconds() > maxDurationSeconds) {
-            throw new IllegalStateException(
+            throw new UnsupportedMediaException(TranscodeErrorCode.INVALID_DURATION,
                     "duration 상한 초과 - " + probeResult.durationSeconds() + "s, max: " + maxDurationSeconds + "s");
         }
 
         // 4. 프레임레이트 이상
         if (probeResult.fps() <= 0) {
-            throw new IllegalStateException("프레임레이트가 유효하지 않음 - fps: " + probeResult.fps());
+            throw new UnsupportedMediaException(TranscodeErrorCode.INVALID_FPS,
+                    "프레임레이트가 유효하지 않음 - fps: " + probeResult.fps());
         }
         if (probeResult.fps() > MAX_FPS) {
-            throw new IllegalStateException(
+            throw new UnsupportedMediaException(TranscodeErrorCode.INVALID_FPS,
                     "프레임레이트가 비정상적으로 높음 - fps: " + probeResult.fps() + ", max: " + MAX_FPS);
         }
 

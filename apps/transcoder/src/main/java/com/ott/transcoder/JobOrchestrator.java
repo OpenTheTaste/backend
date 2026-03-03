@@ -1,5 +1,9 @@
 package com.ott.transcoder;
 
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.fatal.FatalException;
+import com.ott.transcoder.exception.retryable.RetryableException;
+import com.ott.transcoder.exception.retryable.StorageException;
 import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import com.ott.transcoder.inspection.DiskSpaceGuard;
@@ -33,7 +37,7 @@ public class JobOrchestrator {
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
 
-    public void handle(TranscodeMessage message) throws Exception {
+    public void handle(TranscodeMessage message) {
         Long mediaId = message.mediaId();
         // TODO: 0. DB 확인 필요
 
@@ -44,7 +48,7 @@ public class JobOrchestrator {
 
         try {
             // 2. workDir 생성
-            Files.createDirectories(workDir);
+            createWorkDir(workDir);
 
             // 3. 원본 다운로드
             Path inputFile = videoStorage.download(message.originUrl(), workDir);
@@ -57,8 +61,23 @@ public class JobOrchestrator {
             // 6. 파이프라인 실행
             pipeline.execute(mediaId, inputFile, workDir, probeResult);
 
+        } catch (FatalException e) {
+            log.error("처리 불가 - mediaId: {}", mediaId, e);
+            // TODO: DB IngestJob → FAILED 갱신
+        } catch (RetryableException e) {
+            log.warn("재시도 대상 - mediaId: {}", mediaId, e);
+            // TODO: 재시도 정책 결정
         } finally {
             cleanUp(workDir);
+        }
+    }
+
+    private void createWorkDir(Path workDir) {
+        try {
+            Files.createDirectories(workDir);
+        } catch (IOException e) {
+            throw new StorageException(TranscodeErrorCode.STORAGE_FAILED,
+                    "작업 디렉토리 생성 실패 - " + workDir, e);
         }
     }
 

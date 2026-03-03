@@ -10,5 +10,5 @@ import java.nio.file.Path;
  */
 public interface CommandPipeline {
 
-    void execute(Long mediaId, Path inputFile, Path workDir, ProbeResult probeResult) throws Exception;
+    void execute(Long mediaId, Path inputFile, Path workDir, ProbeResult probeResult);
 }
