@@ -24,14 +24,12 @@ import com.ott.domain.media_tag.repository.MediaTagRepository;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
-import com.ott.infra.s3.service.S3PresignService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -45,7 +43,6 @@ public class BackOfficeContentsService {
     private final MediaTagRepository mediaTagRepository;
     private final ContentsRepository contentsRepository;
     private final SeriesRepository seriesRepository;
-    private final S3PresignService s3PresignService;
     private final UploadHelper uploadHelper;
     private final MediaTagLinker mediaTagLinker;
 
@@ -103,10 +100,6 @@ public class BackOfficeContentsService {
         Series series = resolveSeries(request.seriesId());
 
         // S3 object key 안정성을 위해 파일명을 정규화합니다.
-        String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
-        String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
-        String sanitizedOriginFileName = uploadHelper.sanitizeFileName(request.originFileName());
-
         Media media = mediaRepository.save(
                 Media.builder()
                         .uploader(uploader)
@@ -138,31 +131,30 @@ public class BackOfficeContentsService {
         );
 
         Long contentsId = contents.getId();
-        String posterObjectKey = uploadHelper.buildObjectKey("contents", contentsId, "poster", sanitizedPosterFileName);
-        String thumbnailObjectKey = uploadHelper.buildObjectKey("contents", contentsId, "thumbnail", sanitizedThumbnailFileName);
-        String originObjectKey = uploadHelper.buildObjectKey("contents", contentsId, "origin", sanitizedOriginFileName);
-        String masterPlaylistObjectKey = "contents/" + contentsId + "/transcoded/master.m3u8";
+        UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
+                "contents", contentsId, request.posterFileName(), request.thumbnailFileName(), request.originFileName()
+        );
 
         media.updateImageKeys(
-                s3PresignService.toObjectUrl(posterObjectKey),
-                s3PresignService.toObjectUrl(thumbnailObjectKey)
+                mediaCreateUploadResult.posterObjectUrl(),
+                mediaCreateUploadResult.thumbnailObjectUrl()
         );
         contents.updateStorageKeys(
-                s3PresignService.toObjectUrl(originObjectKey),
-                s3PresignService.toObjectUrl(masterPlaylistObjectKey)
+                mediaCreateUploadResult.originObjectUrl(),
+                mediaCreateUploadResult.masterPlaylistObjectUrl()
         );
 
         mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeContentsMapper.toContentsUploadResponse(
                 contentsId,
-                posterObjectKey,
-                thumbnailObjectKey,
-                originObjectKey,
-                masterPlaylistObjectKey,
-                s3PresignService.createPutPresignedUrl(posterObjectKey, uploadHelper.resolveImageContentType(sanitizedPosterFileName)),
-                s3PresignService.createPutPresignedUrl(thumbnailObjectKey, uploadHelper.resolveImageContentType(sanitizedThumbnailFileName)),
-                s3PresignService.createPutPresignedUrl(originObjectKey, uploadHelper.resolveVideoContentType(sanitizedOriginFileName))
+                mediaCreateUploadResult.posterObjectKey(),
+                mediaCreateUploadResult.thumbnailObjectKey(),
+                mediaCreateUploadResult.originObjectKey(),
+                mediaCreateUploadResult.masterPlaylistObjectKey(),
+                mediaCreateUploadResult.posterUploadUrl(),
+                mediaCreateUploadResult.thumbnailUploadUrl(),
+                mediaCreateUploadResult.originUploadUrl()
         );
     }
 
@@ -178,65 +170,39 @@ public class BackOfficeContentsService {
         contents.updateMetadata(series, request.actors(), request.duration(), request.videoSize());
 
         Long contentsId = contents.getId();
-        String posterObjectKey = null;
-        String thumbnailObjectKey = null;
-        String originObjectKey = null;
-        String posterUploadUrl = null;
-        String thumbnailUploadUrl = null;
-        String originUploadUrl = null;
+        UploadHelper.MediaUpdateUploadResult mediaUpdateUploadResult = uploadHelper.prepareMediaUpdate(
+                "contents",
+                contentsId,
+                request.posterFileName(),
+                request.thumbnailFileName(),
+                request.originFileName(),
+                media.getPosterUrl(),
+                media.getThumbnailUrl(),
+                contents.getOriginUrl(),
+                contents.getMasterPlaylistUrl()
+        );
 
-        String nextPosterUrl = media.getPosterUrl();
-        String nextThumbnailUrl = media.getThumbnailUrl();
-        String nextOriginUrl = contents.getOriginUrl();
-        String nextMasterPlaylistUrl = contents.getMasterPlaylistUrl();
-        String masterPlaylistObjectKey = "contents/" + contentsId + "/transcoded/master.m3u8";
-
-        if (StringUtils.hasText(request.posterFileName())) {
-            String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
-            posterObjectKey = uploadHelper.buildObjectKey("contents", contentsId, "poster", sanitizedPosterFileName);
-            nextPosterUrl = s3PresignService.toObjectUrl(posterObjectKey);
-            posterUploadUrl = s3PresignService.createPutPresignedUrl(
-                    posterObjectKey,
-                    uploadHelper.resolveImageContentType(sanitizedPosterFileName)
-            );
-        }
-
-        if (StringUtils.hasText(request.thumbnailFileName())) {
-            String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
-            thumbnailObjectKey = uploadHelper.buildObjectKey("contents", contentsId, "thumbnail", sanitizedThumbnailFileName);
-            nextThumbnailUrl = s3PresignService.toObjectUrl(thumbnailObjectKey);
-            thumbnailUploadUrl = s3PresignService.createPutPresignedUrl(
-                    thumbnailObjectKey,
-                    uploadHelper.resolveImageContentType(sanitizedThumbnailFileName)
-            );
-        }
-
-        if (StringUtils.hasText(request.originFileName())) {
-            String sanitizedOriginFileName = uploadHelper.sanitizeFileName(request.originFileName());
-            originObjectKey = uploadHelper.buildObjectKey("contents", contentsId, "origin", sanitizedOriginFileName);
-            nextOriginUrl = s3PresignService.toObjectUrl(originObjectKey);
-            nextMasterPlaylistUrl = s3PresignService.toObjectUrl(masterPlaylistObjectKey);
-            originUploadUrl = s3PresignService.createPutPresignedUrl(
-                    originObjectKey,
-                    uploadHelper.resolveVideoContentType(sanitizedOriginFileName)
-            );
-        }
-
-        media.updateImageKeys(nextPosterUrl, nextThumbnailUrl);
-        contents.updateStorageKeys(nextOriginUrl, nextMasterPlaylistUrl);
+        media.updateImageKeys(
+                mediaUpdateUploadResult.nextPosterUrl(),
+                mediaUpdateUploadResult.nextThumbnailUrl()
+        );
+        contents.updateStorageKeys(
+                mediaUpdateUploadResult.nextOriginUrl(),
+                mediaUpdateUploadResult.nextMasterPlaylistUrl()
+        );
 
         mediaTagRepository.deleteAllByMedia_Id(media.getId());
         mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeContentsMapper.toContentsUpdateResponse(
                 contentsId,
-                posterObjectKey,
-                thumbnailObjectKey,
-                originObjectKey,
-                masterPlaylistObjectKey,
-                posterUploadUrl,
-                thumbnailUploadUrl,
-                originUploadUrl
+                mediaUpdateUploadResult.posterObjectKey(),
+                mediaUpdateUploadResult.thumbnailObjectKey(),
+                mediaUpdateUploadResult.originObjectKey(),
+                mediaUpdateUploadResult.masterPlaylistObjectKey(),
+                mediaUpdateUploadResult.posterUploadUrl(),
+                mediaUpdateUploadResult.thumbnailUploadUrl(),
+                mediaUpdateUploadResult.originUploadUrl()
         );
     }
 

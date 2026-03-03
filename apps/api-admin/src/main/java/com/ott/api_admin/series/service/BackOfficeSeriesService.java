@@ -22,14 +22,12 @@ import com.ott.domain.media_tag.repository.MediaTagRepository;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
-import com.ott.infra.s3.service.S3PresignService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -45,7 +43,6 @@ public class BackOfficeSeriesService {
     private final MediaRepository mediaRepository;
     private final MediaTagRepository mediaTagRepository;
     private final SeriesRepository seriesRepository;
-    private final S3PresignService s3PresignService;
     private final UploadHelper uploadHelper;
     private final MediaTagLinker mediaTagLinker;
 
@@ -113,8 +110,6 @@ public class BackOfficeSeriesService {
     @Transactional
     public SeriesUploadResponse createSeriesUpload(SeriesUploadRequest request, Long memberId) {
         Member uploader = uploadHelper.resolveUploader(memberId);
-        String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
-        String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
 
         Media media = mediaRepository.save(
                 Media.builder()
@@ -138,20 +133,21 @@ public class BackOfficeSeriesService {
         );
 
         Long seriesId = series.getId();
-        String posterObjectKey = uploadHelper.buildObjectKey("series", seriesId, "poster", sanitizedPosterFileName);
-        String thumbnailObjectKey = uploadHelper.buildObjectKey("series", seriesId, "thumbnail", sanitizedThumbnailFileName);
+        UploadHelper.ImageCreateUploadResult imageCreateUploadResult = uploadHelper.prepareImageCreate(
+                "series", seriesId, request.posterFileName(), request.thumbnailFileName()
+        );
         media.updateImageKeys(
-                s3PresignService.toObjectUrl(posterObjectKey),
-                s3PresignService.toObjectUrl(thumbnailObjectKey)
+                imageCreateUploadResult.posterObjectUrl(),
+                imageCreateUploadResult.thumbnailObjectUrl()
         );
         mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeSeriesMapper.toSeriesUploadResponse(
                 seriesId,
-                posterObjectKey,
-                thumbnailObjectKey,
-                s3PresignService.createPutPresignedUrl(posterObjectKey, uploadHelper.resolveImageContentType(sanitizedPosterFileName)),
-                s3PresignService.createPutPresignedUrl(thumbnailObjectKey, uploadHelper.resolveImageContentType(sanitizedThumbnailFileName))
+                imageCreateUploadResult.posterObjectKey(),
+                imageCreateUploadResult.thumbnailObjectKey(),
+                imageCreateUploadResult.posterUploadUrl(),
+                imageCreateUploadResult.thumbnailUploadUrl()
         );
     }
 
@@ -165,45 +161,29 @@ public class BackOfficeSeriesService {
         series.updateActors(request.actors());
 
         Long seriesId = series.getId();
-        String posterObjectKey = null;
-        String thumbnailObjectKey = null;
-        String posterUploadUrl = null;
-        String thumbnailUploadUrl = null;
+        UploadHelper.ImageUpdateUploadResult imageUpdateUploadResult = uploadHelper.prepareImageUpdate(
+                "series",
+                seriesId,
+                request.posterFileName(),
+                request.thumbnailFileName(),
+                media.getPosterUrl(),
+                media.getThumbnailUrl()
+        );
 
-        String nextPosterUrl = media.getPosterUrl();
-        String nextThumbnailUrl = media.getThumbnailUrl();
-
-        if (StringUtils.hasText(request.posterFileName())) {
-            String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
-            posterObjectKey = uploadHelper.buildObjectKey("series", seriesId, "poster", sanitizedPosterFileName);
-            nextPosterUrl = s3PresignService.toObjectUrl(posterObjectKey);
-            posterUploadUrl = s3PresignService.createPutPresignedUrl(
-                    posterObjectKey,
-                    uploadHelper.resolveImageContentType(sanitizedPosterFileName)
-            );
-        }
-
-        if (StringUtils.hasText(request.thumbnailFileName())) {
-            String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
-            thumbnailObjectKey = uploadHelper.buildObjectKey("series", seriesId, "thumbnail", sanitizedThumbnailFileName);
-            nextThumbnailUrl = s3PresignService.toObjectUrl(thumbnailObjectKey);
-            thumbnailUploadUrl = s3PresignService.createPutPresignedUrl(
-                    thumbnailObjectKey,
-                    uploadHelper.resolveImageContentType(sanitizedThumbnailFileName)
-            );
-        }
-
-        media.updateImageKeys(nextPosterUrl, nextThumbnailUrl);
+        media.updateImageKeys(
+                imageUpdateUploadResult.nextPosterUrl(),
+                imageUpdateUploadResult.nextThumbnailUrl()
+        );
 
         mediaTagRepository.deleteAllByMedia_Id(media.getId());
         mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
 
         return backOfficeSeriesMapper.toSeriesUpdateResponse(
                 seriesId,
-                posterObjectKey,
-                thumbnailObjectKey,
-                posterUploadUrl,
-                thumbnailUploadUrl
+                imageUpdateUploadResult.posterObjectKey(),
+                imageUpdateUploadResult.thumbnailObjectKey(),
+                imageUpdateUploadResult.posterUploadUrl(),
+                imageUpdateUploadResult.thumbnailUploadUrl()
         );
     }
 }
