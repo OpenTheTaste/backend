@@ -10,21 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-/**
- * HLS 마스터 플레이리스트(master.m3u8) 생성기.
- *
- * 마스터 플레이리스트는 여러 해상도(variant)를 참조하며,
- * HLS 플레이어가 네트워크 상태에 따라 적절한 해상도를 자동 선택(ABR)하게 해준다.
- *
- * 생성 결과 예시:
- *   #EXTM3U
- *   #EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=640x360
- *   360p/media.m3u8
- *   #EXT-X-STREAM-INF:BANDWIDTH=2400000,RESOLUTION=1280x720
- *   720p/media.m3u8
- *   #EXT-X-STREAM-INF:BANDWIDTH=4800000,RESOLUTION=1920x1080
- *   1080p/media.m3u8
- */
+/** HLS 마스터 플레이리스트(master.m3u8) 생성기. ABR variant를 포함한다. */
 @Slf4j
 @Component
 public class MasterPlaylistGenerator {
