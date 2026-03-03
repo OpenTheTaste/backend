@@ -24,7 +24,7 @@ public interface AuthApi {
 
         @Operation(summary = "로그아웃", description = "DB refreshToken을 삭제, accessToken/refreshToken 쿠키 제거")
         @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+                        @ApiResponse(responseCode = "204", description = "로그아웃 성공"),
                         @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
         })
         ResponseEntity<Void> logout(Authentication authentication, HttpServletResponse response);

@@ -11,6 +11,7 @@ import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.bookmark.repository.BookmarkRepository;
+import com.ott.domain.click_event.repository.ClickRepository;
 import com.ott.domain.comment.repository.CommentRepository;
 import com.ott.domain.common.Status;
 import com.ott.domain.likes.repository.LikesRepository;
@@ -26,7 +27,6 @@ import com.ott.domain.tag.repository.TagRepository;
 import com.ott.domain.watch_history.repository.RecentWatchProjection;
 import com.ott.domain.watch_history.repository.TagRankingProjection;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -56,6 +56,7 @@ public class MemberService {
     private final LikesRepository likesRepository;
     private final PlaybackRepository playbackRepository;
     private final CommentRepository commentRepository;
+    private final ClickRepository clickRepository;
 
     /**
      * 마이 페이지 조회 : 닉네임, 선호태그 List 반환
@@ -121,7 +122,7 @@ public class MemberService {
      */
     @Transactional
     public void setPreferredTags(Long memberId, SetPreferredTagRequest request) {
-        Member findMember = memberRepository.findById(memberId)
+        Member findMember = memberRepository.findByIdAndStatus(memberId, Status.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         //재 호출 시 중복 방지 코드
@@ -154,8 +155,9 @@ public class MemberService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 집계일과 마감일 선정 1일~말일까지
-        LocalDateTime endDate = LocalDateTime.now();
-        LocalDateTime startDate = endDate.minusMonths(1);
+        YearMonth currentYearMonth = YearMonth.now();
+        LocalDateTime startDate = currentYearMonth.atDay(1).atStartOfDay();
+        LocalDateTime endDate   = currentYearMonth.plusMonths(1).atDay(1).atStartOfDay(); // 다음 달 1일 00:00:00
 
         List<TagRankingProjection> tagRankingProjections =
                 watchHistoryRepository.findTopTagsByMemberIdAndWatchedBetween(memberId, startDate, endDate);
@@ -202,12 +204,12 @@ public class MemberService {
         // 이번 달 범위
         YearMonth currentYearMonth = YearMonth.now();
         LocalDateTime currentStart = currentYearMonth.atDay(1).atStartOfDay();
-        LocalDateTime currentEnd   = currentYearMonth.atEndOfMonth().atTime(23, 59, 59);
+        LocalDateTime currentEnd   = currentYearMonth.plusMonths(1).atDay(1).atStartOfDay(); // 다음 달 1일 00:00:00
 
         // 저번 달 범위
         YearMonth prevYearMonth = currentYearMonth.minusMonths(1);
         LocalDateTime prevStart = prevYearMonth.atDay(1).atStartOfDay();
-        LocalDateTime prevEnd   = prevYearMonth.atEndOfMonth().atTime(23, 59, 59);
+        LocalDateTime prevEnd   = currentYearMonth.atDay(1).atStartOfDay();  // 이번 달 1일 00:00:00
 
         Long currentCount  = watchHistoryRepository.countByMemberIdAndTagIdAndWatchedBetween(memberId, tagId, currentStart, currentEnd);
         Long previousCount = watchHistoryRepository.countByMemberIdAndTagIdAndWatchedBetween(memberId, tagId, prevStart, prevEnd);
@@ -303,5 +305,16 @@ public class MemberService {
         playbackRepository.softDeleteAllByMemberId(memberId);
         commentRepository.softDeleteAllByMemberId(memberId);
 
+    }
+
+    /**
+     * 온보딩 건너뛰기 - onboardingCompleted = true 처리
+     */
+    @Transactional
+    public void skipOnboarding(Long memberId) {
+        Member findMember = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        findMember.completeOnboarding();
     }
 }

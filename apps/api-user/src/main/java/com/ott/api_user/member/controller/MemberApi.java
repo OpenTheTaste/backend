@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -110,6 +111,20 @@ public interface MemberApi {
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody SetPreferredTagRequest request
     );
+
+
+    @Operation(summary = "온보딩 건너뛰기", description = "온보딩을 건너뛸 경우 onboardingCompleted를 true로 변경합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "건너뛰기 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "회원을 찾을 수 없음",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/me/onboarding/skip")
+    ResponseEntity<Void> skipOnboarding(
+            @AuthenticationPrincipal Long memberId);
+
 
 
     // -------------------------------------------------------
@@ -212,7 +227,7 @@ public interface MemberApi {
                     responseCode = "404", description = "회원을 찾을 수 없음",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/me/playlist")
+    @GetMapping("/me/history/playlist")
     ResponseEntity<SuccessResponse<PageResponse<RecentWatchResponse>>> getWatchHistoryPlaylist(
             @AuthenticationPrincipal Long memberId,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -232,6 +247,7 @@ public interface MemberApi {
     })
     @DeleteMapping("/me")
     ResponseEntity<Void> withdraw(
+            @Parameter HttpServletResponse response,
             @AuthenticationPrincipal Long memberId);
 
 }

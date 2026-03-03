@@ -4,8 +4,10 @@ import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.*;
 import com.ott.api_user.member.service.MemberService;
+import com.ott.common.security.util.CookieUtil;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -22,6 +24,7 @@ import java.util.List;
 public class MemberController implements MemberApi {
 
     private final MemberService memberService;
+    private final CookieUtil cookie;
 
     @Override
     @GetMapping("/me")
@@ -90,12 +93,24 @@ public class MemberController implements MemberApi {
     }
 
     // 회원 탈퇴 - 현재 soft delete
-    // 현재 회원 탈퇴를 진행해도 JWT가 현재 stateless라서 만료 시간 까지 API 호출이 가능함
-    // 추후 redis 블랙리스트 같은 기술을 도입해야됨
+    // 회원 탈퇴 시 DB + 브라우저 토큰 삭제
     @DeleteMapping("/me")
     public ResponseEntity<Void> withdraw(
+            HttpServletResponse response,
             @AuthenticationPrincipal Long memberId) {
         memberService.withdraw(memberId);
+
+        cookie.deleteCookie(response, "accessToken");
+        cookie.deleteCookie(response, "refreshToken");
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // 온보딩 스킵 시 온보딩 컬럼 true 변경
+    @Override
+    @PostMapping("/me/onboarding/skip")
+    public ResponseEntity<Void> skipOnboarding(@AuthenticationPrincipal Long memberId) {
+        memberService.skipOnboarding(memberId);
         return ResponseEntity.noContent().build();
     }
 }
