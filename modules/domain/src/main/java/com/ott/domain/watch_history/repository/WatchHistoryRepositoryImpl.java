@@ -107,7 +107,8 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
 
         List<RecentWatchProjection> content = queryFactory
                 .select(Projections.constructor(RecentWatchProjection.class,
-                        contents.id,
+                        contents.media.id,
+                        contents.media.mediaType,
                         contents.media.posterUrl,
                         playback.positionSec.coalesce(0),
                         contents.duration

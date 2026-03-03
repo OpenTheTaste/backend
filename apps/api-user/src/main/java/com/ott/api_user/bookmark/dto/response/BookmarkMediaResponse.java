@@ -1,6 +1,7 @@
 package com.ott.api_user.bookmark.dto.response;
 
 import com.ott.domain.bookmark.domain.Bookmark;
+import com.ott.domain.common.MediaType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,6 +13,9 @@ public class BookmarkMediaResponse {
 
     @Schema(type ="Long", description = "미디어 ID", example = "1")
     private Long mediaId;
+
+    @Schema(type = "String", description = "미디어 타입 (CONTENTS, SERIES)", example = "SERIES")
+    private MediaType mediaType;
 
     @Schema(type ="String", description = "미디어 제목", example = "어서와요 김마루의 숲")
     private String title;
@@ -25,6 +29,7 @@ public class BookmarkMediaResponse {
     public static BookmarkMediaResponse from(Bookmark bookmark) {
         return BookmarkMediaResponse.builder()
                 .mediaId(bookmark.getMedia().getId())
+                .mediaType(bookmark.getMedia().getMediaType())
                 .title(bookmark.getMedia().getTitle())
                 .description(bookmark.getMedia().getDescription())
                 .posterUrl(bookmark.getMedia().getPosterUrl())

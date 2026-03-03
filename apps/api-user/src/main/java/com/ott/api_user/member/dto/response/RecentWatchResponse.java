@@ -1,5 +1,6 @@
 package com.ott.api_user.member.dto.response;
 
+import com.ott.domain.common.MediaType;
 import com.ott.domain.watch_history.repository.RecentWatchProjection;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -12,8 +13,11 @@ import lombok.Getter;
 @Schema(description = "시청이력 플레이리스트 DTO")
 public class RecentWatchResponse {
 
-    @Schema(type = "Long", example = "3", description = "콘텐츠 ID (콘텐츠 상세 조회용)")
-    private Long contentsId;
+    @Schema(type = "Long", example = "3", description = "미디어 ID")
+    private Long mediaId;
+
+    @Schema(type = "String", example = "CONTENTS", description = "미디어 타입 (CONTENTS, SERIES, SHORT_FORM)")
+    private MediaType mediaType;
 
     @Schema(type = "String", example = "https://cdn.ott.com/poster/thriller01.jpg", description = "포스터 URL")
     private String posterUrl;
@@ -26,7 +30,8 @@ public class RecentWatchResponse {
 
     public static RecentWatchResponse from(RecentWatchProjection projection) {
         return RecentWatchResponse.builder()
-                .contentsId(projection.getContentsId())
+                .mediaId(projection.getMediaId())
+                .mediaType(projection.getMediaType())
                 .posterUrl(projection.getPosterUrl())
                 .positionSec(projection.getPositionSec())
                 .duration(projection.getDuration())
