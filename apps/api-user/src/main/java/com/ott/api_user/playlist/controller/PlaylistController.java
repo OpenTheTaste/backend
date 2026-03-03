@@ -129,6 +129,22 @@ public class PlaylistController implements PlaylistApi {
         return execute(condition, page, size, memberId);
     }
 
+    // 8. 검색 페이지에서 진입
+    @Override
+    public ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getSearchPlaylists(
+            @RequestParam(value = "excludeMediaId") Long excludeMediaId, 
+            @RequestParam(value = "page", defaultValue = "0") Integer page, 
+            @RequestParam(value = "size", defaultValue = "10") Integer size, 
+            @AuthenticationPrincipal Long memberId) {
+        
+        PlaylistCondition condition = new PlaylistCondition();
+        condition.setContentSource(ContentSource.SEARCH); 
+        condition.setExcludeMediaId(excludeMediaId);
+        
+        // 서비스단에서 RECOMMEND로 우회됨!
+        return execute(condition, page, size, memberId); 
+    }
+
     
     // 공통 응답 메서드 
     private ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> execute(

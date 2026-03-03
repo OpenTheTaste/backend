@@ -88,4 +88,13 @@ public interface PlaylistApi {
             @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
     );
+
+    @Operation(summary = "검색 상세 페이지 재생목록", description = "검색 결과에서 진입 시 종합 추천 리스트로 대체하여 제공합니다.")
+    @GetMapping("/search")
+    ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getSearchPlaylists(
+            @Parameter(description = "현재 영상 ID", required = true) @RequestParam(value = "excludeMediaId") Long excludeMediaId,
+            @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+    );
 }
