@@ -34,4 +34,21 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Bookmark b SET b.status = 'DELETE' WHERE b.member.id = :memberId")
     void softDeleteAllByMemberId(@Param("memberId") Long memberId);
+
+
+    // 회원 탈퇴 전 ACTIVE인 유저가 북마크 row 상태 변경
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+  UPDATE media m
+  JOIN (
+      SELECT b.media_id, COUNT(*) AS cnt
+      FROM bookmark b
+      WHERE b.member_id = :memberId
+        AND b.status = 'ACTIVE'
+      GROUP BY b.media_id
+  ) t ON t.media_id = m.id
+  SET m.bookmark_count = GREATEST(0, m.bookmark_count - t.cnt)
+  """, nativeQuery = true)
+    void decreaseBookmarkCountByMemberId(@Param("memberId") Long memberId);
+
 }

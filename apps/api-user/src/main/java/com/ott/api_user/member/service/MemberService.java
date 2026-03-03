@@ -297,14 +297,21 @@ public class MemberService {
         // 2. 회원 Soft Delete
         member.withdraw();
 
+        // 탈퇴 회원의 ACTIVE한 북마크 수 차감
+        bookmarkRepository.decreaseBookmarkCountByMemberId(memberId);
+        bookmarkRepository.softDeleteAllByMemberId(memberId);
+
+
+        // 탈퇴 회원의 ACTIVE한 좋아요 수 차감
+        likesRepository.decreaseLikesCountByMemberId(memberId);
+        likesRepository.softDeleteAllByMemberId(memberId);
+
         // 3. 연관 데이터 Soft Delete
         preferredTagRepository.softDeleteAllByMemberId(memberId);
-        bookmarkRepository.softDeleteAllByMemberId(memberId);
-        likesRepository.softDeleteAllByMemberId(memberId);
         watchHistoryRepository.softDeleteAllByMemberId(memberId);
         playbackRepository.softDeleteAllByMemberId(memberId);
         commentRepository.softDeleteAllByMemberId(memberId);
-
+        clickRepository.softDeleteAllByMemberId(memberId);
     }
 
     /**

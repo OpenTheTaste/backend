@@ -22,4 +22,19 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Likes l SET l.status = 'DELETE' WHERE l.member.id = :memberId")
     void softDeleteAllByMemberId(@Param("memberId") Long memberId);
+
+    // 회원 탈퇴 시 해당 유저가 좋아요한 미디어에 대하여 -count
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+    UPDATE media m
+    JOIN (
+        SELECT l.media_id, COUNT(*) AS cnt
+        FROM likes l
+        WHERE l.member_id = :memberId
+          AND l.status = 'ACTIVE'
+        GROUP BY l.media_id
+    ) t ON t.media_id = m.id
+    SET m.likes_count = GREATEST(0, m.likes_count - t.cnt)
+    """, nativeQuery = true)
+    void decreaseLikesCountByMemberId(@Param("memberId") Long memberId);
 }
