@@ -1,14 +1,15 @@
 package com.ott.transcoder.exception.retryable;
 
+import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.TranscodeException;
 
-// 일시적인 오류로 인해 재시도가 필요한 경우 발생하는 예외
+/** 재시도 가능 — RabbitMQ requeue 대상 */
 public class RetryableException extends TranscodeException {
-    public RetryableException(String message) {
-        super(message);
+    public RetryableException(TranscodeErrorCode errorCode, String message) {
+        super(errorCode, message);
     }
 
-    public RetryableException(String message, Throwable cause) {
-        super(message, cause);
+    public RetryableException(TranscodeErrorCode errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
     }
 }

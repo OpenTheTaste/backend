@@ -1,10 +1,10 @@
 package com.ott.transcoder.exception.retryable;
 
-/**
- * 스토리지(로컬 파일 시스템, S3 등) 입출력 중 발생하는 예외
- */
+import com.ott.transcoder.exception.TranscodeErrorCode;
+
+/** 스토리지(로컬/S3) 입출력 실패 */
 public class StorageException extends RetryableException {
-    public StorageException(String message, Throwable cause) {
-        super(message, cause);
+    public StorageException(TranscodeErrorCode errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
     }
 }

@@ -1,14 +1,14 @@
 package com.ott.transcoder.exception.retryable;
 
-/**
- * FFmpeg 실행 중 프로세스 오류나 타임아웃 발생 시 던지는 예외
- */
+import com.ott.transcoder.exception.TranscodeErrorCode;
+
+/** FFmpeg 실행 실패/타임아웃 */
 public class FfmpegException extends RetryableException {
-    public FfmpegException(String message) {
-        super(message);
+    public FfmpegException(TranscodeErrorCode errorCode, String message) {
+        super(errorCode, message);
     }
 
-    public FfmpegException(String message, Throwable cause) {
-        super(message, cause);
+    public FfmpegException(TranscodeErrorCode errorCode, String message, Throwable cause) {
+        super(errorCode, message, cause);
     }
 }
