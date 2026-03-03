@@ -17,6 +17,6 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long> {
 
     // 회원 탈퇴
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE WatchHistory w SET w.status = 'DELETE' WHERE w.member.id = :memberId")
+    @Query("UPDATE Playback p SET p.status = 'DELETE' WHERE p.member.id = :memberId")
     void softDeleteAllByMemberId(@Param("memberId") Long memberId);
 }
