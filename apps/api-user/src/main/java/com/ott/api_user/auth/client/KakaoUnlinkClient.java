@@ -44,9 +44,9 @@ public class KakaoUnlinkClient {
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(unlinkUrl, request, String.class);
-            log.info("카카오 연결 끊기 성공 - providerId: {}, status: {}", providerId, response.getStatusCode());
+            log.info("카카오 연결 끊기 성공");
         } catch (Exception e) {
-            log.error("카카오 연결 끊기 실패 - providerId: {}", providerId, e);
+            log.error("카카오 연결 끊기 실패");
             throw new BusinessException(ErrorCode.KAKAO_UNLINK_FAILED);
         }
     }
