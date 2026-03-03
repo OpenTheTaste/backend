@@ -52,7 +52,11 @@ public class SecurityConfig {
                                 "/back-office/reissue",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
-                                "/swagger-resources/**"
+                                "/swagger-resources/**",
+                                "/back-office//swagger-ui/**",
+                                "/back-office//v3/api-docs/**",
+                                "/back-office//swagger-resources/**"
+
 
                         ).permitAll()
                         .requestMatchers("/back-office/admin/**").hasRole("ADMIN")
