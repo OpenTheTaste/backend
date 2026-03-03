@@ -110,6 +110,7 @@ public class MemberService {
                 .toList();
 
         preferredTagRepository.saveAll(preferredTags);
+        findMember.completeOnboarding();
     }
 
     }

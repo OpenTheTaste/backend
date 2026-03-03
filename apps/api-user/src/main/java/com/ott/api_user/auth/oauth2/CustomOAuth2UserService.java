@@ -42,7 +42,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         Member member = kakaoAuthService.findOrCreateMember(kakaoUserInfo);
 
         // 신규 회원 판별
-        boolean isNewMember = kakaoAuthService.isNewMember(member.getId());
+        boolean isNewMember = kakaoAuthService.isNewMember(member);
 
         // attribute에 memberId(PK)와 신규 유저 유무를 적재
         // payload memberId, isNewMember만 들어감 -> 민감한 정보 적재 x

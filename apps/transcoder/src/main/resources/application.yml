@@ -40,6 +40,9 @@ transcoder:
     path: ${FFMPEG_PATH}
     temp-dir: ${TRANSCODER_TEMP_DIR}
     segment-duration: ${TRANSCODER_SEGMENT_DURATION}
+  ffprobe:
+    engine: ${TRANSCODER_FFPROBE_ENGINE}
+    path: ${FFPROBE_PATH}
 
 storage:
   provider: ${STORAGE_PROVIDER}
