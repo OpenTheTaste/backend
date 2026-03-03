@@ -17,7 +17,7 @@ public interface AuthApi {
 
         @Operation(summary = "Access Token 재발급", description = "access token + refresh token 재발급.")
         @ApiResponses(value = {
-                        @ApiResponse(responseCode = "200", description = "재발급 성공"),
+                        @ApiResponse(responseCode = "204", description = "재발급 성공"),
                         @ApiResponse(responseCode = "401", description = "refreshToken이 없거나 만료/유효하지 않음", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
         })
         ResponseEntity<Void> reissue(HttpServletRequest request, HttpServletResponse response);

@@ -50,7 +50,7 @@ public class MemberController implements MemberApi {
             @Valid @RequestBody SetPreferredTagRequest request
     ) {
         memberService.setPreferredTags(memberId, request);
-        return ResponseEntity.ok(SuccessResponse.of(null));
+        return ResponseEntity.noContent().build();
     }
 
     // 유저 별 1달 간 상위 태그 조회

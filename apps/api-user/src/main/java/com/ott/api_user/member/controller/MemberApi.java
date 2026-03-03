@@ -88,7 +88,7 @@ public interface MemberApi {
     )
     @ApiResponses({
             @ApiResponse(
-                    responseCode = "200", description = "선호 태그 저장 성공"
+                    responseCode = "204", description = "선호 태그 저장 성공"
             ),
             @ApiResponse(
                     responseCode = "400", description = "잘못된 요청 (빈 태그 목록, 중복 태그 ID 등)",
