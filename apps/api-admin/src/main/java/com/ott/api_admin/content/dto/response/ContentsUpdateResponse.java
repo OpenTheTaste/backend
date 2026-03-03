@@ -2,7 +2,7 @@ package com.ott.api_admin.content.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(type = "Object", description = "콘텐츠 수정 응답")
+@Schema(description = "콘텐츠 수정 응답")
 public record ContentsUpdateResponse(
         @Schema(type = "Long", description = "콘텐츠 ID", example = "10")
         Long contentsId,

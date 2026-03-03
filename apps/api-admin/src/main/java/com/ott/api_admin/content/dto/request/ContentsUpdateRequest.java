@@ -10,7 +10,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 import java.util.List;
 
-@Schema(type = "Object", description = "콘텐츠 수정 요청")
+@Schema(description = "콘텐츠 수정 요청")
 public record ContentsUpdateRequest(
         @Schema(type = "Long", description = "연결할 시리즈 ID(선택)", example = "1")
         @Positive

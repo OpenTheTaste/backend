@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
-@Schema(type = "Object", description = "숏폼 수정 요청")
+@Schema(description = "숏폼 수정 요청")
 public record ShortFormUpdateRequest(
         @Schema(type = "Long", description = "연결할 시리즈 ID(선택)", example = "1")
         @Positive

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
-@Schema(type = "Object", description = "숏폼 업로드 요청")
+@Schema(description = "숏폼 업로드 요청")
 public record ShortFormUploadRequest(
         @Schema(type = "Long", description = "연결할 시리즈 ID(선택)", example = "1")
         Long seriesId,

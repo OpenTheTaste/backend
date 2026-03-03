@@ -11,7 +11,7 @@ import java.util.List;
 
 @Schema(description = "시리즈 수정 요청")
 public record SeriesUpdateRequest(
-        @Schema(type = "String", description = "시리즈 제목", example = "수정된 시리즈 제목")
+        @Schema(description = "시리즈 제목", example = "수정된 시리즈 제목")
         @NotBlank
         String title,
 

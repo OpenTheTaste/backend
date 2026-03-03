@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Positive;
 
 import java.util.List;
 
-@Schema(type = "Object", description = "시리즈 업로드 요청")
+@Schema(description = "시리즈 업로드 요청")
 public record SeriesUploadRequest(
         @Schema(type = "String", description = "시리즈 제목", example = "응답하라 1988")
         @NotBlank
