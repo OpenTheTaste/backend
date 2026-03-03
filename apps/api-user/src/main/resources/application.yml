@@ -1,8 +1,9 @@
 app:
-  frontend-url: ${FRONTEND_URL:http://localhost:8080}
+  frontend-url: ${FRONTEND_URL}
 
 server:
   port: 8080
+  forward-headers-strategy: framework # ALB가 보내는 https 신호를 스프링이 신뢰하여 springdoc이 OpenAPI 서버 URL을 https://...로 생성
 
 spring:
   datasource:
