@@ -23,11 +23,13 @@ public class CategoryController implements CategoryApi {
 
     private final CategoryService categoryService;
 
+    @Override
     @GetMapping
     public ResponseEntity<SuccessResponse<List<CategoryResponse>>> getCategories() {
         return ResponseEntity.ok(SuccessResponse.of(categoryService.getCategories()));
     }
 
+    @Override
     @GetMapping("{categoryId}/tags")
     public ResponseEntity<SuccessResponse<List<TagResponse>>> getTagsByCategory(
             @Positive @PathVariable Long categoryId
