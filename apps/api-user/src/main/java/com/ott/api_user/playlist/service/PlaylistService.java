@@ -3,12 +3,15 @@ package com.ott.api_user.playlist.service;
 import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.playlist.dto.request.PlaylistCondition;
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
+import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
 import com.ott.api_user.playlist.service.strategy.PlaylistStrategy;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.media.domain.Media;
+import com.ott.domain.tag.domain.Tag;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +26,7 @@ import java.util.Map;
 public class PlaylistService {
 
     private final Map<String, PlaylistStrategy> strategyMap;
+    private final PlaylistPreferenceService preferenceService;
 
     public PageResponse<PlaylistResponse> getPlaylists(PlaylistCondition condition, Pageable pageable) {
         
@@ -49,6 +53,41 @@ public class PlaylistService {
         );
 
         return PageResponse.toPageResponse(pageInfo, contentList);
+    }
+
+
+    public TopTagPlaylistResponse getTopTagPlaylistWithMetadata(PlaylistCondition condition, Pageable pageable){
+        // 위 메서드를 통해 미디어 리스트 추출
+        PageResponse<PlaylistResponse> mediaPage = getPlaylists(condition, pageable);
+
+        List<Tag> topTags = preferenceService.getTopTags(condition.getMemberId());
+        
+        TopTagPlaylistResponse.CategoryInfo categoryInfo = null;
+        TopTagPlaylistResponse.TagInfo tagInfo = null;
+
+       if (condition.getIndex() != null && condition.getIndex() < topTags.size()) {
+            Tag targetTag = topTags.get(condition.getIndex());
+            
+            // TagInfo 객체 조립
+            tagInfo = TopTagPlaylistResponse.TagInfo.builder()
+                    .id(targetTag.getId())
+                    .name(targetTag.getName())
+                    .build();
+
+            // CategoryInfo 객체 조립
+            if (targetTag.getCategory() != null) {
+                categoryInfo = TopTagPlaylistResponse.CategoryInfo.builder()
+                        .id(targetTag.getCategory().getId())
+                        .name(targetTag.getCategory().getName())
+                        .build();
+            }
+        }
+
+        return TopTagPlaylistResponse.builder()
+                    .category(categoryInfo)
+                    .tag(tagInfo)
+                    .medias(mediaPage) // 위에서 가져온 PageResponse를 그대로 넣음
+                    .build();
     }
 
 
