@@ -2,9 +2,9 @@ package com.ott.transcoder;
 
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
+import com.ott.transcoder.inspection.DiskSpaceGuard;
 import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
-import com.ott.transcoder.inspection.DiskSpaceGuard;
 import com.ott.transcoder.pipeline.CommandPipeline;
 import com.ott.transcoder.queue.TranscodeMessage;
 import com.ott.transcoder.storage.VideoStorage;
@@ -17,7 +17,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.List;
+
+import static com.ott.transcoder.constant.IngestJobConstant.DirectoryConstant.*;
 
 /**
  * 작업 전체 흐름 조율
@@ -42,7 +43,8 @@ public class JobOrchestrator {
      */
     public void handle(TranscodeMessage message) {
         Long mediaId = message.mediaId();
-        Path workDir = Path.of(tempDir, "media-" + mediaId);
+        Long ingestJobId = message.ingestJobId();
+        Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId); //  + SUFFIX_WORK_DIR + ingestJob.id
 
         try {
             // 1. 디스크 공간 확인

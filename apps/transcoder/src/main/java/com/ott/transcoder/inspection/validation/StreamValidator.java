@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 
+import static com.ott.transcoder.constant.IngestJobConstant.DirectoryConstant.*;
+
 /**
  * probe 후 스트림 수준 검증
  *
@@ -35,14 +37,7 @@ public class StreamValidator {
             "mjpeg", "rawvideo"
     );
 
-    /** 최소 해상도 (이보다 작으면 의미 없는 영상) */
-    private static final int MIN_RESOLUTION = 32;
 
-    /** 최대 해상도 (8K 초과는 비정상) */
-    private static final int MAX_RESOLUTION = 8192;
-
-    /** 최대 프레임레이트 (이보다 높으면 비정상) */
-    private static final double MAX_FPS = 240.0;
 
     @Value("${transcoder.validation.max-duration-seconds:43200}")
     private double maxDurationSeconds; // 기본 12시간

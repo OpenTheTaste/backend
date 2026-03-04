@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.util.HexFormat;
 import java.util.Map;
 
+import static com.ott.transcoder.constant.IngestJobConstant.ValidateConstant.*;
+
 /**
  * probe 전 파일 수준 검증.
  *
@@ -115,27 +117,27 @@ public class FileValidator {
 
         // MP4/MOV: offset 4~7이 "ftyp"
         if (header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70) {
-            return "MP4"; // MP4/MOV/3GP 계열
+            return MP4; // MP4/MOV/3GP 계열
         }
 
         // MKV/WebM: EBML 헤더 (0x1A 0x45 0xDF 0xA3)
         if (header[0] == 0x1A && header[1] == 0x45 && header[2] == (byte) 0xDF && header[3] == (byte) 0xA3) {
-            return "MKV"; // MKV/WebM
+            return MKV; // MKV/WebM
         }
 
         // AVI: "RIFF"
         if (header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F') {
-            return "AVI";
+            return AVI;
         }
 
         // FLV: "FLV"
         if (header[0] == 'F' && header[1] == 'L' && header[2] == 'V') {
-            return "FLV";
+            return FLV;
         }
 
         // MPEG-TS: sync byte 0x47
         if (header[0] == 0x47) {
-            return "MPEG-TS";
+            return MPEG_TS;
         }
 
         log.debug("매직 바이트 미식별 - hex: {}", HexFormat.of().formatHex(header, 0, bytesRead));
@@ -151,9 +153,9 @@ public class FileValidator {
 
     /** MP4/MOV는 동일 ftyp 계열이므로 호환으로 취급 */
     private boolean isCompatibleFormat(String expected, String detected) {
-        if ("MP4".equals(expected) && "MP4".equals(detected)) return true;
-        if ("MOV".equals(expected) && "MP4".equals(detected)) return true;
-        if ("WEBM".equals(expected) && "MKV".equals(detected)) return true;
+        if (MP4.equals(expected) && MP4.equals(detected)) return true;
+        if (MOV.equals(expected) && MP4.equals(detected)) return true;
+        if (WEBM.equals(expected) && MKV.equals(detected)) return true;
         return false;
     }
 }
