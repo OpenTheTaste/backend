@@ -1,7 +1,9 @@
 package com.ott.api_user.series.service;
 
 import java.lang.foreign.Linker.Option;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -47,8 +49,7 @@ public class SeriesService {
         private final BookmarkRepository bookmarkRepository;
         private final LikesRepository likesRepository;
         private final WatchHistoryRepository watchHistoryRepository;
-
-        // private final PlaybackRepository playbackRepository;
+        private final PlaybackRepository playbackRepository;
 
         // 시리즈 상세 조회
         public SeriesDetailResponse getSeriesDetail(Long mediaId, Long memberId) {
@@ -84,9 +85,32 @@ public class SeriesService {
                
                 Page<Contents> contentsPage = contentsRepository
                                 .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(targetSeriesId, Status.ACTIVE, PublicStatus.PUBLIC, pageable);               
+                
+              
+                // 시리즈의 에피소드들의 mediaId 추출 
+                List<Long> mediaIds = contentsPage.getContent().stream()
+                        .map(content -> content.getMedia().getId())
+                        .toList();
 
-                List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream().map(SeriesContentsResponse::from).collect(Collectors.toList());
+                
+                // 미디어 컨텐츠들에 대한 이어보기 지점 IN 절로 한번에 조회
+                final Map<Long, Integer> playbackMap = mediaIds.isEmpty() ? new HashMap<>() : 
+                        playbackRepository.findAllByMmberIdAndMediaIds(memberId, mediaIds).stream()
+                        .collect(Collectors.toMap(
+                                p -> p.getContents().getMedia().getId(), 
+                                Playback::getPositionSec,
+                                (existing, replacement) -> existing // 중복 방어
+                ));
 
+                // 에피소드별로 시청 이력을 매핑하여 DTO 변환
+                List<SeriesContentsResponse> contentsList = contentsPage.getContent().stream()
+                        .map(content -> {
+                            Integer positionSec = playbackMap.getOrDefault(content.getMedia().getId(), 0);
+                            return SeriesContentsResponse.from(content, positionSec);
+                        })
+                        .toList();
+
+                        
                 PageInfo pageInfo = PageInfo.builder()
                                 .currentPage(contentsPage.getNumber())
                                 .totalPage(contentsPage.getTotalPages())

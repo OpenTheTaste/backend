@@ -68,5 +68,7 @@ public interface ContentsRepository extends JpaRepository<Contents, Long>, Conte
                 @Param("status") Status status,
                 @Param("publicStatus") PublicStatus publicStatus);
 
+
+                
         boolean existsByIdAndStatus(Long id, Status status);
 }

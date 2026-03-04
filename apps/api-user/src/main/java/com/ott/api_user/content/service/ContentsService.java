@@ -22,6 +22,7 @@ import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.likes.repository.LikesRepository;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_tag.repository.MediaTagRepository;
+import com.ott.domain.playback.domain.Playback;
 import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.tag.repository.TagRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class ContentsService {
         private final LikesRepository likesRepository;
         private final TagRepository tagRepository;
         private final CategoryRepository categoryRepository;
+        private final PlaybackRepository playbackRepository;
 
         
         // 재생 상세
@@ -52,9 +54,14 @@ public class ContentsService {
                 Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId,Status.ACTIVE);
                 Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId, Status.ACTIVE);
 
+                //  이어보기 지점 조회
+                Integer positionSec = playbackRepository.findByMemberIdAndMediaId(memberId, contents.getId())
+                                .map(Playback::getPositionSec)
+                                .orElse(0); // 기록 없으면 0초부터
+                                
                 String masterPlaylistUrl = contents.getMasterPlaylistUrl();
 
-                Integer positionSec = 0;
+                
 
                 return ContentsDetailResponse.from(contents, tags, categories, isBookmarked, isLiked,masterPlaylistUrl, positionSec);
         }

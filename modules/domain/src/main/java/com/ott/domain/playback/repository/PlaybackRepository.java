@@ -1,6 +1,7 @@
 package com.ott.domain.playback.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +23,26 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long> {
                 @Param("memberId") Long memberId,
                 @Param("status") Status status,
                 Pageable pageable);
+
+        //현재 플레이리스트의 모든 미디어에 대한 일괄 조회
+        @Query("""
+                SELECT p FROM Playback p 
+                WHERE p.member.id = :memberId 
+                AND p.contents.media.id IN :mediaIds
+                """)
+        List<Playback> findAllByMmberIdAndMediaIds(
+            @Param("memberId") Long memberId,
+            @Param("mediaIds") List<Long> mediaIds);
+
+        
+        // 단건 조회(컨텐츠 or 에피별) 에 대해 시청기록 조회
+        @Query("""
+                SELECT p FROM Playback p 
+                WHERE p.member.id = :memberId 
+                AND p.contents.media.id = :mediaId
+                """)
+        Optional<Playback> findByMemberIdAndMediaId(
+                @Param("memberId") Long memberId, 
+                @Param("mediaId") Long mediaId);
+        
 }
