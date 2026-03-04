@@ -53,9 +53,9 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
-                                "/back-office//swagger-ui/**",
-                                "/back-office//v3/api-docs/**",
-                                "/back-office//swagger-resources/**"
+                                "/back-office/swagger-ui/**",
+                                "/back-office/v3/api-docs/**",
+                                "/back-office/swagger-resources/**"
 
 
                         ).permitAll()
