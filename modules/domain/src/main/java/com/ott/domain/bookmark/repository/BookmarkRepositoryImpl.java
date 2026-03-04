@@ -1,6 +1,7 @@
 package com.ott.domain.bookmark.repository;
 
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class BookmarkRepositoryImpl implements BookmarkRepositoryCustom {
                         media.title,
                         media.description,
                         media.posterUrl,
-                        media.mediaType.when(CONTENTS).then(playback.positionSec.coalesce(0)).otherwise((Integer) null), // SERIES는 null, CONTENTS만 playback 없으면 0
+                        media.mediaType.when(CONTENTS).then(playback.positionSec.coalesce(0)).otherwise(Expressions.nullExpression(Integer.class)), // SERIES는 null, CONTENTS만 playback 없으면 0
                         contents.duration                  // SERIES면 null (LEFT JOIN 미매칭)
                 ))
                 .from(bookmark)
