@@ -29,7 +29,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/playlists")
-public class PlaylistController implements PlaylistApi {
+public class PlaylistController implements PlayListAPI {
 
     private final PlaylistService playlistService;
     private final PlaylisStrategytService playlisStrategytService;

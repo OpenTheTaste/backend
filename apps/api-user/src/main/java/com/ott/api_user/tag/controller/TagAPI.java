@@ -62,6 +62,11 @@ public interface TagAPI {
                     )
             ),
             @ApiResponse(
+                    responseCode = "400", description = "요청 파라미터 오류",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
                     responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
                     )
