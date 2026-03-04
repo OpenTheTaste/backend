@@ -48,3 +48,12 @@ storage:
   provider: ${STORAGE_PROVIDER}
   local:
     output-dir: ${STORAGE_OUTPUT_DIR}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
