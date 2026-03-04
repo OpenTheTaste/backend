@@ -198,7 +198,7 @@ public class MemberService {
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        Tag findTag = tagRepository.findById(tagId)
+        Tag findTag = tagRepository.findByIdAndStatus(tagId, Status.ACTIVE)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND));
 
         // 이번 달 범위
