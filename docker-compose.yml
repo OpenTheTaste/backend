@@ -126,5 +126,40 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  # ============ Monitoring ============
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: ott-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./apps/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      api-user:
+        condition: service_healthy
+      api-admin:
+        condition: service_started
+      transcoder:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana:12.4.0
+    container_name: ott-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin1234}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./apps/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+
 volumes:
   mysql-data:
