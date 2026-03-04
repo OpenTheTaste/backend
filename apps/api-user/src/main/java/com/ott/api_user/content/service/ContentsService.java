@@ -1,28 +1,17 @@
 package com.ott.api_user.content.service;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.content.dto.ContentsDetailResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
-import com.ott.common.web.response.PageInfo;
-import com.ott.common.web.response.PageResponse;
 import com.ott.domain.bookmark.repository.BookmarkRepository;
 import com.ott.domain.category.repository.CategoryRepository;
-import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.likes.repository.LikesRepository;
-import com.ott.domain.media.domain.Media;
-import com.ott.domain.media_tag.repository.MediaTagRepository;
-import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.tag.repository.TagRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +31,6 @@ public class ContentsService {
         
         // 재생 상세
         public ContentsDetailResponse getContentDetail(Long mediaId, Long memberId) {
-                
                 Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
 

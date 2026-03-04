@@ -4,6 +4,7 @@ import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.Media;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -17,12 +18,20 @@ import org.springframework.util.StringUtils;
 import static com.ott.domain.playback.domain.QPlayback.playback;
 import static com.ott.domain.contents.domain.QContents.contents;
 import java.util.List;
-import static com.ott.domain.media.domain.QMedia.media;
+import java.util.Map;
+
 import com.querydsl.jpa.JPAExpressions;
+
+import static com.ott.domain.common.MediaType.CONTENTS;
+import static com.ott.domain.common.MediaType.SERIES;
+import static com.ott.domain.common.PublicStatus.PUBLIC;
+import static com.ott.domain.common.Status.ACTIVE;
+import static com.ott.domain.media.domain.QMedia.media;
 import static com.ott.domain.bookmark.domain.QBookmark.bookmark;
 import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
 
-import java.util.Map;
+
+
 
 @RequiredArgsConstructor
 public class MediaRepositoryImpl implements MediaRepositoryCustom {
@@ -106,7 +115,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         @Override
         public Page<Media> findOriginMediaListBySearchWord(Pageable pageable, String searchWord) {
-                BooleanExpression condition = media.mediaType.in(List.of(MediaType.SERIES, MediaType.CONTENTS))
+                BooleanExpression condition = media.mediaType.in(List.of(SERIES, CONTENTS))
                                 .and(
                                                 JPAExpressions.selectOne()
                                                                 .from(contents)
@@ -132,6 +141,54 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
         }
+
+    // 특정 태그를 가진 영상 조회
+    @Override
+    public List<Media> findMediasByTagId(Long tagId, Long excludeMediaId, int limit, long offset) {
+        return queryFactory.selectFrom(media)
+                .join(mediaTag).on(mediaTag.media.id.eq(media.id))
+                .where(
+                        media.status.eq(Status.ACTIVE),
+                        media.publicStatus.eq(PublicStatus.PUBLIC),
+                        mediaTag.tag.id.eq(tagId),
+                        excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
+                .orderBy(media.id.desc())
+                .limit(limit)
+                .offset(offset)
+                .fetch();
+    }
+
+    // 특정 태그에 속하는 추천 콘텐츠 조회
+    @Override
+    public List<TagContentProjection> findRecommendContentsByTagId(Long tagId, int limit) {
+        return queryFactory
+                .select(Projections.constructor(TagContentProjection.class,
+                        media.id,
+                        media.posterUrl,
+                        media.mediaType
+                ))
+                .from(media)
+                .join(mediaTag).on(
+                        mediaTag.media.id.eq(media.id),
+                        mediaTag.tag.id.eq(tagId),
+                        mediaTag.status.eq(ACTIVE)
+                )
+                .leftJoin(contents).on(
+                        contents.media.id.eq(media.id),
+                        contents.series.isNull()
+                )
+                .where(
+                        media.status.eq(ACTIVE),
+                        media.publicStatus.eq(PUBLIC),
+                        // 시리즈 자체 OR 단편 콘텐츠 (시리즈 에피소드 제외)
+                        media.mediaType.eq(SERIES)
+                                .or(media.mediaType.eq(CONTENTS).and(contents.id.isNotNull()))
+                )
+                .orderBy(media.bookmarkCount.desc())  // 북마크 많은 순 정렬
+                .limit(limit)
+                .fetch();
+    }
+
 
         /*
          * 플레이리스트 전략패턴 관련 로직
@@ -246,21 +303,6 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
         }
 
-        // 특정 태그를 가진 영상 조회
-        @Override
-        public List<Media> findMediasByTagId(Long tagId, Long excludeMediaId, int limit, long offset) {
-                return queryFactory.selectFrom(media)
-                                .join(mediaTag).on(mediaTag.media.id.eq(media.id))
-                                .where(
-                                                media.status.eq(Status.ACTIVE),
-                                                media.publicStatus.eq(PublicStatus.PUBLIC),
-                                                mediaTag.tag.id.eq(tagId),
-                                                excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
-                                .orderBy(media.id.desc())
-                                .limit(limit)
-                                .offset(offset)
-                                .fetch();
-        }
 
         // PlaylistPrefereceService 에서 받아온 tagScores 로 추천 종합 쿼리
         @Override
@@ -269,7 +311,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 // 이때는 가장 최근 신작 노출
                 if (tagScores.isEmpty()) {
                         return queryFactory.selectFrom(media)
-                                        .where(         
+                                        .where(
                                                         isActiveAndPublic(),
                                                         excludeId(excludeMediaId))
                                         .orderBy(media.id.desc())
@@ -303,6 +345,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
         }
 
         // --- 동적 쿼리 헬퍼 메서드 ---
+
+
         private BooleanExpression titleContains(String searchWord) {
                 if (StringUtils.hasText(searchWord))
                         return media.title.contains(searchWord);

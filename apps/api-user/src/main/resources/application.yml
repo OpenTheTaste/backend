@@ -1,6 +1,10 @@
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:8080}
 
+kakao:
+  unlink-url: ${KAKAO_UNLINK_URL} # 카카오 회원탈퇴 할 링크
+  admin-key: ${KAKAO_ADMIN_KEY} # 회원탈퇴, 서비스 앱의 어드민 키
+
 server:
   port: 8080
 
@@ -53,7 +57,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:

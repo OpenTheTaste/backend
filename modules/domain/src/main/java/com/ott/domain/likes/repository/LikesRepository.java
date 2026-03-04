@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 
 import com.ott.domain.common.Status;
 import com.ott.domain.likes.domain.Likes;
+import org.springframework.data.jpa.repository.Modifying;
+
 
 import java.util.Optional;
 
@@ -29,4 +31,23 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
             """)
         List<Long> findRecentLikedMediaIds(@Param("memberId") Long memberId, @Param("status") Status status,
                         Pageable pageable);
+
+   // 회원 탈퇴 soft delete
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Likes l SET l.status = 'DELETE' WHERE l.member.id = :memberId")
+    void softDeleteAllByMemberId(@Param("memberId") Long memberId);
+
+    // 회원 탈퇴 시 해당 유저가 좋아요한 미디어에 대하여 -count
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+    UPDATE media m
+    JOIN (
+        SELECT l.media_id
+        FROM likes l
+        WHERE l.member_id = :memberId
+          AND l.status = 'ACTIVE'
+    ) t ON t.media_id = m.id
+    SET m.likes_count = GREATEST(0, m.likes_count - 1)
+    """, nativeQuery = true)
+    void decreaseLikesCountByMemberId(@Param("memberId") Long memberId);
 }

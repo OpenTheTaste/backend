@@ -2,12 +2,13 @@ package com.ott.api_user.member.controller;
 
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
-import com.ott.api_user.member.dto.response.MyPageResponse;
+import com.ott.api_user.member.dto.response.*;
 import com.ott.api_user.member.service.MemberService;
+import com.ott.common.security.util.CookieUtil;
 import com.ott.common.web.response.SuccessResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -18,13 +19,16 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController implements MemberApi {
 
     private final MemberService memberService;
+    private final CookieUtil cookie;
 
+    @Override
     @GetMapping("/me")
     public ResponseEntity<SuccessResponse<MyPageResponse>> getMyPage(@AuthenticationPrincipal Long memberId) {
         MyPageResponse response = memberService.getMyPage(memberId);
         return ResponseEntity.ok(SuccessResponse.of(response));
     }
 
+    @Override
     @PatchMapping("/me")
     public ResponseEntity<SuccessResponse<MyPageResponse>> updateMyInfo(
             @AuthenticationPrincipal Long memberId,
@@ -34,12 +38,36 @@ public class MemberController implements MemberApi {
 
     }
 
+    @Override
     @PostMapping("/me/tags")
     public ResponseEntity<SuccessResponse<Void>> setPreferredTags(
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody SetPreferredTagRequest request
     ) {
         memberService.setPreferredTags(memberId, request);
-        return ResponseEntity.ok(SuccessResponse.of(null));
+        return ResponseEntity.noContent().build();
+    }
+
+
+    // 회원 탈퇴 - 현재 soft delete
+    // 회원 탈퇴 시 DB + 브라우저 토큰 삭제
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> withdraw(
+            HttpServletResponse response,
+            @AuthenticationPrincipal Long memberId) {
+        memberService.withdraw(memberId);
+
+        cookie.deleteCookie(response, "accessToken");
+        cookie.deleteCookie(response, "refreshToken");
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // 온보딩 스킵 시 온보딩 컬럼 true 변경
+    @Override
+    @PostMapping("/me/onboarding/skip")
+    public ResponseEntity<Void> skipOnboarding(@AuthenticationPrincipal Long memberId) {
+        memberService.skipOnboarding(memberId);
+        return ResponseEntity.noContent().build();
     }
 }

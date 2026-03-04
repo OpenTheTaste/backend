@@ -36,7 +36,7 @@ public class BookmarkController implements BookmarkAPI  {
             @AuthenticationPrincipal Long memberId) {
 
         bookmarkService.editBookmark(memberId, request.getMediaId());
-        return ResponseEntity.ok(SuccessResponse.of(null));
+        return ResponseEntity.noContent().build();
     }
 
     // 북마크한 콘텐츠 or 시리즈 리스트 조회

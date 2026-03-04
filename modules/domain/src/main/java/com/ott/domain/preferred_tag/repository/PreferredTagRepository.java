@@ -33,6 +33,12 @@ public interface PreferredTagRepository extends JpaRepository<PreferredTag, Long
     void deleteAllByMember(@Param("member") Member member);
 
 
+    // 회원 탈퇴 시 soft delete 사용
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE PreferredTag pt SET pt.status = 'DELETE' WHERE pt.member.id = :memberId")
+    void softDeleteAllByMemberId(@Param("memberId") Long memberId);
+
+
     // 사용자의 선호 태그 ID만 조회
     @Query("""
             SELECT pt.tag.id
