@@ -139,13 +139,6 @@ services:
     volumes:
       - ./apps/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
-    depends_on:
-      api-user:
-        condition: service_healthy
-      api-admin:
-        condition: service_started
-      transcoder:
-        condition: service_started
 
   grafana:
     image: grafana/grafana:12.4.0
