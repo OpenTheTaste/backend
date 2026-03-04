@@ -14,13 +14,7 @@ import com.ott.domain.series.domain.Series;
 
 public interface SeriesRepository extends JpaRepository<Series, Long>, SeriesRepositoryCustom {
 
-        // Optional<Series> findByIdAndStatusAndMedia_PublicStatus(Long id, Status
-        // status, PublicStatus publicStatus);
-        // @Query("SELECT s FROM Series s JOIN FETCH s.media m WHERE s.id = :id AND s.status = :status AND m.publicStatus = :publicStatus")
-        // Optional<Series> findByIdWithMedia(@Param("id") Long id,
-        //                 @Param("status") Status status,
-        //                 @Param("publicStatus") PublicStatus publicStatus);
-
+        // 미디어 Id 로 해당 시리즈 조회
         @Query("SELECT s FROM Series s JOIN FETCH s.media m WHERE m.id = :mediaId AND s.status = :status AND m.publicStatus = :publicStatus")
         Optional<Series> findByMediaIdAndStatusAndPublicStatus(
                         @Param("mediaId") Long mediaId,

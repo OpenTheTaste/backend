@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/playlists") 
 public class PlaylistController implements PlaylistApi {
     
-    private final PlaylisStrategytService playlistService;
+    private final PlaylisStrategytService playlisStrategytService;
 
     // 1. 종합 추천
     @Override
@@ -61,7 +61,7 @@ public class PlaylistController implements PlaylistApi {
 
         Pageable pageable = PageRequest.of(page, size);
         
-        return ResponseEntity.ok(SuccessResponse.of(playlistService.getTopTagPlaylistWithMetadata(condition, pageable)));
+        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getTopTagPlaylistWithMetadata(condition, pageable)));
     }
 
     // 3. 특정 태그 단건 리스트 
@@ -156,6 +156,6 @@ public class PlaylistController implements PlaylistApi {
 
         Pageable pageable = PageRequest.of(pageParam, sizeParam);
 
-        return ResponseEntity.ok(SuccessResponse.of(playlistService.getPlaylists(condition, pageable)));
+        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getPlaylists(condition, pageable)));
     }
 }

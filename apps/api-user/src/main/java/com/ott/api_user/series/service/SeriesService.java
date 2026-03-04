@@ -52,7 +52,7 @@ public class SeriesService {
 
         // 시리즈 상세 조회
         public SeriesDetailResponse getSeriesDetail(Long mediaId, Long memberId) {
-
+                
                 Series series = seriesRepository.findByMediaIdAndStatusAndPublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
 

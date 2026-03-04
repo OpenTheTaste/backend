@@ -2,6 +2,7 @@ package com.ott.domain.watch_history.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface WatchHistoryRepositoryCustom {
 

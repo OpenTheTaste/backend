@@ -57,16 +57,18 @@ public class PlaylisStrategytService {
 
 
     public TopTagPlaylistResponse getTopTagPlaylistWithMetadata(PlaylistCondition condition, Pageable pageable){
-        // 위 메서드를 통해 미디어 리스트 추출
-        PageResponse<PlaylistResponse> mediaPage = getPlaylists(condition, pageable);
-
+        //상위 태그 먼저 가져오기
         List<Tag> topTags = preferenceService.getTopTags(condition.getMemberId());
         
         TopTagPlaylistResponse.CategoryInfo categoryInfo = null;
         TopTagPlaylistResponse.TagInfo tagInfo = null;
 
+    
        if (condition.getIndex() != null && condition.getIndex() >= 0 && condition.getIndex() < topTags.size()) {
             Tag targetTag = topTags.get(condition.getIndex());
+
+            // 상위 태그 조립해줌
+            condition.setTagId(targetTag.getId());
             
             // TagInfo 객체 조립
             tagInfo = TopTagPlaylistResponse.TagInfo.builder()
@@ -82,6 +84,10 @@ public class PlaylisStrategytService {
                         .build();
             }
         }
+
+        // 상위태그가 조립된 상태로 플레이리스트 조회
+        PageResponse<PlaylistResponse> mediaPage = getPlaylists(condition, pageable);
+
 
         return TopTagPlaylistResponse.builder()
                     .category(categoryInfo)

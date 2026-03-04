@@ -138,11 +138,12 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
          */
 
         @Override
-        public Page<Media> findTrendingPlaylists(Long excludeMediaId, Pageable pageable) {
+        public Page<Media> findTrendingPlaylists(MediaType mediaType, Long excludeMediaId, Pageable pageable) {
                 List<Media> content = queryFactory
                                 .selectFrom(media)
                                 .where(
                                                 isActiveAndPublic(), // 활성 및 공개 상태 필터링
+                                                isDisplayable(), // 공통 노출 조건 사용
                                                 excludeId(excludeMediaId) // 현재 미디어 제외 (null이면 무시됨)
                                 )
                                 .orderBy(media.bookmarkCount.desc())
@@ -155,6 +156,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .from(media)
                                 .where(
                                                 isActiveAndPublic(),
+                                                isDisplayable(),
                                                 excludeId(excludeMediaId));
 
                 // PageableExecutionUtils를 사용하여 첫 페이지 조회 시 불필요한 카운트 쿼리 방지
@@ -162,7 +164,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
         }
 
         @Override
-        public Page<Media> findHistoryPlaylists(Long memberId, Long excludeMediaId, Pageable pageable) {
+        public Page<Media> findHistoryPlaylists(Long memberId, MediaType mediaType, Long excludeMediaId, Pageable pageable) {
                 List<Media> content = queryFactory
                                 .select(media)
                                 .from(playback)
@@ -170,6 +172,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .where(
                                                 playback.member.id.eq(memberId), // 특정 사용자 필터링
                                                 isActiveAndPublic(), // 활성/공개 상태 확인
+                                                isDisplayable(),
                                                 excludeId(excludeMediaId) // 현재 재생 중인 영상 제외
                                 )
                                 .orderBy(playback.modifiedDate.desc()) // 최근 시청 시점 순 정렬
@@ -184,13 +187,14 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .where(
                                                 playback.member.id.eq(memberId),
                                                 isActiveAndPublic(),
+                                                isDisplayable(),
                                                 excludeId(excludeMediaId));
 
                 return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
         }
 
         @Override
-        public Page<Media> findBookmarkedPlaylists(Long memberId, Long excludeMediaId, Pageable pageable) {
+        public Page<Media> findBookmarkedPlaylists(Long memberId, MediaType mediaType, Long excludeMediaId, Pageable pageable) {
                 List<Media> content = queryFactory
                                 .select(media)
                                 .from(bookmark)
@@ -199,6 +203,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                                 bookmark.member.id.eq(memberId),
                                                 bookmark.status.eq(Status.ACTIVE),
                                                 isActiveAndPublic(),
+                                                isDisplayable(),
                                                 excludeId(excludeMediaId))
                                 .orderBy(bookmark.createdDate.desc()) // 최근 북마크한 순서
                                 .offset(pageable.getOffset())
@@ -213,13 +218,14 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                                 bookmark.member.id.eq(memberId),
                                                 bookmark.status.eq(Status.ACTIVE),
                                                 isActiveAndPublic(),
+                                                isDisplayable(),
                                                 excludeId(excludeMediaId));
 
                 return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
         }
 
         @Override
-        public Page<Media> findPlaylistsByTag(Long tagId, Long excludeMediaId, Pageable pageable) {
+        public Page<Media> findPlaylistsByTag(Long tagId, MediaType mediaType , Long excludeMediaId, Pageable pageable) {
                 List<Media> content = queryFactory
                                 .select(media)
                                 .from(mediaTag)
@@ -227,6 +233,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .where(
                                                 mediaTag.tag.id.eq(tagId), // 요청된 태그 ID 필터링
                                                 isActiveAndPublic(), // 활성/공개 상태 확인
+                                                isDisplayable(),
                                                 excludeId(excludeMediaId) // 현재 재생 중인 영상 제외
                                 )
                                 .orderBy(media.createdDate.desc()) // 최신 등록 순 정렬
@@ -241,6 +248,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .where(
                                                 mediaTag.tag.id.eq(tagId),
                                                 isActiveAndPublic(),
+                                                isDisplayable(),
                                                 excludeId(excludeMediaId));
 
                 return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
@@ -248,12 +256,12 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         // 특정 태그를 가진 영상 조회
         @Override
-        public List<Media> findMediasByTagId(Long tagId, Long excludeMediaId, int limit, long offset) {
+        public List<Media> findMediasByTagId( Long tagId, MediaType mediaType, Long excludeMediaId, int limit, long offset) {
                 return queryFactory.selectFrom(media)
                                 .join(mediaTag).on(mediaTag.media.id.eq(media.id))
                                 .where(
-                                                media.status.eq(Status.ACTIVE),
-                                                media.publicStatus.eq(PublicStatus.PUBLIC),
+                                                isActiveAndPublic(),
+                                                isDisplayable(),
                                                 mediaTag.tag.id.eq(tagId),
                                                 excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
                                 .orderBy(media.id.desc())
@@ -264,13 +272,14 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         // PlaylistPrefereceService 에서 받아온 tagScores 로 추천 종합 쿼리
         @Override
-        public List<Media> findRecommendedMedias(Map<Long, Integer> tagScores, Long excludeMediaId, int limit, long offset) {
+        public List<Media> findRecommendedMedias(Map<Long, Integer> tagScores, MediaType mediaType, Long excludeMediaId, int limit, long offset) {
                 // 선호태그 조차 고르지 않은 백지 상태의 유저
                 // 이때는 가장 최근 신작 노출
                 if (tagScores.isEmpty()) {
                         return queryFactory.selectFrom(media)
                                         .where(         
                                                         isActiveAndPublic(),
+                                                        isDisplayable(),
                                                         excludeId(excludeMediaId))
                                         .orderBy(media.id.desc())
                                         .limit(limit)
@@ -292,9 +301,9 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 return queryFactory.selectFrom(media)
                                 .join(mediaTag).on(mediaTag.media.id.eq(media.id))
                                 .where(
-                                                media.status.eq(Status.ACTIVE),
-                                                media.publicStatus.eq(PublicStatus.PUBLIC),
-                                                excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
+                                                isActiveAndPublic(),
+                                                isDisplayable(),
+                                                excludeId(excludeMediaId))
                                 .groupBy(media.id)
                                 .orderBy(scoreExpression.sum().desc(), media.id.desc())
                                 .limit(limit)
@@ -337,4 +346,14 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 // 전달된 ID가 있을 때만 '해당 ID 제외' 조건을 추가, 없으면 null 반환하여 무시
                 return excludeMediaId != null ? media.id.ne(excludeMediaId) : null;
         }
+
+        private BooleanExpression isDisplayable() {
+                return media.mediaType.eq(MediaType.SERIES)
+                        .or(media.mediaType.eq(MediaType.CONTENTS)
+                                .and(JPAExpressions.selectOne()
+                                        .from(contents)
+                                        .where(contents.media.id.eq(media.id)
+                                                .and(contents.series.isNotNull()))
+                                        .notExists()));
+       }
 }

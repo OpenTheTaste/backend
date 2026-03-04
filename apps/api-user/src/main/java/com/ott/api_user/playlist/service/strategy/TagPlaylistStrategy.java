@@ -60,7 +60,7 @@ public class TagPlaylistStrategy implements PlaylistStrategy {
         // 홈 화면은 항상 무작위로 섞을 거니까 0으로 고정,  상세 페이지는 페이지에 맞게 건너뜀
         long fetchOffset = (isHomeScreen) ? 0 : pageable.getOffset();
         
-        List<Media> mediaPool = mediaRepository.findMediasByTagId(targetTagId, condition.getExcludeMediaId(), fetchLimit, fetchOffset);
+        List<Media> mediaPool = mediaRepository.findMediasByTagId(targetTagId, condition.getMediaType(), condition.getExcludeMediaId(), fetchLimit, fetchOffset);
 
         // 3. 디스커버리 UX: 홈 화면일 경우에만 매번 새로운 콘텐츠를 발견하도록 리스트를 무작위로 섞음
         if (pageable.getPageNumber() == 0 && isHomeScreen) {

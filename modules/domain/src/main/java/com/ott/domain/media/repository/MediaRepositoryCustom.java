@@ -22,20 +22,21 @@ public interface MediaRepositoryCustom {
 
         Page<Media> findOriginMediaListBySearchWord(Pageable pageable, String searchWord);
 
-        // 인기 차트 통합 조회 메서드
-        Page<Media> findTrendingPlaylists(Long excludeMediaId, Pageable pageable);
+       // 인기 차트 통합 조회 메서드
+        Page<Media> findTrendingPlaylists(MediaType mediaType, Long excludeMediaId, Pageable pageable);
 
         // 시청 이력 조회 (최근 시청 순)
-        Page<Media> findHistoryPlaylists(Long memberId, Long excludeMediaId, Pageable pageable);
+        Page<Media> findHistoryPlaylists(Long memberId, MediaType mediaType, Long excludeMediaId, Pageable pageable);
 
         // 북마크 목록 조회 (최근 찜한 순)
-        Page<Media> findBookmarkedPlaylists(Long memberId, Long excludeMediaId, Pageable pageable);
+        Page<Media> findBookmarkedPlaylists(Long memberId, MediaType mediaType, Long excludeMediaId, Pageable pageable);
 
-        // 특정 태그 기반 미디어 목록 조회
-        Page<Media> findPlaylistsByTag(Long tagId, Long excludeMediaId, Pageable pageable);
+        // 특정 태그 기반 미디어 목록 조회 (페이징 객체 사용)
+        Page<Media> findPlaylistsByTag(Long tagId, MediaType mediaType, Long excludeMediaId, Pageable pageable);
 
+        // 특정 태그 기반 미디어 목록 조회 (limit, offset 사용)
+        List<Media> findMediasByTagId(Long tagId, MediaType mediaType, Long excludeMediaId, int limit , long offset);
 
-        List<Media> findMediasByTagId(Long tagId, Long excludeMediaId, int limit , long offset);
-
-        List<Media> findRecommendedMedias(Map<Long, Integer> tagScores, Long excludeMediaId, int limit, long offset);
+        // 추천 종합 쿼리
+        List<Media> findRecommendedMedias(Map<Long, Integer> tagScores, MediaType mediaType, Long excludeMediaId, int limit, long offset);
 }
