@@ -8,7 +8,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
+import static com.ott.transcoder.constant.IngestJobConstant.VideoConstant.*;
+import static com.ott.transcoder.constant.IngestJobConstant.AudioConstant.*;
 
 /**
  * ProbeResult를 분석하여 HLS 트랜스코딩 대상 해상도/비트레이트 결정
@@ -17,27 +19,6 @@ import java.util.Map;
 @Slf4j
 @Component
 public class TranscodePlanner {
-
-    /** 해상도별 높이 (Resolution enum에 height 필드가 없으므로 여기서 관리) */
-    private static final Map<Resolution, Integer> HEIGHT_MAP = Map.of(
-            Resolution.P360, 360,
-            Resolution.P720, 720,
-            Resolution.P1080, 1080
-    );
-
-    /** 해상도별 기본 비디오 비트레이트 (bps) — 원본 비트레이트와 비교용 */
-    private static final Map<Resolution, Long> DEFAULT_VIDEO_BITRATE_MAP = Map.of(
-            Resolution.P360, 800_000L,
-            Resolution.P720, 2_400_000L,
-            Resolution.P1080, 4_800_000L
-    );
-
-    /** 해상도별 기본 오디오 비트레이트 문자열 */
-    private static final Map<Resolution, String> AUDIO_BITRATE_MAP = Map.of(
-            Resolution.P360, "96k",
-            Resolution.P720, "128k",
-            Resolution.P1080, "192k"
-    );
 
     /** 트랜스코딩 대상 해상도 */
     private static final List<Resolution> CANDIDATE_RESOLUTION_LIST = List.of(
@@ -54,7 +35,7 @@ public class TranscodePlanner {
         List<TranscodeProfile> profileList = new ArrayList<>();
 
         for (Resolution resolution : CANDIDATE_RESOLUTION_LIST) {
-            int targetHeight = HEIGHT_MAP.get(resolution);
+            int targetHeight = resolution.getHeight();
 
             // 업스케일 방지
             if (probeResult.isUpscaleFor(targetHeight)) {
@@ -62,7 +43,7 @@ public class TranscodePlanner {
             }
 
             String videoBitrate = decideVideoBitrate(probeResult, resolution);
-            String audioBitrate = AUDIO_BITRATE_MAP.get(resolution);
+            String audioBitrate = resolution.getAudioBitrate();
             String audioCodec = decideAudioCodec(probeResult);
 
             TranscodeProfile profile = new TranscodeProfile(
@@ -70,9 +51,9 @@ public class TranscodePlanner {
                     targetHeight,
                     videoBitrate,
                     audioBitrate,
-                    "libx264",
+                    LIBX264,
                     audioCodec,
-                    "fast"
+                    PRESET_FAST
             );
 
             profileList.add(profile);
@@ -95,7 +76,7 @@ public class TranscodePlanner {
      * 원본 비트레이트가 기본값보다 낮으면 원본 비트레이트를 상한으로 사용하여 과도한 할당을 방지
      */
     private String decideVideoBitrate(ProbeResult probeResult, Resolution resolution) {
-        long defaultBitrate = DEFAULT_VIDEO_BITRATE_MAP.get(resolution);
+        long defaultBitrate = resolution.getVideoBitrate();
         long originBitrate = probeResult.videoBitrate();
 
         // 원본 비트레이트 정보가 없으면 기본값 사용
@@ -109,7 +90,7 @@ public class TranscodePlanner {
     }
 
     private String decideAudioCodec(ProbeResult probeResult) {
-        return "aac";
+        return AAC;
     }
 
     private String formatBitrate(long bps) {

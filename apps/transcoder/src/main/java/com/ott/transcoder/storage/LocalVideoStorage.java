@@ -44,10 +44,6 @@ public class LocalVideoStorage implements VideoStorage {
         return target;
     }
 
-    /**
-     * workDir 내 모든 파일을 output-dir/{destinationPrefix}/ 하위로 복사
-     * 디렉토리 구조(360p/, 720p/, 1080p/) 그대로 유지
-     */
     @Override
     public String upload(Path localDir, String destinationPrefix) {
         Path destination = Path.of(outputDir, destinationPrefix);
