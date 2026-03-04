@@ -1,6 +1,8 @@
 package com.ott.api_user.playlist.controller;
 
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
+import com.ott.api_user.playlist.dto.response.RecentWatchResponse;
+import com.ott.api_user.playlist.dto.response.TagPlaylistResponse;
 import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -25,6 +27,8 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
+import java.util.List;
+
 
 @Validated
 @Tag(name = "Playlist", description = "플레이리스트 API")
@@ -38,6 +42,7 @@ public interface PlaylistApi {
         @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
     })
+
     
     @Operation(summary = "OO 님이 좋아하실만한 콘텐츠", description = "유저 취향을 합산하여 추천합니다. (홈 화면 셔플 지원)")
     @GetMapping("/recommend")
@@ -102,5 +107,32 @@ public interface PlaylistApi {
             @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
             @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+    );
+
+    @Operation(summary = "태그별 추천 콘텐츠 조회", description = "특정 태그 ID를 기반으로 유저 맞춤 추천 콘텐츠를 제공합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공", content = {
+                    @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TagPlaylistResponse.class))) }),
+            @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
+    })
+    @GetMapping("/me/{tagId}")
+    ResponseEntity<SuccessResponse<List<TagPlaylistResponse>>> getRecommendContentsByTag(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId,
+            @Positive @Parameter(description = "태그 ID", required = true) @PathVariable Long tagId
+    );
+
+
+    @Operation(summary = "과거 시청 이력 조회", description = "유저의 시청 이력을 10개씩 페이지네이션하여 제공합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class)) }),
+            @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
+    })
+    @GetMapping("/me/history")
+    ResponseEntity<SuccessResponse<PageResponse<RecentWatchResponse>>> getWatchHistoryPlaylist(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId,
+            @PositiveOrZero @Parameter(description = "페이지 번호(0부터 시작)", example = "0") @RequestParam(defaultValue = "0") Integer page
     );
 }

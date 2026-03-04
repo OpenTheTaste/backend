@@ -21,7 +21,6 @@ import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +29,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/playlists")
-public class PlaylistController implements PlayListAPI {
+public class PlaylistController implements PlaylistApi {
 
     private final PlaylistService playlistService;
     private final PlaylisStrategytService playlisStrategytService;
@@ -76,7 +75,7 @@ public class PlaylistController implements PlayListAPI {
     // 2. Top 3 태그별 리스트
     @Override
     public ResponseEntity<SuccessResponse<TopTagPlaylistResponse>> getTopTagPlaylists(
-           @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
+            @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @RequestParam(value = "index") Integer index,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "10") Integer size,
