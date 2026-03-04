@@ -60,8 +60,8 @@ public class PlaylistPreferenceService {
 
         // [2단계] 가져온 영상이 하나라도 있다면, 그 영상들의 '태그 ID'를 한 번에 가져와 점수 부여
         if (!playedMediaIds.isEmpty()) {
-        mediaTagRepository.findTagIdsByMediaIds(playedMediaIds)
-                .forEach(id -> tagScores.merge(id, 3, Integer::sum)); // 혹은 totalScores.merge
+                mediaTagRepository.findTagIdsByMediaIds(playedMediaIds)
+                        .forEach(id -> tagScores.merge(id, 3, Integer::sum)); // 혹은 totalScores.merge
         }
 
         // 3. 점수가 가장 높은 순(내림차순)으로 정렬한 뒤, 상위 3개의 태그 ID만 추출
@@ -101,8 +101,12 @@ public class PlaylistPreferenceService {
                 .forEach(id -> totalScores.merge(id, 5, Integer::sum));
         
         // 2. 최근 관심사: 최근 시청 이력 (+3점)
-        playbackRepository.findRecentTagIdsByMemberId(memberId, Status.ACTIVE, limit100)
+        List<Long> playedMediaIds = playbackRepository.findRecentPlayedMediaIds(memberId, Status.ACTIVE, limit100);
+
+        if (!playedMediaIds.isEmpty()) {
+                mediaTagRepository.findTagIdsByMediaIds(playedMediaIds)
                 .forEach(id -> totalScores.merge(id, 3, Integer::sum));
+        }
 
         // 3. 강한 선호도: 최근 좋아요 누른 이력 (+2점)
         // [1단계] 최근 좋아요 누른 '영상 ID' 최대 100개를 가져옴
@@ -110,8 +114,8 @@ public class PlaylistPreferenceService {
 
         // [2단계] 가져온 영상이 하나라도 있다면, 그 영상들의 '태그 ID'를 한 번에 가져와 점수 부여
         if (!likedMediaIds.isEmpty()) {
-        mediaTagRepository.findTagIdsByMediaIds(likedMediaIds)
-                .forEach(id -> totalScores.merge(id, 2, Integer::sum));
+                mediaTagRepository.findTagIdsByMediaIds(likedMediaIds)
+                        .forEach(id -> totalScores.merge(id, 2, Integer::sum));
         }
 
         // 만들어진 유저의 최종 점수를 반환
