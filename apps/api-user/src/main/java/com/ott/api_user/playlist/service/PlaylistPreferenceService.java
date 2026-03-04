@@ -1,6 +1,7 @@
 package com.ott.api_user.playlist.service;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,6 @@ public class PlaylistPreferenceService {
 
         // 1. 온보딩 선호 태그 가중치 반영 (+5점)
         // Map.merge 를 통해 누적 점수 계산
-        // ex) 
         preferredTagRepository.findTagIdsByMemberId(memberId, Status.ACTIVE)
                 .forEach(id -> tagScores.merge(id, 5, Integer::sum));
 
@@ -72,7 +72,11 @@ public class PlaylistPreferenceService {
         }
         
         // 최종적으로 추출된 3개의 ID로 실제 Tag 엔티티들을 DB에서 가져와 반환
-        return tagRepository.findAllById(topTagIds);
+        // findAllById (In 절은 순서 보장 x 한번 더 TopTagIds 의 인덱스 순서에 맞게 정렬해주어야함)
+        List<Tag> tags = tagRepository.findAllById(topTagIds);
+        tags.sort(Comparator.comparing(tag -> topTagIds.indexOf(tag.getId())));
+
+        return tags;
                 
     }
 
