@@ -38,7 +38,7 @@ public class BookmarkRepositoryImpl implements BookmarkRepositoryCustom {
                         media.title,
                         media.description,
                         media.posterUrl,
-                        playback.positionSec.coalesce(0),  // SERIES면 null (LEFT JOIN 미매칭)
+                        media.mediaType.when(CONTENTS).then(playback.positionSec.coalesce(0)).otherwise((Integer) null), // SERIES는 null, CONTENTS만 playback 없으면 0
                         contents.duration                  // SERIES면 null (LEFT JOIN 미매칭)
                 ))
                 .from(bookmark)
