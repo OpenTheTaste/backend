@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * 작업 전체 흐름 조율
@@ -56,10 +57,13 @@ public class JobOrchestrator {
             // 4. 미디어 검사 (Fatal/RetryableException 발생 가능)
             ProbeResult probeResult = inspector.inspect(inputFile);
 
-            // 5. 트랜스코딩 파이프라인 실행
+            // 5. 커맨드 추출
+//            List<CommandType> commandList = commandExtractor.extractCommand(probeResult, message);
+
+            // 6. 파이프라인 실행
             pipeline.execute(mediaId, inputFile, workDir, probeResult);
 
-            log.info("모든 트랜스코딩 작업 성공 - mediaId: {}", mediaId);
+            log.info("모든 작업 성공 - mediaId: {}", mediaId);
 
         } finally {
             // 예외 발생 여부와 상관없이 로컬 작업 디렉토리는 반드시 정리합니다.

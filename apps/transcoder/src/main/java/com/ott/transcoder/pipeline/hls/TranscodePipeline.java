@@ -16,7 +16,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class HlsTranscodePipeline implements CommandPipeline {
+public class TranscodePipeline implements CommandPipeline {
 
     private final TranscodePlanner transcodePlanner;
     private final FfmpegExecutor ffmpegExecutor;
