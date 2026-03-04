@@ -149,6 +149,7 @@ jobs:
           PROM_PROD_B64=$(base64 -w 0 apps/monitoring/prometheus/prometheus.prod.yml)
           DATASOURCE_B64=$(base64 -w 0 apps/monitoring/grafana/provisioning/datasources/prometheus.yml)
           DASH_PROVIDER_B64=$(base64 -w 0 apps/monitoring/grafana/provisioning/dashboards/dashboards.yml)
+          DASHBOARDS_JSON_TGZ_B64=$(tar -C apps/monitoring/grafana/provisioning/dashboards -czf - json | base64 -w 0)
 
           PARAMS=$(jq -nc \
             --arg c1 "set -euo pipefail" \
@@ -158,9 +159,10 @@ jobs:
             --arg c5 "echo '$PROM_PROD_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/prometheus/prometheus.prod.yml >/dev/null" \
             --arg c6 "echo '$DATASOURCE_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/grafana/provisioning/datasources/prometheus.yml >/dev/null" \
             --arg c7 "echo '$DASH_PROVIDER_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/grafana/provisioning/dashboards/dashboards.yml >/dev/null" \
-            --arg c8 "sudo sh -c 'cat > ${MONITORING_ROOT}/.env <<\"EOF\"\nGF_SECURITY_ADMIN_USER=admin\nGF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}\nEOF'" \
-            --arg c9 "cd ${MONITORING_ROOT} && sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d" \
-            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c7,$c8,$c9]}')
+            --arg c8 "echo '$DASHBOARDS_JSON_TGZ_B64' | base64 -d | sudo tar -xzf - -C ${MONITORING_ROOT}/grafana/provisioning/dashboards" \
+            --arg c9 "sudo sh -c 'cat > ${MONITORING_ROOT}/.env <<\"EOF\"\nGF_SECURITY_ADMIN_USER=admin\nGF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}\nEOF'" \
+            --arg c10 "cd ${MONITORING_ROOT} && sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d" \
+            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c7,$c8,$c9,$c10]}')
 
           CMD_ID=$(aws ssm send-command \
             --region "$AWS_REGION" \

@@ -153,8 +153,8 @@ services:
     ports:
       - "3001:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin1234}
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./apps/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -163,3 +163,5 @@ services:
 
 volumes:
   mysql-data:
+  prometheus-data:
+  grafana-data:

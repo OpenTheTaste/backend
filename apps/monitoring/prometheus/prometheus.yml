@@ -10,7 +10,7 @@ scrape_configs:
   - job_name: "user-api"
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ["host.docker.internal:8080"]
+      - targets: ["api-user:8080"]
         labels:
           app: "user-api"
           env: "local"
@@ -21,7 +21,7 @@ scrape_configs:
   - job_name: "admin-api"
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ["host.docker.internal:8081"]
+      - targets: ["api-admin:8081"]
         labels:
           app: "admin-api"
           env: "local"
@@ -32,7 +32,7 @@ scrape_configs:
   - job_name: "transcoder"
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ["host.docker.internal:8082"]
+      - targets: ["transcoder:8082"]
         labels:
           app: "transcoder"
           env: "local"
