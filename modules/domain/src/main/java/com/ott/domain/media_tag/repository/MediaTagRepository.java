@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface MediaTagRepository extends JpaRepository<MediaTag, Long>, MediaTagRepositoryCustom {
 
-    // 최근 좋아요한 미디어의 태그 ID 조회
+    // 미디어의 태그 ID 조회 (좋아욧 & 시청 이력에서 사용)
     // [2단계] 미디어에 대한 태그들을 전부 가져옴
     @Query("""
             SELECT mt.tag.id FROM MediaTag mt

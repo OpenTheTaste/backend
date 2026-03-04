@@ -11,19 +11,15 @@ import com.ott.domain.common.Status;
 import com.ott.domain.playback.domain.Playback;
 
 public interface PlaybackRepository extends JpaRepository<Playback, Long> {
-        // 가장 최신으로 하나만 가져오기
-        // Optional<Playback> findFirstByMemberIdAndContentsIdAndStatus(Long memberId,
-        // Long contentsId, Status status);
-
-        // 최신 시청 이력 100개 가져오기 - 선호 태그 조사용
+        // 최근 시청한 미디어의 태그 ID 조회
+        // 1단계 - 최근 시청 이력 100개 가져오기 (JOIN 보다 LIMIT 먼저)
         @Query("""
-                        SELECT mt.tag.id FROM Playback p
-                        JOIN MediaTag mt ON p.contents.media.id  = mt.media.id
-                        WHERE p.member.id = :memberId AND p.status = :status
-                        ORDER BY p.modifiedDate DESC
-                        """)
-        List<Long> findRecentTagIdsByMemberId(
-                        @Param("memberId") Long memberId,
-                        @Param("status") Status status,
-                        Pageable pageable); // pageable로 100개로 리미트 제한
+            SELECT p.contents.media.id FROM Playback p
+            WHERE p.member.id = :memberId AND p.status = :status
+            ORDER BY p.modifiedDate DESC
+            """)
+        List<Long> findRecentPlayedMediaIds(
+                @Param("memberId") Long memberId,
+                @Param("status") Status status,
+                Pageable pageable);
 }

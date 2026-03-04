@@ -55,9 +55,14 @@ public class PlaylistPreferenceService {
 
 
         // 2. 최근 시청 이력 가중치 반영 (+3점)
-        playbackRepository.findRecentTagIdsByMemberId(memberId, Status.ACTIVE, limit100)
-                .forEach(id -> tagScores.merge(id, 3, Integer::sum));
+         // [1단계] 최근 시청한 영상에 대해 '영상 ID' 최대 100개를 가져옴
+        List<Long> playedMediaIds = playbackRepository.findRecentPlayedMediaIds(memberId, Status.ACTIVE, limit100);
 
+        // [2단계] 가져온 영상이 하나라도 있다면, 그 영상들의 '태그 ID'를 한 번에 가져와 점수 부여
+        if (!playedMediaIds.isEmpty()) {
+        mediaTagRepository.findTagIdsByMediaIds(playedMediaIds)
+                .forEach(id -> tagScores.merge(id, 3, Integer::sum)); // 혹은 totalScores.merge
+        }
 
         // 3. 점수가 가장 높은 순(내림차순)으로 정렬한 뒤, 상위 3개의 태그 ID만 추출
         List<Long> topTagIds = tagScores.entrySet().stream()
