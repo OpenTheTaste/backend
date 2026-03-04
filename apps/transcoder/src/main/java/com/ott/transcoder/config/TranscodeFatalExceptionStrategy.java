@@ -17,7 +17,7 @@ public class TranscodeFatalExceptionStrategy implements FatalExceptionStrategy {
         Throwable cause = t.getCause();
         boolean isFatal = cause instanceof FatalException;
         if (isFatal) {
-            log.error("[Fatal Error Detected] 재시도를 중단하고 실패 큐(DLQ)로 전송합니다: {}", cause.getMessage());
+            log.error("[Fatal Error Detected]: {}", cause.getMessage());
         }
         return isFatal;
     }

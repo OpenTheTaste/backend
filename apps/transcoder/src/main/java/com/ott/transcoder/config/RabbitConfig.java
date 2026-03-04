@@ -2,6 +2,7 @@ package com.ott.transcoder.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ott.transcoder.exception.fatal.FatalException;
+import com.ott.transcoder.exception.retryable.RetryableException;
 import com.ott.transcoder.queue.TranscodeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
@@ -18,6 +19,10 @@ import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.util.ErrorHandler;
+
+import java.util.Map;
 
 /** 
  * 비즈니스 로직에서 발생하는 예외의 성격(Fatal vs Retryable)을 판단하여, 자동으로 재시도하거나 실패 큐(DLQ)로 격리
@@ -91,16 +96,26 @@ public class RabbitConfig {
         factory.setMessageConverter(jacksonMessageConverter);
 
         // FatalException 발생 시 재시도 없이 즉시 거절(Reject) 처리
-        factory.setErrorHandler(new ConditionalRejectingErrorHandler(new TranscodeFatalExceptionStrategy()));
+//        factory.setErrorHandler(new ConditionalRejectingErrorHandler(new TranscodeFatalExceptionStrategy()));
+        factory.setErrorHandler(errorHandler());
 
         // 일시적 장애(Retryable) 시 3회 재시도 (1s -> 2s -> 4s)
         factory.setAdviceChain(RetryInterceptorBuilder.stateless()
-                .maxAttempts(3)
+                .retryPolicy(new SimpleRetryPolicy(3, Map.of(RetryableException.class, true, FatalException.class, false), true))
                 .backOffOptions(1000, 2.0, 10000)
-                .recoverer(new RejectAndDontRequeueRecoverer()) // 3번 다 실패하면 DLQ행
                 .build());
 
         return factory;
+    }
+
+    @Bean
+    public ErrorHandler errorHandler() {
+        return new TranscodeErrorHandler(fatalExceptionStrategy());
+    }
+
+    @Bean
+    public FatalExceptionStrategy fatalExceptionStrategy() {
+        return new TranscodeFatalExceptionStrategy();
     }
 
     @Bean
