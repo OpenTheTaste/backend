@@ -24,6 +24,6 @@ public class LikesController implements LikesAPI {
             @AuthenticationPrincipal Long memberId) {
 
         likesService.editLikes(memberId, request.getMediaId());
-        return ResponseEntity.ok(SuccessResponse.of(null));
+        return ResponseEntity.noContent().build();
     }
 }

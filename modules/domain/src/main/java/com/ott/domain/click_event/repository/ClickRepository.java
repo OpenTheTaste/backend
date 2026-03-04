@@ -1,15 +1,16 @@
-package com.ott.domain.watch_history.repository;
+package com.ott.domain.click_event.repository;
 
-import com.ott.domain.watch_history.domain.WatchHistory;
+import com.ott.domain.click_event.domain.ClickEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface WatchHistoryRepository extends JpaRepository<WatchHistory, Long>, WatchHistoryRepositoryCustom {
 
-    // 회원 탈퇴
+public interface ClickRepository extends JpaRepository<ClickEvent, Long> {
+
     @Modifying(clearAutomatically = true)
-    @Query("UPDATE WatchHistory w SET w.status = 'DELETE' WHERE w.member.id = :memberId")
+    @Query("UPDATE ClickEvent c SET c.status = 'DELETE' WHERE c.member.id = :memberId")
     void softDeleteAllByMemberId(@Param("memberId") Long memberId);
+
 }

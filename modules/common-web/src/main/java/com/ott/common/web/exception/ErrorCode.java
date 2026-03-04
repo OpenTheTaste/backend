@@ -33,8 +33,8 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A001", "인증이 필요합니다"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "유효하지 않은 토큰입니다"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "만료된 토큰입니다"),
-
     FORBIDDEN(HttpStatus.FORBIDDEN, "A004", "접근 권한이 없습니다"),
+    KAKAO_UNLINK_FAILED(HttpStatus.BAD_GATEWAY, "A005", "카카오 인증 서버에 접근할 수 없습니다"),
 
     // ========== User (U) - 사용자 ==========
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다"),

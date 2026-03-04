@@ -2,7 +2,6 @@ package com.ott.api_user.content.dto;
 
 import java.util.List;
 
-import com.ott.domain.common.MediaType;
 import com.ott.domain.contents.domain.Contents;
 
 import io.swagger.v3.oas.annotations.media.Schema;

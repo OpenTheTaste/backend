@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+
 public interface MediaRepositoryCustom {
 
         Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType, String searchWord);
@@ -21,6 +22,8 @@ public interface MediaRepositoryCustom {
                         MediaType mediaType, String searchWord, PublicStatus publicStatus, Long uploaderId);
 
         Page<Media> findOriginMediaListBySearchWord(Pageable pageable, String searchWord);
+
+        List<TagContentProjection> findRecommendContentsByTagId(Long tagId, int limit);
 
         // 인기 차트 통합 조회 메서드
         Page<Media> findTrendingPlaylists(Long excludeMediaId, Pageable pageable);

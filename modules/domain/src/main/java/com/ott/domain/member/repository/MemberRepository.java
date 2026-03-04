@@ -1,9 +1,8 @@
 package com.ott.domain.member.repository;
 
-import java.util.List;
 import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
+import com.ott.domain.common.Status;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.domain.Provider;
 
@@ -14,5 +13,8 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberRep
 
     // 관리자&에디터용 조회
     Optional<Member> findByEmailAndProvider(String email, Provider provider);
-    
+
+    // Active한 유저 조회
+    Optional<Member> findByIdAndStatus(Long memberId, Status status);
+
 }

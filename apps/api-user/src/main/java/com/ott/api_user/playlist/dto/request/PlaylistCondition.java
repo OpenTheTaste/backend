@@ -1,18 +1,15 @@
 package com.ott.api_user.playlist.dto.request;
 
-import org.hibernate.annotations.SourceType;
+
 
 import com.ott.api_user.common.ContentSource;
 import com.ott.domain.common.MediaType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
+
 
 // 플레이리스트 공통 요청 DTO
 // 진입점, 플레이리스트 or 재생목록 (둘은 재사용, 현재 컨텐츠 id 에 따라) 에 따라 들어오는 파라미터를 공통으로 사용

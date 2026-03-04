@@ -1,6 +1,7 @@
 package com.ott.domain.tag.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import com.ott.domain.category.domain.Category;
@@ -31,4 +32,7 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     // ACTIVE&&리스트안에 있는 태그 조회
     List<Tag> findAllByIdInAndStatus(List<Long> ids, Status status);
+
+    // ACTIVE한 특정 태그 조회
+   Optional<Tag> findByIdAndStatus(Long tagId, Status status);
 }
