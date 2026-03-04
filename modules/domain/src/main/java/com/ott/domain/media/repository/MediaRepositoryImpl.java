@@ -180,8 +180,10 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 JPAQuery<Long> countQuery = queryFactory
                                 .select(playback.count())
                                 .from(playback)
+                                .join(playback.contents.media, media)
                                 .where(
                                                 playback.member.id.eq(memberId),
+                                                isActiveAndPublic(),
                                                 excludeId(excludeMediaId));
 
                 return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
@@ -206,9 +208,11 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 JPAQuery<Long> countQuery = queryFactory
                                 .select(bookmark.count())
                                 .from(bookmark)
+                                .join(bookmark.media, media)
                                 .where(
                                                 bookmark.member.id.eq(memberId),
                                                 bookmark.status.eq(Status.ACTIVE),
+                                                isActiveAndPublic(),
                                                 excludeId(excludeMediaId));
 
                 return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
@@ -233,8 +237,10 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 JPAQuery<Long> countQuery = queryFactory
                                 .select(mediaTag.count())
                                 .from(mediaTag)
+                                .join(mediaTag.media, media)
                                 .where(
                                                 mediaTag.tag.id.eq(tagId),
+                                                isActiveAndPublic(),
                                                 excludeId(excludeMediaId));
 
                 return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
@@ -263,8 +269,9 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 // 이때는 가장 최근 신작 노출
                 if (tagScores.isEmpty()) {
                         return queryFactory.selectFrom(media)
-                                        .where(media.status.eq(Status.ACTIVE),
-                                                        media.publicStatus.eq(PublicStatus.PUBLIC))
+                                        .where(         
+                                                        isActiveAndPublic(),
+                                                        excludeId(excludeMediaId))
                                         .orderBy(media.id.desc())
                                         .limit(limit)
                                         .offset(offset)
@@ -322,8 +329,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         private BooleanExpression isActiveAndPublic() {
                 // Status.ACTIVE와 PublicStatus.PUBLIC 조건을 결합
-                return media.status.eq(com.ott.domain.common.Status.ACTIVE)
-                                .and(media.publicStatus.eq(com.ott.domain.common.PublicStatus.PUBLIC));
+                return media.status.eq(Status.ACTIVE)
+                                .and(media.publicStatus.eq(PublicStatus.PUBLIC));
         }
 
         private BooleanExpression excludeId(Long excludeMediaId) {

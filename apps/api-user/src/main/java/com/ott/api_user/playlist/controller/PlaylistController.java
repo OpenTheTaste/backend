@@ -13,7 +13,7 @@ import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.playlist.dto.request.PlaylistCondition;
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
 import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
-import com.ott.api_user.playlist.service.PlaylistService;
+import com.ott.api_user.playlist.service.PlaylisStrategytService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 
@@ -24,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/playlists") 
 public class PlaylistController implements PlaylistApi {
     
-    private final PlaylistService playlistService;
+    private final PlaylisStrategytService playlistService;
 
     // 1. 종합 추천
     @Override

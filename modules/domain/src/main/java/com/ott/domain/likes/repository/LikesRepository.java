@@ -21,12 +21,12 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
         Optional<Likes> findByMemberIdAndMediaId(Long memberId, Long mediaId);
 
         // 최근 좋아요한 미디어의 태그 ID 조회
+        // 1단계 : 최근 좋아요 누른 미디어 100개 먼저 조회 (JOIN 보다 LIMIT 먼저)
         @Query("""
-                        SELECT mt.tag.id FROM Likes l
-                        JOIN MediaTag mt ON l.media.id = mt.media.id
-                        WHERE l.member.id = :memberId AND l.status = :status
-                        ORDER BY l.createdDate DESC
-                        """)
-        List<Long> findRecentTagIdsByMemberId(@Param("memberId") Long memberId, @Param("status") Status status,
+            SELECT l.media.id FROM Likes l
+            WHERE l.member.id = :memberId AND l.status = :status
+            ORDER BY l.createdDate DESC
+            """)
+        List<Long> findRecentLikedMediaIds(@Param("memberId") Long memberId, @Param("status") Status status,
                         Pageable pageable);
 }
