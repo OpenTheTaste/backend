@@ -55,7 +55,7 @@ public class ContentsService {
                 Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId, Status.ACTIVE);
 
                 //  이어보기 지점 조회
-                Integer positionSec = playbackRepository.findByMemberIdAndMediaId(memberId, contents.getId())
+                Integer positionSec = playbackRepository.findByMemberIdAndMediaId(memberId, mediaId)
                                 .map(Playback::getPositionSec)
                                 .orElse(0); // 기록 없으면 0초부터
                                 

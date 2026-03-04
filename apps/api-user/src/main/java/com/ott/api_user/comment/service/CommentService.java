@@ -33,7 +33,6 @@ import org.springframework.data.domain.Sort;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CommentService {
 
         private final CommentRepository commentRepository;
@@ -117,6 +116,7 @@ public class CommentService {
                 return PageResponse.toPageResponse(pageInfo, responseList);
         }
         
+        @Transactional(readOnly = true)
         public PageResponse<ContentsCommentResponse> getContentsCommentList(Long contentsId, int page, int size, boolean includeSpoiler) {
 
                 if (!contentsRepository.existsByIdAndStatus(contentsId, Status.ACTIVE)) {

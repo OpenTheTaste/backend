@@ -1,6 +1,4 @@
 package com.ott.api_user.series.service;
-
-import java.lang.foreign.Linker.Option;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +136,7 @@ public class SeriesService {
                         .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, limitOne);
 
                 if (firstContentPage.isEmpty()) {
-                        throw new BusinessException(ErrorCode.CONTENT_NOT_FOUND);} // 1화조차 없는 경우 예외 처리
+                        throw new BusinessException(ErrorCode.EPISODE_NOT_REGISTERED);} // 1화조차 없는 경우 
 
                 return firstContentPage.getContent().get(0).getMedia().getId();
         }

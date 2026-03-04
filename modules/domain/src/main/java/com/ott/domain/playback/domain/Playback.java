@@ -40,4 +40,8 @@ public class Playback extends BaseEntity {
 
     @Column(name = "position_sec", nullable = false)
     private Integer positionSec;
+
+    public void updatePosition(Integer positionSec){
+        this.positionSec = positionSec;
+    }
 }
