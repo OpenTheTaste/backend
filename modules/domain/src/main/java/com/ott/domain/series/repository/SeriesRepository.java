@@ -16,8 +16,14 @@ public interface SeriesRepository extends JpaRepository<Series, Long>, SeriesRep
 
         // Optional<Series> findByIdAndStatusAndMedia_PublicStatus(Long id, Status
         // status, PublicStatus publicStatus);
-        @Query("SELECT s FROM Series s JOIN FETCH s.media m WHERE s.id = :id AND s.status = :status AND m.publicStatus = :publicStatus")
-        Optional<Series> findByIdWithMedia(@Param("id") Long id,
+        // @Query("SELECT s FROM Series s JOIN FETCH s.media m WHERE s.id = :id AND s.status = :status AND m.publicStatus = :publicStatus")
+        // Optional<Series> findByIdWithMedia(@Param("id") Long id,
+        //                 @Param("status") Status status,
+        //                 @Param("publicStatus") PublicStatus publicStatus);
+
+        @Query("SELECT s FROM Series s JOIN FETCH s.media m WHERE m.id = :mediaId AND s.status = :status AND m.publicStatus = :publicStatus")
+        Optional<Series> findByMediaIdAndStatusAndPublicStatus(
+                        @Param("mediaId") Long mediaId,
                         @Param("status") Status status,
                         @Param("publicStatus") PublicStatus publicStatus);
 

@@ -24,21 +24,21 @@ public class SeriesController implements SeriesApi {
 
     @Override
     public ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
-            @PathVariable(value = "seriesId") Long seriesId,
+            @PathVariable(value = "mediaId") Long mediaId,
             @AuthenticationPrincipal Long memberId) {
 
         return ResponseEntity.ok(
-                SuccessResponse.of(seriesService.getSeriesDetail(seriesId, memberId)));
+                SuccessResponse.of(seriesService.getSeriesDetail(mediaId, memberId)));
     }
 
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<SeriesContentsResponse>>> getSeriesContents(
-            @PathVariable(value = "seriesId") Long seriesId,
+            @PathVariable(value = "mediaId") Long mediaId,
             @RequestParam(value = "page") Integer pageParam,
             @RequestParam(value = "size") Integer sizeParam,
             @AuthenticationPrincipal Long memberId) {
 
         return ResponseEntity.ok(
-                SuccessResponse.of(seriesService.getSeriesContents(seriesId, pageParam, sizeParam, memberId)));
+                SuccessResponse.of(seriesService.getSeriesContents(mediaId, pageParam, sizeParam, memberId)));
     }
 }
