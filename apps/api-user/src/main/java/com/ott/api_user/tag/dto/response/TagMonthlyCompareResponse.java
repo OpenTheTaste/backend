@@ -1,4 +1,4 @@
-package com.ott.api_user.member.dto.response;
+package com.ott.api_user.tag.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

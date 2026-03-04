@@ -1,4 +1,4 @@
-package com.ott.api_user.member.dto.response;
+package com.ott.api_user.playlist.dto.response;
 
 import com.ott.domain.common.MediaType;
 import com.ott.domain.watch_history.repository.RecentWatchProjection;

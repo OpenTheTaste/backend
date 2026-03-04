@@ -4,8 +4,8 @@ import com.ott.api_user.auth.client.KakaoUnlinkClient;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.*;
-import com.ott.api_user.member.dto.response.TagMonthlyCompareResponse.MonthlyCount;
-import com.ott.api_user.member.dto.response.TagRankingResponse.TagRankItem;
+import com.ott.api_user.playlist.dto.response.RecentWatchResponse;
+import com.ott.api_user.playlist.dto.response.TagPlaylistResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
@@ -25,7 +25,6 @@ import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
 import com.ott.domain.tag.domain.Tag;
 import com.ott.domain.tag.repository.TagRepository;
 import com.ott.domain.watch_history.repository.RecentWatchProjection;
-import com.ott.domain.watch_history.repository.TagRankingProjection;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,10 +32,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -142,137 +137,6 @@ public class MemberService {
 
         preferredTagRepository.saveAll(preferredTags);
         findMember.completeOnboarding();
-    }
-
-    /**
-     * 마이페이지 - 시청이력 기반 상위 태그 랭킹 조회 1달
-     * - 상위 4개: 개별 태그 항목
-     * - 나머지: count 합산하여 기타 항목으로 반환
-     */
-    @Transactional(readOnly = true)
-    public TagRankingResponse getTagRanking(Long memberId) {
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        // 집계일과 마감일 선정 1일~말일까지
-        YearMonth currentYearMonth = YearMonth.now();
-        LocalDateTime startDate = currentYearMonth.atDay(1).atStartOfDay();
-        LocalDateTime endDate   = currentYearMonth.plusMonths(1).atDay(1).atStartOfDay(); // 다음 달 1일 00:00:00
-
-        List<TagRankingProjection> tagRankingProjections =
-                watchHistoryRepository.findTopTagsByMemberIdAndWatchedBetween(memberId, startDate, endDate);
-
-        List<TagRankItem> rankItems = new ArrayList<>();
-
-        // 시청이력이 없을 경우 빈 리스트가 전달됨
-        if (tagRankingProjections.isEmpty()) {
-            return TagRankingResponse.builder().rankings(rankItems).build();
-        }
-
-        int topN = Math.min(4, tagRankingProjections.size());
-
-        // 상위 4개 추가
-        for (int i = 0; i < topN; i++) {
-            TagRankingProjection projection = tagRankingProjections.get(i);
-            rankItems.add(TagRankItem.of(projection.getTagId(), projection.getTagName(), projection.getCount()));
-        }
-
-        // 나머지 → 기타로 합산
-        if (tagRankingProjections.size() > 4) {
-            long etcCount = tagRankingProjections.subList(4, tagRankingProjections.size())
-                    .stream()
-                    .mapToLong(TagRankingProjection::getCount)
-                    .sum();
-            rankItems.add(TagRankItem.ofEtc(etcCount));
-        }
-
-        return TagRankingResponse.builder().rankings(rankItems).build();
-    }
-
-
-    /**
-     * 마이페이지 - 특정 태그의 이번 달 vs 저번 달 시청 count 비교
-     */
-    @Transactional(readOnly = true)
-    public TagMonthlyCompareResponse getTagMonthlyCompare(Long memberId, Long tagId) {
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        Tag findTag = tagRepository.findByIdAndStatus(tagId, Status.ACTIVE)
-                .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND));
-
-        // 이번 달 범위
-        YearMonth currentYearMonth = YearMonth.now();
-        LocalDateTime currentStart = currentYearMonth.atDay(1).atStartOfDay();
-        LocalDateTime currentEnd   = currentYearMonth.plusMonths(1).atDay(1).atStartOfDay(); // 다음 달 1일 00:00:00
-
-        // 저번 달 범위
-        YearMonth prevYearMonth = currentYearMonth.minusMonths(1);
-        LocalDateTime prevStart = prevYearMonth.atDay(1).atStartOfDay();
-        LocalDateTime prevEnd   = currentYearMonth.atDay(1).atStartOfDay();  // 이번 달 1일 00:00:00
-
-        Long currentCount  = watchHistoryRepository.countByMemberIdAndTagIdAndWatchedBetween(memberId, tagId, currentStart, currentEnd);
-        Long previousCount = watchHistoryRepository.countByMemberIdAndTagIdAndWatchedBetween(memberId, tagId, prevStart, prevEnd);
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-
-        // 저번 달 시청 기록이 없으면 null
-        MonthlyCount previousMonth = previousCount > 0
-                ? MonthlyCount.builder()
-                .yearMonth(prevYearMonth.format(formatter))
-                .count(previousCount)
-                .build()
-                : null;
-
-        return TagMonthlyCompareResponse.builder()
-                .tagId(findTag.getId())
-                .tagName(findTag.getName())
-                .currentMonth(MonthlyCount.builder()
-                        .yearMonth(currentYearMonth.format(formatter))
-                        .count(currentCount)
-                        .build())
-                .previousMonth(previousMonth)
-                .build();
-    }
-
-    // 태그별 추천 콘텐츠 목록 조회 (최대 20개)
-    @Transactional(readOnly = true)
-    public List<TagContentResponse> getRecommendContentsByTag(Long memberId, Long tagId) {
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        tagRepository.findById(tagId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.TAG_NOT_FOUND));
-
-        return mediaRepository.findRecommendContentsByTagId(tagId, 20)
-                .stream()
-                .map(TagContentResponse::from)
-                .toList();
-    }
-
-    // 전체 시청이력 플레이리스트 페이징 조회 (최신순, 10개씩)
-    @Transactional(readOnly = true)
-    public PageResponse<RecentWatchResponse> getWatchHistoryPlaylist(Long memberId, Integer page) {
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        PageRequest pageable = PageRequest.of(page, 10);
-
-        Page<RecentWatchProjection> watchPage =
-                watchHistoryRepository.findWatchHistoryByMemberId(memberId, pageable);
-
-        List<RecentWatchResponse> dataList = watchPage.getContent()
-                .stream()
-                .map(RecentWatchResponse::from)
-                .toList();
-
-        PageInfo pageInfo = PageInfo.toPageInfo(
-                watchPage.getNumber(),
-                watchPage.getTotalPages(),
-                watchPage.getSize()
-        );
-
-        return PageResponse.toPageResponse(pageInfo, dataList);
     }
 
 

@@ -1,4 +1,4 @@
-package com.ott.api_user.member.dto.response;
+package com.ott.api_user.playlist.dto.response;
 
 import com.ott.domain.common.MediaType;
 import com.ott.domain.media.repository.TagContentProjection;
@@ -11,7 +11,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 @Schema(description = "태그별 추천 콘텐츠 아이템")
-public class TagContentResponse {
+public class TagPlaylistResponse {
 
     @Schema(type = "Long", example = "5", description = "미디어 ID")
     private Long mediaId;
@@ -22,8 +22,8 @@ public class TagContentResponse {
     @Schema(type = "String", example = "SERIES", description = "미디어 타입 (SERIES / CONTENTS)")
     private MediaType mediaType;
 
-    public static TagContentResponse from(TagContentProjection projection) {
-        return TagContentResponse.builder()
+    public static TagPlaylistResponse from(TagContentProjection projection) {
+        return TagPlaylistResponse.builder()
                 .mediaId(projection.getMediaId())
                 .posterUrl(projection.getPosterUrl())
                 .mediaType(projection.getMediaType())
