@@ -23,7 +23,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class PlaylistService {
+public class PlaylisStrategytService {
 
     private final Map<String, PlaylistStrategy> strategyMap;
     private final PlaylistPreferenceService preferenceService;
@@ -65,7 +65,7 @@ public class PlaylistService {
         TopTagPlaylistResponse.CategoryInfo categoryInfo = null;
         TopTagPlaylistResponse.TagInfo tagInfo = null;
 
-       if (condition.getIndex() != null && condition.getIndex() < topTags.size()) {
+       if (condition.getIndex() != null && condition.getIndex() >= 0 && condition.getIndex() < topTags.size()) {
             Tag targetTag = topTags.get(condition.getIndex());
             
             // TagInfo 객체 조립

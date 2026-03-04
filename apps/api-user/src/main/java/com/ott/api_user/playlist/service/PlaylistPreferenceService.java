@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ott.domain.common.Status;
 import com.ott.domain.likes.repository.LikesRepository;
+import com.ott.domain.media_tag.repository.MediaTagRepository;
 import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
 import com.ott.domain.tag.domain.Tag;
@@ -34,6 +35,7 @@ public class PlaylistPreferenceService {
     private final PlaybackRepository playbackRepository;
     private final LikesRepository likesRepository;
     private final TagRepository tagRepository;
+    private final MediaTagRepository mediaTagRepository;
 
     /*
      * [TAG 전략용] 시청 이력(+3) + 선호 태그(+5) 점수만 합산하여 Top 3 태그 추출
@@ -98,8 +100,14 @@ public class PlaylistPreferenceService {
                 .forEach(id -> totalScores.merge(id, 3, Integer::sum));
 
         // 3. 강한 선호도: 최근 좋아요 누른 이력 (+2점)
-        likesRepository.findRecentTagIdsByMemberId(memberId, Status.ACTIVE, limit100)
+        // [1단계] 최근 좋아요 누른 '영상 ID' 최대 100개를 가져옴
+        List<Long> likedMediaIds = likesRepository.findRecentLikedMediaIds(memberId, Status.ACTIVE, limit100);
+
+        // [2단계] 가져온 영상이 하나라도 있다면, 그 영상들의 '태그 ID'를 한 번에 가져와 점수 부여
+        if (!likedMediaIds.isEmpty()) {
+        mediaTagRepository.findTagIdsByMediaIds(likedMediaIds)
                 .forEach(id -> totalScores.merge(id, 2, Integer::sum));
+        }
 
         // 만들어진 유저의 최종 점수를 반환
         return totalScores;
