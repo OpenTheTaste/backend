@@ -15,7 +15,7 @@ import lombok.Getter;
 @Schema(description = "시리즈 상세 조회 응답 DTO")
 public class SeriesDetailResponse {
 
-    @Schema(description = "시리즈 고유 ID", example = "101")
+    @Schema(description = "미디어 고유 ID", example = "101")
     private Long id;
 
     @Schema(description = "시리즈 제목", example = "비밀의 숲")
@@ -46,7 +46,7 @@ public class SeriesDetailResponse {
     public static SeriesDetailResponse of(Series series, List<String> tags, List<String> categories,
             Boolean isBookmarked, Boolean isLiked) {
         return SeriesDetailResponse.builder()
-                .id(series.getId())
+                .id(series.getMedia().getId())
                 .actors(series.getActors())
                 .title(series.getMedia().getTitle())
                 .description(series.getMedia().getDescription())

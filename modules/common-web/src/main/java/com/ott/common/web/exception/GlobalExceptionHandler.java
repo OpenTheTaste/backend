@@ -1,6 +1,7 @@
 package com.ott.common.web.exception;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -88,5 +89,13 @@ public class GlobalExceptionHandler {
         log.error("Unhandled Exception: {}", ex.getMessage(), ex);
         ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_ERROR, ex.getMessage());
         return ResponseEntity.status(ErrorCode.INTERNAL_ERROR.getStatus()).body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    protected ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
+        log.warn("ConstraintViolationException: {}", ex.getMessage());
+        // C001 에러 코드를 사용하여 400 Bad Request 응답 생성
+        ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_INPUT, ex.getMessage());
+        return ResponseEntity.badRequest().body(response);
     }
 }
