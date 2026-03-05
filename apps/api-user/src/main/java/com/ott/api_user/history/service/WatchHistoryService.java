@@ -3,6 +3,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
@@ -14,7 +15,7 @@ import com.ott.domain.member.repository.MemberRepository;
 import com.ott.domain.watch_history.domain.WatchHistory;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 
 
