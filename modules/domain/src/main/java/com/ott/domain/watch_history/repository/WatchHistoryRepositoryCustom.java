@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface WatchHistoryRepositoryCustom {
 
@@ -18,4 +19,8 @@ public interface WatchHistoryRepositoryCustom {
 
     // 특정 회원의 전체 시청이력 페이징 조회 (최신순)
     Page<RecentWatchProjection> findWatchHistoryByMemberId(Long memberId, Pageable pageable);
+
+    // 가장 최근에 시청한 에피소드의 media_id 반환
+    Optional<Long> findLatestContentMediaIdByMemberIdAndSeriesId(Long memberId, Long seriesId);
+
 }

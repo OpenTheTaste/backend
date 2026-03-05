@@ -19,6 +19,7 @@ public class BookmarkPlaylistStrategy implements PlaylistStrategy {
         
         return mediaRepository.findBookmarkedPlaylists(
             condition.getMemberId(), 
+            condition.getMediaType(),
             condition.getExcludeMediaId(), 
             pageable
         );

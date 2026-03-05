@@ -42,4 +42,8 @@ public class WatchHistory extends BaseEntity {
 
     @Column(name = "last_watched_at")
     private LocalDateTime lastWatchedAt;
+
+    public void updateLastWatchedAt(){
+        this.lastWatchedAt = LocalDateTime.now();
+    }
 }

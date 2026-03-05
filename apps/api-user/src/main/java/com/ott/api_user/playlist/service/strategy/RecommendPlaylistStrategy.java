@@ -39,6 +39,7 @@ public class RecommendPlaylistStrategy  implements PlaylistStrategy  {
         // QueryDSL CaseBuilder 쿼리 실행 -> DB 내부에서 점수 합산 후 내림차순 정렬된 리스트 반환
         List<Media> mediaPool = mediaRepository.findRecommendedMedias(
                 tagScores, 
+                condition.getMediaType(),
                 condition.getExcludeMediaId(), 
                 fetchLimit, 
                 fetchOffset 

@@ -33,7 +33,6 @@ import org.springframework.data.domain.Sort;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CommentService {
 
         private final CommentRepository commentRepository;
@@ -95,6 +94,7 @@ public class CommentService {
         }
 
         // 댓글 조회 - 본인 댓글만 조회 가능(최신순)
+        @Transactional(readOnly = true)
         public PageResponse<MyCommentResponse> getMyComments(
                 Long memberId,
                 Integer page,
@@ -117,6 +117,7 @@ public class CommentService {
                 return PageResponse.toPageResponse(pageInfo, responseList);
         }
         
+        @Transactional(readOnly = true)
         public PageResponse<ContentsCommentResponse> getContentsCommentList(Long contentsId, int page, int size, boolean includeSpoiler) {
 
                 if (!contentsRepository.existsByIdAndStatus(contentsId, Status.ACTIVE)) {

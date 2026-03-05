@@ -1,6 +1,10 @@
 package com.ott.domain.watch_history.repository;
 
+import com.ott.domain.common.Status;
 import com.ott.domain.watch_history.domain.WatchHistory;
+
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,4 +16,7 @@ public interface WatchHistoryRepository extends JpaRepository<WatchHistory, Long
     @Modifying(clearAutomatically = true)
     @Query("UPDATE WatchHistory w SET w.status = 'DELETE' WHERE w.member.id = :memberId")
     void softDeleteAllByMemberId(@Param("memberId") Long memberId);
+    
+    Optional<WatchHistory> findByMember_IdAndContents_IdAndStatus(Long memberId, Long contentsId , Status status);
+
 }

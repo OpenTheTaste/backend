@@ -72,7 +72,8 @@ public enum ErrorCode {
     INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B405", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요"),
 
     // ========== Server (S) - 서버/시스템 ==========
-    STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다");
+    STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다"),
+    EPISODE_NOT_REGISTERED(HttpStatus.NOT_FOUND, "S002", "아직 에피소드가 등록되지 않았습니다.");
   
 
     private final HttpStatus status;
