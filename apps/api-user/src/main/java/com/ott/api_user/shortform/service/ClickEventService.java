@@ -41,7 +41,5 @@ public class ClickEventService {
             .build();
 
         clickRepository.save(event);
-
-        
     }
 }

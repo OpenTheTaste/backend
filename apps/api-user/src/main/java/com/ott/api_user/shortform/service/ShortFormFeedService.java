@@ -33,22 +33,30 @@ public class ShortFormFeedService {
 
     public PageResponse<ShortFormFeedResponse> getShortFormFeed(Long memberId, int page, int size){
         
-        int recommendLimit = (int) (size * 0.8); // ex) 8개 - 사용자 기반 추천 콘텐츠
-        int latestLimit = size - recommendLimit; // ex) 2개 - 완전 새로운 것 (최신성)
+        
+        int recommendLimit = (int) (size * 0.7); // ex) 7개 - 사용자 기반 추천 콘텐츠
+        int latestLimit = size - recommendLimit; // ex) 3개 - 완전 새로운 것 (최신성)
 
+        // 무한 스와이프를 위한 독립적인 Offset 계산
         long recommendOffset = (long) page * recommendLimit;
         long latestOffset = (long) page * latestLimit;
 
 
+        // 사용자의 취향을 기반으로 tag 점수 가져오기
         Map<Long, Integer> tagScores = playlistPreferenceService.getTotalTagScores(memberId);
 
+        // 태그 점수와 추천 개수로 숏폼 가져오기
+        // 무한 페이징을 위해 DB 단에서 가중치 조인 후 정확히 잘라오기
         List<ShortForm> recommendList = shortFormRepository.findRecommendedShortForms(
                 tagScores, recommendLimit, recommendOffset
         );
 
+        // 숏폼 리스트에서 Id 만 꺼낸 리스트
         List<Long> recommendIdList = recommendList.stream()
                             .map(ShortForm::getId).toList();
+
         
+        // 위 숏폼에서 추천된 리스트는 제외하고 최신순 숏폼 가져오기
         List<ShortForm> latestList = shortFormRepository.findLatestShortForms(
             latestLimit, latestOffset, recommendIdList
         );
@@ -58,19 +66,26 @@ public class ShortFormFeedService {
         combinedList.addAll(latestList);
         Collections.shuffle(combinedList); // 무작위 셔플
 
-        List<Long> finalShortFormIds = combinedList.stream().map(ShortForm::getId).toList();
 
-        Set<Long> likedShortFormIds = finalShortFormIds.isEmpty() ? Collections.emptySet() :
-                likesRepository.findLikedShortFormIdsByMemberIdAndShortFormIds(memberId, finalShortFormIds);
+        // 최종 노출될 숏폼
+        List<Long> finalmediaIdList = combinedList.stream()
+                        .map(sf -> sf.getMedia().getId()) 
+                        .distinct() // 중복 방지
+                        .toList();
+
+        // 사용자의 좋아요, 북마크 여부 
+        Set<Long> likedMediaIds = finalmediaIdList.isEmpty() ? Collections.emptySet() :
+                likesRepository.findLikedMediaIds(memberId, finalmediaIdList);
                 
-        Set<Long> bookmarkedShortFormIds = finalShortFormIds.isEmpty() ? Collections.emptySet() :
-                bookmarkRepository.findBookmarkedShortFormIdsByMemberIdAndShortFormIds(memberId, finalShortFormIds);
+        Set<Long> bookmarkedMediaIds = finalmediaIdList.isEmpty() ? Collections.emptySet() :
+                bookmarkRepository.findBookmarkedMediaIds(memberId, finalmediaIdList);
+        
 
         List<ShortFormFeedResponse> responseList = combinedList.stream()
                 .map(sf -> ShortFormFeedResponse.of(
                         sf,
-                        bookmarkedShortFormIds.contains(sf.getId()),
-                        likedShortFormIds.contains(sf.getId())
+                        bookmarkedMediaIds.contains(sf.getMedia().getId()), 
+                        likedMediaIds.contains(sf.getMedia().getId())
                 ))
                 .toList();
 
