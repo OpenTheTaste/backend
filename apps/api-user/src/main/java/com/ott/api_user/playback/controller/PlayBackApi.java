@@ -17,8 +17,8 @@ import jakarta.validation.Valid;
 @Validated
 @Tag(name = "PlayBack", description = "이어보기 갱신 및 조회 API")
 public interface PlayBackApi {
-    @Operation(summary = "시청 이력 생성 및 갱신", description = "영상을 시청하기 시작할 때 시청 이력을 남깁니다.")
-    @ApiResponse(responseCode = "200", description = "시청 이력 기록 성공")
+    @Operation(summary = "이어보기 위치 생성 및 갱신", description = "영상 재생 중 이어보기 위치(positionSec)를 저장/갱신합니다.")
+    @ApiResponse(responseCode = "200", description = "이어보기 위치 저장 성공")
     @ApiResponse(responseCode = "400", description = "잘못된 요청 (mediaId 누락 등)") 
     @ApiResponse(responseCode = "404", description = "존재하지 않는 미디어 ID") 
     ResponseEntity<SuccessResponse<Void>> createPlayBack(

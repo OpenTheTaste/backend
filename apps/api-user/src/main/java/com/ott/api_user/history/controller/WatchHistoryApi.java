@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,6 +32,7 @@ public interface WatchHistoryApi {
                 @ApiResponse(responseCode = "404", description = "존재하지 않는 미디어 ID", content = {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
         })
+        @PutMapping
         ResponseEntity<SuccessResponse<Void>> createWatchHistory(
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId, 
                 @Valid @RequestBody WatchHistoryRequest request

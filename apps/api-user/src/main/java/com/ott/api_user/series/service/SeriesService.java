@@ -96,7 +96,7 @@ public class SeriesService {
                         playbackRepository.findAllByMemberIdAndMediaIds(memberId, mediaIds).stream()
                         .collect(Collectors.toMap(
                                 p -> p.getContents().getMedia().getId(), 
-                                Playback::getPositionSec,
+                                p -> p.getPositionSec() != null ? p.getPositionSec() : 0,
                                 (existing, replacement) -> existing // 중복 방어
                 ));
 

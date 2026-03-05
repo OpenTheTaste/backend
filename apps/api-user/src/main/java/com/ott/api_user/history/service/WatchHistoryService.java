@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.member.domain.Member;
@@ -31,7 +32,7 @@ public class WatchHistoryService {
         Contents contents = contentsRepository.findByMediaId(mediaId)
                 .orElseThrow(()-> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
         
-        Optional<WatchHistory> watchhistoryOpt = watchHistoryRepository.findByMemberIdAndContentsId(memberId, contents.getId());
+        Optional<WatchHistory> watchhistoryOpt = watchHistoryRepository.findByMember_IdAndContents_IdAndStatus(memberId, contents.getId(),Status.ACTIVE);
 
         if(watchhistoryOpt.isPresent()){
             watchhistoryOpt.get().updateLastWatchedAt();

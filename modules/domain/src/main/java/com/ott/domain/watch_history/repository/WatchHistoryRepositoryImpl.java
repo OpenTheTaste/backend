@@ -1,5 +1,6 @@
 package com.ott.domain.watch_history.repository;
 
+import com.ott.domain.common.Status;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -150,7 +151,8 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .join(contents).on(watchHistory.contents.id.eq(contents.id))
                 .where(
                         watchHistory.member.id.eq(memberId), 
-                        contents.series.id.eq(seriesId)
+                        contents.series.id.eq(seriesId),
+                        watchHistory.status.eq(Status.ACTIVE)
                 )
                 .orderBy(watchHistory.lastWatchedAt.desc())
                 .fetchFirst();
