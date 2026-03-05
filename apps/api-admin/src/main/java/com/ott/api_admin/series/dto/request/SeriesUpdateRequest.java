@@ -9,17 +9,17 @@ import jakarta.validation.constraints.Positive;
 
 import java.util.List;
 
-@Schema(description = "시리즈 업로드 요청")
-public record SeriesUploadRequest(
-        @Schema(type = "String", description = "시리즈 제목", example = "응답하라 1988")
+@Schema(description = "시리즈 수정 요청")
+public record SeriesUpdateRequest(
+        @Schema(description = "시리즈 제목", example = "수정된 시리즈 제목")
         @NotBlank
         String title,
 
-        @Schema(type = "String", description = "시리즈 설명", example = "가족과 이웃의 따뜻한 이야기")
+        @Schema(type = "String", description = "시리즈 설명", example = "수정된 시리즈 설명")
         @NotBlank
         String description,
 
-        @Schema(type = "String", description = "출연진", example = "성동일, 이일화")
+        @Schema(type = "String", description = "출연진", example = "배우A, 배우B")
         @NotBlank
         String actors,
 
@@ -36,12 +36,10 @@ public record SeriesUploadRequest(
         @NotEmpty
         List<@NotNull @Positive Long> tagIdList,
 
-        @Schema(type = "String", description = "포스터 원본 파일명", example = "poster.jpg")
-        @NotBlank
+        @Schema(type = "String", description = "새 포스터 파일명 (교체 시에만 입력)", example = "poster-new.jpg")
         String posterFileName,
 
-        @Schema(type = "String", description = "썸네일 원본 파일명", example = "thumb.jpg")
-        @NotBlank
+        @Schema(type = "String", description = "새 썸네일 파일명 (교체 시에만 입력)", example = "thumb-new.jpg")
         String thumbnailFileName
 ) {
 }

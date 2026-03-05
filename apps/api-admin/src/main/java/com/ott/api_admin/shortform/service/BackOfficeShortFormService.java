@@ -1,9 +1,11 @@
 package com.ott.api_admin.shortform.service;
 
 import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
+import com.ott.api_admin.shortform.dto.request.ShortFormUpdateRequest;
 import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormUpdateResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
 import com.ott.api_admin.shortform.mapper.BackOfficeShortFormMapper;
 import com.ott.api_admin.upload.support.UploadHelper;
@@ -23,7 +25,6 @@ import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.domain.Role;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
-import com.ott.infra.s3.service.S3PresignService;
 import com.ott.domain.short_form.domain.ShortForm;
 import com.ott.domain.short_form.repository.ShortFormRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,6 @@ public class BackOfficeShortFormService {
         private final SeriesRepository seriesRepository;
         private final ContentsRepository contentsRepository;
         private final ShortFormRepository shortFormRepository;
-        private final S3PresignService s3PresignService;
         private final UploadHelper uploadHelper;
 
         @Transactional(readOnly = true)
@@ -151,15 +151,19 @@ public class BackOfficeShortFormService {
         }
 
         @Transactional
-        public ShortFormUploadResponse createShortFormUpload(ShortFormUploadRequest request) {
-                validateExclusiveTarget(request.seriesId(), request.contentsId());
+        public ShortFormUploadResponse createShortFormUpload(ShortFormUploadRequest request, Long memberId) {
+                Member uploader = uploadHelper.resolveUploader(memberId);
+                Series series = null;
+                Contents contents = null;
 
-                Member uploader = uploadHelper.resolveUploader();
-                Series series = resolveSeries(request.seriesId());
-                Contents contents = resolveContents(request.contentsId());
-                String sanitizedPosterFileName = uploadHelper.sanitizeFileName(request.posterFileName());
-                String sanitizedThumbnailFileName = uploadHelper.sanitizeFileName(request.thumbnailFileName());
-                String sanitizedOriginFileName = uploadHelper.sanitizeFileName(request.originFileName());
+                if ( request.mediaType().equals(MediaType.SERIES) ) {
+                        series = seriesRepository.findById(request.originId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+                } else if ( request.mediaType().equals(MediaType.CONTENTS) ){
+                        contents = resolveContents(request.originId());
+                } else {
+                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
+                }
 
                 Media media = mediaRepository.save(
                                 Media.builder()
@@ -186,50 +190,95 @@ public class BackOfficeShortFormService {
                                                 .build());
 
                 Long shortFormId = shortForm.getId();
-                String posterObjectKey = uploadHelper.buildObjectKey("short-forms", shortFormId, "poster",
-                                sanitizedPosterFileName);
-                String thumbnailObjectKey = uploadHelper.buildObjectKey("short-forms", shortFormId, "thumbnail",
-                                sanitizedThumbnailFileName);
-                String originObjectKey = uploadHelper.buildObjectKey("short-forms", shortFormId, "origin",
-                                sanitizedOriginFileName);
-                String masterPlaylistObjectKey = "short-forms/" + shortFormId + "/transcoded/master.m3u8";
+                UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
+                                "short-forms", shortFormId, request.posterFileName(), request.thumbnailFileName(), request.originFileName()
+                );
 
                 media.updateImageKeys(
-                                s3PresignService.toObjectUrl(posterObjectKey),
-                                s3PresignService.toObjectUrl(thumbnailObjectKey));
+                                mediaCreateUploadResult.posterObjectUrl(),
+                                mediaCreateUploadResult.thumbnailObjectUrl());
                 shortForm.updateStorageKeys(
-                                s3PresignService.toObjectUrl(originObjectKey),
-                                s3PresignService.toObjectUrl(masterPlaylistObjectKey));
+                                mediaCreateUploadResult.originObjectUrl(),
+                                mediaCreateUploadResult.masterPlaylistObjectUrl());
 
                 Long originMediaId = resolveOriginMediaId(series, contents);
                 inheritOriginMediaTags(media, originMediaId);
 
                 return backOfficeShortFormMapper.toShortFormUploadResponse(
                                 shortFormId,
-                                posterObjectKey,
-                                thumbnailObjectKey,
-                                originObjectKey,
-                                masterPlaylistObjectKey,
-                                s3PresignService.createPutPresignedUrl(posterObjectKey,
-                                                uploadHelper.resolveImageContentType(sanitizedPosterFileName)),
-                                s3PresignService.createPutPresignedUrl(thumbnailObjectKey,
-                                                uploadHelper.resolveImageContentType(sanitizedThumbnailFileName)),
-                                s3PresignService.createPutPresignedUrl(originObjectKey,
-                                                uploadHelper.resolveVideoContentType(sanitizedOriginFileName)));
+                                mediaCreateUploadResult.posterObjectKey(),
+                                mediaCreateUploadResult.thumbnailObjectKey(),
+                                mediaCreateUploadResult.originObjectKey(),
+                                mediaCreateUploadResult.masterPlaylistObjectKey(),
+                                mediaCreateUploadResult.posterUploadUrl(),
+                                mediaCreateUploadResult.thumbnailUploadUrl(),
+                                mediaCreateUploadResult.originUploadUrl());
         }
 
-        private void validateExclusiveTarget(Long seriesId, Long contentsId) {
-                if ((seriesId == null && contentsId == null) || (seriesId != null && contentsId != null)) {
+        @Transactional
+        public ShortFormUpdateResponse updateShortFormUpload(Long shortformId, ShortFormUpdateRequest request, Authentication authentication) {
+                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortformId)
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+
+                Media media = shortForm.getMedia();
+                Long memberId = (Long) authentication.getPrincipal();
+                boolean isEditor = authentication.getAuthorities().stream()
+                                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
+                if (isEditor && !media.getUploader().getId().equals(memberId)) {
+                        throw new BusinessException(ErrorCode.FORBIDDEN);
+                }
+
+                Series series = null;
+                Contents contents = null;
+
+                if ( request.mediaType().equals(MediaType.SERIES) ) {
+                        series = seriesRepository.findById(request.originId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+                } else if ( request.mediaType().equals(MediaType.CONTENTS) ){
+                        contents = resolveContents(request.originId());
+                } else {
                         throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
                 }
-        }
 
-        private Series resolveSeries(Long seriesId) {
-                if (seriesId == null) {
-                        return null;
-                }
-                return seriesRepository.findById(seriesId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+
+                media.updateMetadata(request.title(), request.description(), request.publicStatus());
+                shortForm.updateMetadata(series, contents, request.duration(), request.videoSize());
+
+                Long shortFormId = shortForm.getId();
+                UploadHelper.MediaUpdateUploadResult mediaUpdateUploadResult = uploadHelper.prepareMediaUpdate(
+                                "short-forms",
+                                shortFormId,
+                                request.posterFileName(),
+                                request.thumbnailFileName(),
+                                request.originFileName(),
+                                media.getPosterUrl(),
+                                media.getThumbnailUrl(),
+                                shortForm.getOriginUrl(),
+                                shortForm.getMasterPlaylistUrl()
+                );
+
+                media.updateImageKeys(
+                                mediaUpdateUploadResult.nextPosterUrl(),
+                                mediaUpdateUploadResult.nextThumbnailUrl()
+                );
+                shortForm.updateStorageKeys(
+                                mediaUpdateUploadResult.nextOriginUrl(),
+                                mediaUpdateUploadResult.nextMasterPlaylistUrl()
+                );
+
+                Long originMediaId = resolveOriginMediaId(series, contents);
+                mediaTagRepository.deleteAllByMedia_Id(media.getId());
+                inheritOriginMediaTags(media, originMediaId);
+
+                return backOfficeShortFormMapper.toShortFormUpdateResponse(
+                                shortFormId,
+                                mediaUpdateUploadResult.posterObjectKey(),
+                                mediaUpdateUploadResult.thumbnailObjectKey(),
+                                mediaUpdateUploadResult.originObjectKey(),
+                                mediaUpdateUploadResult.masterPlaylistObjectKey(),
+                                mediaUpdateUploadResult.posterUploadUrl(),
+                                mediaUpdateUploadResult.thumbnailUploadUrl(),
+                                mediaUpdateUploadResult.originUploadUrl());
         }
 
         private Contents resolveContents(Long contentsId) {

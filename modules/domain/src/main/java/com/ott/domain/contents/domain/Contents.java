@@ -60,4 +60,11 @@ public class Contents extends BaseEntity {
         this.originUrl = originUrl;
         this.masterPlaylistUrl = masterPlaylistUrl;
     }
+
+    public void updateMetadata(Series series, String actors, Integer duration, Integer videoSize) {
+        this.series = series;
+        this.actors = actors;
+        this.duration = duration;
+        this.videoSize = videoSize;
+    }
 }

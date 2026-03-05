@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface ContentsRepositoryCustom {
 
+    Optional<Contents> findWithMediaById(Long contentsId);
+
     Optional<Contents> findWithMediaAndUploaderByMediaId(Long mediaId);
 
     List<Contents> findAllByMediaIdIn(List<Long> mediaIdList);

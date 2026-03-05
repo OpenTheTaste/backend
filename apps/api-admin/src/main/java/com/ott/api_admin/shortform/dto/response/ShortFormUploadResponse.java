@@ -2,7 +2,7 @@ package com.ott.api_admin.shortform.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(type = "Object", description = "숏폼 업로드 응답")
+@Schema(description = "숏폼 업로드 응답")
 public record ShortFormUploadResponse(
         @Schema(type = "Long", description = "생성된 숏폼 ID", example = "10")
         Long shortFormId,

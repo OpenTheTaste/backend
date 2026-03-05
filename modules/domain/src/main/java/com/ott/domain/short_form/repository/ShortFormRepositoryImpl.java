@@ -39,6 +39,25 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
     }
 
     @Override
+    public Optional<ShortForm> findWithMediaAndUploaderByShortFormId(Long shortFormId) {
+        QMedia contentsMedia = new QMedia("contentsMedia");
+        QMedia seriesMedia = new QMedia("seriesMedia");
+
+        ShortForm result = queryFactory
+                .selectFrom(shortForm)
+                .join(shortForm.media, media).fetchJoin()
+                .join(media.uploader, member).fetchJoin()
+                .leftJoin(shortForm.contents, contents).fetchJoin()
+                .leftJoin(contents.media, contentsMedia).fetchJoin()
+                .leftJoin(shortForm.series, series).fetchJoin()
+                .leftJoin(series.media, seriesMedia).fetchJoin()
+                .where(shortForm.id.eq(shortFormId))
+                .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
     public List<ShortForm> findAllByMediaIdIn(List<Long> mediaIdList) {
         return queryFactory
                 .selectFrom(shortForm)
