@@ -1,0 +1,212 @@
+name: Deploy Monitoring Stack
+
+on:
+  workflow_dispatch:
+    inputs:
+      monitoring_instance_tag:
+        description: "EC2 Name tag for monitoring server"
+        required: true
+        default: "oplust-monitoring-ec2"
+        type: string
+      user_api_target_ssm_param:
+        description: "SSM parameter name for user-api target (host:port)"
+        required: true
+        default: "/oplust/monitoring/targets/user-api"
+        type: string
+      admin_api_target_ssm_param:
+        description: "SSM parameter name for admin-api target (host:port)"
+        required: true
+        default: "/oplust/monitoring/targets/admin-api"
+        type: string
+      transcoder_target_ssm_param:
+        description: "SSM parameter name for transcoder target (host:port)"
+        required: true
+        default: "/oplust/monitoring/targets/transcoder"
+        type: string
+      grafana_password_ssm_param:
+        description: "SSM SecureString parameter name for Grafana admin password"
+        required: true
+        default: "/oplust/monitoring/grafana-admin-password"
+        type: string
+      grafana_admin_password:
+        description: "Optional override password (leave blank to use SSM)"
+        required: false
+        type: string
+
+env:
+  AWS_REGION: ap-northeast-2
+  MONITORING_ROOT: /opt/oplust-monitoring
+
+jobs:
+  deploy-monitoring:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve scrape targets from SSM
+        env:
+          USER_API_TARGET_SSM_PARAM: ${{ github.event.inputs.user_api_target_ssm_param }}
+          ADMIN_API_TARGET_SSM_PARAM: ${{ github.event.inputs.admin_api_target_ssm_param }}
+          TRANSCODER_TARGET_SSM_PARAM: ${{ github.event.inputs.transcoder_target_ssm_param }}
+        run: |
+          set -euo pipefail
+
+          USER_API_TARGET=$(aws ssm get-parameter \
+            --region "$AWS_REGION" \
+            --name "$USER_API_TARGET_SSM_PARAM" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)
+
+          ADMIN_API_TARGET=$(aws ssm get-parameter \
+            --region "$AWS_REGION" \
+            --name "$ADMIN_API_TARGET_SSM_PARAM" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)
+
+          TRANSCODER_TARGET=$(aws ssm get-parameter \
+            --region "$AWS_REGION" \
+            --name "$TRANSCODER_TARGET_SSM_PARAM" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)
+
+          if [ -z "$USER_API_TARGET" ] || [ "$USER_API_TARGET" = "None" ] || \
+             [ -z "$ADMIN_API_TARGET" ] || [ "$ADMIN_API_TARGET" = "None" ] || \
+             [ -z "$TRANSCODER_TARGET" ] || [ "$TRANSCODER_TARGET" = "None" ]; then
+            echo "One or more scrape targets are empty. Check SSM parameter values." >&2
+            exit 1
+          fi
+
+          echo "USER_API_TARGET=$USER_API_TARGET" >> "$GITHUB_ENV"
+          echo "ADMIN_API_TARGET=$ADMIN_API_TARGET" >> "$GITHUB_ENV"
+          echo "TRANSCODER_TARGET=$TRANSCODER_TARGET" >> "$GITHUB_ENV"
+
+      - name: Render prod Prometheus config
+        run: |
+          set -euo pipefail
+
+          sed \
+            -e "s|__USER_API_TARGET__|${USER_API_TARGET}|g" \
+            -e "s|__ADMIN_API_TARGET__|${ADMIN_API_TARGET}|g" \
+            -e "s|__TRANSCODER_TARGET__|${TRANSCODER_TARGET}|g" \
+            apps/monitoring/prometheus/prometheus.prod.yml.tpl > apps/monitoring/prometheus/prometheus.prod.yml
+
+      - name: Resolve Grafana admin password
+        env:
+          GRAFANA_ADMIN_PASSWORD_INPUT: ${{ github.event.inputs.grafana_admin_password }}
+          GRAFANA_PASSWORD_SSM_PARAM: ${{ github.event.inputs.grafana_password_ssm_param }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "$GRAFANA_ADMIN_PASSWORD_INPUT" ]; then
+            GRAFANA_PASSWORD="$GRAFANA_ADMIN_PASSWORD_INPUT"
+          else
+            GRAFANA_PASSWORD=$(aws ssm get-parameter \
+              --region "$AWS_REGION" \
+              --name "$GRAFANA_PASSWORD_SSM_PARAM" \
+              --with-decryption \
+              --query 'Parameter.Value' \
+              --output text)
+          fi
+
+          if [ -z "$GRAFANA_PASSWORD" ] || [ "$GRAFANA_PASSWORD" = "None" ]; then
+            echo "Grafana admin password is empty. Check input or SSM parameter." >&2
+            exit 1
+          fi
+
+          echo "GRAFANA_PASSWORD=$GRAFANA_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Deploy monitoring stack via SSM
+        env:
+          INSTANCE_TAG: ${{ github.event.inputs.monitoring_instance_tag }}
+        run: |
+          set -euo pipefail
+
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --filters "Name=tag:Name,Values=${INSTANCE_TAG}" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
+
+          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+            echo "No running monitoring instance found for tag: $INSTANCE_TAG" >&2
+            exit 1
+          fi
+
+          COMPOSE_B64=$(base64 -w 0 apps/monitoring/docker-compose.yml)
+          COMPOSE_PROD_B64=$(base64 -w 0 apps/monitoring/docker-compose.prod.yml)
+          PROM_PROD_B64=$(base64 -w 0 apps/monitoring/prometheus/prometheus.prod.yml)
+          DATASOURCE_B64=$(base64 -w 0 apps/monitoring/grafana/provisioning/datasources/prometheus.yml)
+          DASH_PROVIDER_B64=$(base64 -w 0 apps/monitoring/grafana/provisioning/dashboards/dashboards.yml)
+          DASHBOARDS_JSON_TGZ_B64=$(tar -C apps/monitoring/grafana/provisioning/dashboards -czf - json | base64 -w 0)
+
+          PARAMS=$(jq -nc \
+            --arg c1 "set -euo pipefail" \
+            --arg c2 "sudo mkdir -p ${MONITORING_ROOT}/prometheus ${MONITORING_ROOT}/grafana/provisioning/datasources ${MONITORING_ROOT}/grafana/provisioning/dashboards/json ${MONITORING_ROOT}/grafana/provisioning/dashboards" \
+            --arg c3 "echo '$COMPOSE_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/docker-compose.yml >/dev/null" \
+            --arg c4 "echo '$COMPOSE_PROD_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/docker-compose.prod.yml >/dev/null" \
+            --arg c5 "echo '$PROM_PROD_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/prometheus/prometheus.prod.yml >/dev/null" \
+            --arg c6 "echo '$DATASOURCE_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/grafana/provisioning/datasources/prometheus.yml >/dev/null" \
+            --arg c7 "echo '$DASH_PROVIDER_B64' | base64 -d | sudo tee ${MONITORING_ROOT}/grafana/provisioning/dashboards/dashboards.yml >/dev/null" \
+            --arg c8 "echo '$DASHBOARDS_JSON_TGZ_B64' | base64 -d | sudo tar -xzf - -C ${MONITORING_ROOT}/grafana/provisioning/dashboards" \
+            --arg c9 "printf '%s\n' 'GF_SECURITY_ADMIN_USER=admin' 'GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}' | sudo tee ${MONITORING_ROOT}/.env >/dev/null" \
+            --arg c10 "if sudo docker compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker compose'; elif sudo docker-compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker-compose'; else if command -v dnf >/dev/null 2>&1; then sudo dnf install -y docker-compose-plugin || true; fi; if command -v yum >/dev/null 2>&1; then sudo yum install -y docker-compose-plugin || true; fi; if sudo docker compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker compose'; elif sudo docker-compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker-compose'; else sudo mkdir -p /usr/local/lib/docker/cli-plugins; sudo curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose; sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose; if sudo docker compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker compose'; else echo 'Docker Compose not found' >&2; exit 1; fi; fi; fi" \
+            --arg c11 "cd ${MONITORING_ROOT} && \$COMPOSE_CMD -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d" \
+            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c7,$c8,$c9,$c10,$c11]}')
+
+          CMD_ID=$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy monitoring stack" \
+            --parameters "$PARAMS" \
+            --query 'Command.CommandId' \
+            --output text)
+
+          echo "command_id=$CMD_ID instance_id=$INSTANCE_ID"
+
+          for _ in $(seq 1 120); do
+            STATUS=$(aws ssm get-command-invocation \
+              --region "$AWS_REGION" \
+              --command-id "$CMD_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query 'Status' \
+              --output text 2>/dev/null || true)
+
+            case "$STATUS" in
+              Success)
+                echo "Monitoring deployment success"
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut)
+                echo "Monitoring deployment failed: $STATUS" >&2
+                aws ssm get-command-invocation \
+                  --region "$AWS_REGION" \
+                  --command-id "$CMD_ID" \
+                  --instance-id "$INSTANCE_ID" \
+                  --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' \
+                  --output json || true
+                exit 1
+                ;;
+              Pending|InProgress|Delayed|"")
+                sleep 5
+                ;;
+              *)
+                sleep 5
+                ;;
+            esac
+          done
+
+          echo "Monitoring deployment timed out" >&2
+          exit 1

@@ -30,7 +30,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
@@ -45,3 +45,7 @@ jwt:
 springdoc:
   api-docs:
     version: OPENAPI_3_0
+    path: /back-office/v3/api-docs
+
+  swagger-ui:
+    path: /back-office/swagger-ui/index.html
