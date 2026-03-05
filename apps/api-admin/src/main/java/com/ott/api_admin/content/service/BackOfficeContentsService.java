@@ -159,8 +159,8 @@ public class BackOfficeContentsService {
     }
 
     @Transactional
-    public ContentsUpdateResponse updateContentsUpload(Long mediaId, ContentsUpdateRequest request) {
-        Contents contents = contentsRepository.findWithMediaAndUploaderByMediaId(mediaId)
+    public ContentsUpdateResponse updateContentsUpload(Long contentsId, ContentsUpdateRequest request) {
+        Contents contents = contentsRepository.findWithMediaById(contentsId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
 
         Media media = contents.getMedia();
@@ -169,7 +169,6 @@ public class BackOfficeContentsService {
         media.updateMetadata(request.title(), request.description(), request.publicStatus());
         contents.updateMetadata(series, request.actors(), request.duration(), request.videoSize());
 
-        Long contentsId = contents.getId();
         UploadHelper.MediaUpdateUploadResult mediaUpdateUploadResult = uploadHelper.prepareMediaUpdate(
                 "contents",
                 contentsId,

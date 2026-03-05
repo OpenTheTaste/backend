@@ -79,12 +79,12 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
     }
 
     @Override
-    @PatchMapping("/{mediaId}/upload")
+    @PatchMapping("/{shortformId}/upload")
     public ResponseEntity<SuccessResponse<ShortFormUpdateResponse>> updateShortFormUpload(
-            @PathVariable("mediaId") Long mediaId,
+            @PathVariable("shortformId") Long shortformId,
             @Valid @RequestBody ShortFormUpdateRequest request,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.updateShortFormUpload(mediaId, request, authentication)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.updateShortFormUpload(shortformId, request, authentication)));
     }
 }

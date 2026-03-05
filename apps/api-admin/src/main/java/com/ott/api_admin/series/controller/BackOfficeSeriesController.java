@@ -72,11 +72,11 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
     }
 
     @Override
-    @PatchMapping("/{mediaId}/upload")
+    @PatchMapping("/{seriesId}/upload")
     public ResponseEntity<SuccessResponse<SeriesUpdateResponse>> updateSeriesUpload(
-            @PathVariable("mediaId") Long mediaId,
+            @PathVariable("seriesId") Long seriesId,
             @Valid @RequestBody SeriesUpdateRequest request
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeSeriesService.updateSeriesUpload(mediaId, request)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeSeriesService.updateSeriesUpload(seriesId, request)));
     }
 }

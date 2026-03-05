@@ -1,5 +1,6 @@
 package com.ott.api_admin.shortform.dto.request;
 
+import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -8,11 +9,13 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 @Schema(description = "숏폼 업로드 요청")
 public record ShortFormUploadRequest(
-        @Schema(type = "Long", description = "연결할 시리즈 ID(선택)", example = "1")
-        Long seriesId,
+        @Schema(type = "Long", description = "원본 콘텐츠 ID", example = "1")
+        @NotNull
+        Long originId,
 
-        @Schema(type = "Long", description = "연결할 콘텐츠 ID(선택)", example = "2")
-        Long contentsId,
+        @Schema(type = "String", description = "원본 콘텐츠 타입", example = "SERIES")
+        @NotNull
+        MediaType mediaType,
 
         @Schema(type = "String", description = "숏폼 제목", example = "하이라이트")
         @NotBlank

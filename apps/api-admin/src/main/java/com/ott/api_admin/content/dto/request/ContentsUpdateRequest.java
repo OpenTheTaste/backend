@@ -43,19 +43,24 @@ public record ContentsUpdateRequest(
 
         @Schema(type = "Integer", description = "영상 길이(초)", example = "3600")
         @PositiveOrZero
+        @NotNull
         Integer duration,
 
         @Schema(type = "Integer", description = "영상 크기(KB)", example = "512000")
         @PositiveOrZero
+        @NotNull
         Integer videoSize,
 
         @Schema(type = "String", description = "포스터 원본 파일명(교체 시에만 입력)", example = "poster-new.jpg")
+        @NotBlank
         String posterFileName,
 
         @Schema(type = "String", description = "썸네일 원본 파일명(교체 시에만 입력)", example = "thumb-new.jpg")
+        @NotBlank
         String thumbnailFileName,
 
         @Schema(type = "String", description = "원본 영상 파일명(교체 시에만 입력)", example = "origin-new.mp4")
+        @NotBlank
         String originFileName
 ) {
 }

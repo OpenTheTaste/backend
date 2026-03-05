@@ -152,11 +152,17 @@ public class BackOfficeShortFormService {
 
         @Transactional
         public ShortFormUploadResponse createShortFormUpload(ShortFormUploadRequest request, Long memberId) {
-                validateExclusiveTarget(request.seriesId(), request.contentsId());
-
                 Member uploader = uploadHelper.resolveUploader(memberId);
-                Series series = resolveSeries(request.seriesId());
-                Contents contents = resolveContents(request.contentsId());
+                Series series = null;
+                Contents contents = null;
+
+                if ( request.mediaType().equals(MediaType.SERIES) ) {
+                        series = seriesRepository.findById(request.originId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+                }
+                else if ( request.mediaType().equals(MediaType.CONTENTS) ){
+                        contents = resolveContents(request.originId());
+                }
 
                 Media media = mediaRepository.save(
                                 Media.builder()
@@ -209,8 +215,8 @@ public class BackOfficeShortFormService {
         }
 
         @Transactional
-        public ShortFormUpdateResponse updateShortFormUpload(Long mediaId, ShortFormUpdateRequest request, Authentication authentication) {
-                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByMediaId(mediaId)
+        public ShortFormUpdateResponse updateShortFormUpload(Long shortformId, ShortFormUpdateRequest request, Authentication authentication) {
+                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortformId)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
 
                 Media media = shortForm.getMedia();
@@ -221,9 +227,17 @@ public class BackOfficeShortFormService {
                         throw new BusinessException(ErrorCode.FORBIDDEN);
                 }
 
-                validateExclusiveTarget(request.seriesId(), request.contentsId());
-                Series series = resolveSeries(request.seriesId());
-                Contents contents = resolveContents(request.contentsId());
+                Series series = null;
+                Contents contents = null;
+
+                if ( request.mediaType().equals(MediaType.SERIES) ) {
+                        series = seriesRepository.findById(request.originId())
+                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+                }
+                else if ( request.mediaType().equals(MediaType.CONTENTS) ){
+                        contents = resolveContents(request.originId());
+                }
+
 
                 media.updateMetadata(request.title(), request.description(), request.publicStatus());
                 shortForm.updateMetadata(series, contents, request.duration(), request.videoSize());
@@ -263,20 +277,6 @@ public class BackOfficeShortFormService {
                                 mediaUpdateUploadResult.posterUploadUrl(),
                                 mediaUpdateUploadResult.thumbnailUploadUrl(),
                                 mediaUpdateUploadResult.originUploadUrl());
-        }
-
-        private void validateExclusiveTarget(Long seriesId, Long contentsId) {
-                if ((seriesId == null && contentsId == null) || (seriesId != null && contentsId != null)) {
-                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
-                }
-        }
-
-        private Series resolveSeries(Long seriesId) {
-                if (seriesId == null) {
-                        return null;
-                }
-                return seriesRepository.findById(seriesId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
         }
 
         private Contents resolveContents(Long contentsId) {

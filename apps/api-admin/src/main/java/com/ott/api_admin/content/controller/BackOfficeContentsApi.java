@@ -109,8 +109,8 @@ public interface BackOfficeContentsApi {
             )
     })
     ResponseEntity<SuccessResponse<ContentsUpdateResponse>> updateContentsUpload(
-            @Parameter(description = "수정 대상 콘텐츠의 미디어 ID", required = true, example = "1")
-            @PathVariable("mediaId") Long mediaId,
+            @Parameter(description = "수정 대상 콘텐츠의 ID", required = true, example = "1")
+            @PathVariable("contentsId") Long contentsId,
 
             @Parameter(description = "ContentsUpdateRequest를 참고해주세요.", required = true)
             @Valid @RequestBody ContentsUpdateRequest request

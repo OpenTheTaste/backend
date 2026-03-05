@@ -107,8 +107,10 @@ public interface BackOfficeShortFormApi {
     })
     ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
             @Parameter(description = "ShortFormUploadRequest 참고해주세요.", required = true)
-            @RequestBody ShortFormUploadRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+            @Valid @RequestBody ShortFormUploadRequest request,
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal Long memberId
     );
 
     @Operation(summary = "숏폼 수정", description = "숏폼 메타데이터를 수정하고 필요 시 파일 교체용 Presigned URL을 발급합니다.")
@@ -127,8 +129,8 @@ public interface BackOfficeShortFormApi {
             )
     })
     ResponseEntity<SuccessResponse<ShortFormUpdateResponse>> updateShortFormUpload(
-            @Parameter(description = "수정 대상 숏폼 미디어 ID", required = true, example = "1")
-            @PathVariable("mediaId") Long mediaId,
+            @Parameter(description = "수정 대상 숏폼 ID", required = true, example = "1")
+            @PathVariable("shortformId") Long shortformId,
 
             @Parameter(description = "ShortFormUpdateRequest 참고해주세요.", required = true)
             @Valid @RequestBody ShortFormUpdateRequest request,

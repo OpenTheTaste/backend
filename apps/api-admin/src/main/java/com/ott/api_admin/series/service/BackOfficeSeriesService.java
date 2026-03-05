@@ -152,15 +152,14 @@ public class BackOfficeSeriesService {
     }
 
     @Transactional
-    public SeriesUpdateResponse updateSeriesUpload(Long mediaId, SeriesUpdateRequest request) {
-        Series series = seriesRepository.findWithMediaAndUploaderByMediaId(mediaId)
+    public SeriesUpdateResponse updateSeriesUpload(Long seriesId, SeriesUpdateRequest request) {
+        Series series = seriesRepository.findWithMediaById(seriesId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
 
         Media media = series.getMedia();
         media.updateMetadata(request.title(), request.description(), request.publicStatus());
         series.updateActors(request.actors());
 
-        Long seriesId = series.getId();
         UploadHelper.ImageUpdateUploadResult imageUpdateUploadResult = uploadHelper.prepareImageUpdate(
                 "series",
                 seriesId,

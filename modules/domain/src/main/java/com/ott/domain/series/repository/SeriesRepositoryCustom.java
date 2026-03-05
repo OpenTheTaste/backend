@@ -11,6 +11,8 @@ public interface SeriesRepositoryCustom {
 
     Page<Series> findSeriesListWithMediaBySearchWord(Pageable pageable, String searchWord);
 
+    Optional<Series> findWithMediaById(Long seriesId);
+
     Optional<Series> findWithMediaAndUploaderByMediaId(Long mediaId);
 
     List<Series> findAllByMediaIdIn(List<Long> mediaIdList);

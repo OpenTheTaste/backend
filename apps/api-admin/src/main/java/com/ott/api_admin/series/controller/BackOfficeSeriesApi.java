@@ -134,8 +134,8 @@ public interface BackOfficeSeriesApi {
             )
     })
     ResponseEntity<SuccessResponse<SeriesUpdateResponse>> updateSeriesUpload(
-            @Parameter(description = "수정 대상 미디어 ID", required = true, example = "1")
-            @PathVariable("mediaId") Long mediaId,
+            @Parameter(description = "수정 대상 시리즈 ID", required = true, example = "1")
+            @PathVariable("seriesId") Long seriesId,
 
             @Parameter(description = "SeriesUpdateRequest를 참고해주세요.", required = true)
             @Valid @RequestBody SeriesUpdateRequest request

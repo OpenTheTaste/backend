@@ -63,11 +63,11 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
     }
 
     @Override
-    @PatchMapping("/{mediaId}/upload")
+    @PatchMapping("/{contentsId}/upload")
     public ResponseEntity<SuccessResponse<ContentsUpdateResponse>> updateContentsUpload(
-            @PathVariable("mediaId") Long mediaId,
+            @PathVariable("contentsId") Long contentsId,
             @Valid @RequestBody ContentsUpdateRequest request
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeContentsService.updateContentsUpload(mediaId, request)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeContentsService.updateContentsUpload(contentsId, request)));
     }
 }

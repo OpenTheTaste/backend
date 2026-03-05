@@ -19,6 +19,17 @@ public class ContentsRepositoryImpl implements ContentsRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
+    public Optional<Contents> findWithMediaById(Long contentsId) {
+        Contents result = queryFactory
+                .selectFrom(contents)
+                .join(contents.media, media).fetchJoin()
+                .where(contents.id.eq(contentsId))
+                .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
     public List<Contents> findAllByMediaIdIn(List<Long> mediaIdList) {
         return queryFactory
                 .selectFrom(contents)
