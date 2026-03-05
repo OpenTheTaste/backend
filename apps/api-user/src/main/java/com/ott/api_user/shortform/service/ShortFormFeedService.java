@@ -1,0 +1,84 @@
+package com.ott.api_user.shortform.service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ott.api_user.playlist.service.PlaylistPreferenceService;
+import com.ott.api_user.shortform.dto.response.ShortFormFeedResponse;
+import com.ott.common.web.response.PageInfo;
+import com.ott.common.web.response.PageResponse;
+import com.ott.domain.bookmark.repository.BookmarkRepository;
+import com.ott.domain.click_event.repository.ClickRepository;
+import com.ott.domain.likes.repository.LikesRepository;
+import com.ott.domain.short_form.domain.ShortForm;
+import com.ott.domain.short_form.repository.ShortFormRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class ShortFormFeedService {
+    private final ShortFormRepository shortFormRepository;
+    private final ClickRepository clickRepository;
+    private final LikesRepository likesRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final PlaylistPreferenceService playlistPreferenceService;
+
+    public PageResponse<ShortFormFeedResponse> getShortFormFeed(Long memberId, int page, int size){
+        
+        int recommendLimit = (int) (size * 0.8); // ex) 8개 - 사용자 기반 추천 콘텐츠
+        int latestLimit = size - recommendLimit; // ex) 2개 - 완전 새로운 것 (최신성)
+
+        long recommendOffset = (long) page * recommendLimit;
+        long latestOffset = (long) page * latestLimit;
+
+
+        Map<Long, Integer> tagScores = playlistPreferenceService.getTotalTagScores(memberId);
+
+        List<ShortForm> recommendList = shortFormRepository.findRecommendedShortForms(
+                tagScores, recommendLimit, recommendOffset
+        );
+
+        List<Long> recommendIdList = recommendList.stream()
+                            .map(ShortForm::getId).toList();
+        
+        List<ShortForm> latestList = shortFormRepository.findLatestShortForms(
+            latestLimit, latestOffset, recommendIdList
+        );
+
+
+        List<ShortForm> combinedList = new ArrayList<>(recommendList);
+        combinedList.addAll(latestList);
+        Collections.shuffle(combinedList); // 무작위 셔플
+
+        List<Long> finalShortFormIds = combinedList.stream().map(ShortForm::getId).toList();
+
+        Set<Long> likedShortFormIds = finalShortFormIds.isEmpty() ? Collections.emptySet() :
+                likesRepository.findLikedShortFormIdsByMemberIdAndShortFormIds(memberId, finalShortFormIds);
+                
+        Set<Long> bookmarkedShortFormIds = finalShortFormIds.isEmpty() ? Collections.emptySet() :
+                bookmarkRepository.findBookmarkedShortFormIdsByMemberIdAndShortFormIds(memberId, finalShortFormIds);
+
+        List<ShortFormFeedResponse> responseList = combinedList.stream()
+                .map(sf -> ShortFormFeedResponse.of(
+                        sf,
+                        bookmarkedShortFormIds.contains(sf.getId()),
+                        likedShortFormIds.contains(sf.getId())
+                ))
+                .toList();
+
+        PageInfo pageInfo = PageInfo.builder()
+                .currentPage(page)
+                .pageSize(size)
+                .build(); 
+
+        return PageResponse.toPageResponse(pageInfo, responseList);
+    }
+}
