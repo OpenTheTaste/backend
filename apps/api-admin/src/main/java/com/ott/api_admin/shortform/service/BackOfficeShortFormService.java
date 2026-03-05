@@ -159,9 +159,10 @@ public class BackOfficeShortFormService {
                 if ( request.mediaType().equals(MediaType.SERIES) ) {
                         series = seriesRepository.findById(request.originId())
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
-                }
-                else if ( request.mediaType().equals(MediaType.CONTENTS) ){
+                } else if ( request.mediaType().equals(MediaType.CONTENTS) ){
                         contents = resolveContents(request.originId());
+                } else {
+                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
                 }
 
                 Media media = mediaRepository.save(
@@ -233,9 +234,10 @@ public class BackOfficeShortFormService {
                 if ( request.mediaType().equals(MediaType.SERIES) ) {
                         series = seriesRepository.findById(request.originId())
                                 .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
-                }
-                else if ( request.mediaType().equals(MediaType.CONTENTS) ){
+                } else if ( request.mediaType().equals(MediaType.CONTENTS) ){
                         contents = resolveContents(request.originId());
+                } else {
+                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
                 }
 
 
