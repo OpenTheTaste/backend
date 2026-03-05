@@ -33,36 +33,47 @@ public enum ErrorCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A001", "인증이 필요합니다"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "유효하지 않은 토큰입니다"),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "만료된 토큰입니다"),
-
     FORBIDDEN(HttpStatus.FORBIDDEN, "A004", "접근 권한이 없습니다"),
+    KAKAO_UNLINK_FAILED(HttpStatus.BAD_GATEWAY, "A005", "카카오 인증 서버에 접근할 수 없습니다"),
 
     // ========== User (U) - 사용자 ==========
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다"),
 
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "U002", "이미 존재하는 이메일입니다"),
 
-    // ========== Business (B) - 비즈니스 ==========
-    CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "콘텐츠를 찾을 수 없습니다"),
-    SERIES_NOT_FOUND(HttpStatus.NOT_FOUND, "B002", "시리즈를 찾을 수 없습니다"),
-    SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B003", "검색어는 최소 2글자 이상이어야 합니다"),
-    INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B004", "허용되지 않는 역할 변경입니다"),
-    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "B005", "카테고리를 찾을 수 없습니다."),
-    TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B006", "태그를 찾을 수 없습니다."),
-    MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B007", "미디어를 찾을 수 없습니다."),
-    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B008", "댓글을 찾을 수 없습니다."),
-    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "B009", "본인이 작성한 댓글만 수정/삭제할 수 있습니다."),
-    UNSUPPORTED_IMAGE_EXTENSION(HttpStatus.BAD_REQUEST, "B009", "지원하지 않는 이미지 확장자입니다."),
-    UNSUPPORTED_VIDEO_EXTENSION(HttpStatus.BAD_REQUEST, "B010", "지원하지 않는 동영상 확장자입니다."),
-    INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "B011", "파일 확장자가 올바르지 않습니다."),
-    INVALID_TAG_CATEGORY(HttpStatus.NOT_FOUND, "B012", "유효한 카테고리를 찾을 수 없습니다."),
-    INVALID_TAG_SELECTION(HttpStatus.BAD_REQUEST, "B013", "카테고리에 맞지 않거나 존재하지 않는 태그가 포함되어 있습니다."),
-    DUPLICATE_TAG_IN_LIST(HttpStatus.BAD_REQUEST, "B014", "태그 목록에 중복된 값이 있습니다."),
-    INVALID_SHORTFORM_TARGET(HttpStatus.BAD_REQUEST, "B015", "seriesId와 contentsId 중 하나만 제공해야 합니다."),
-    INVALID_SHORTFORM_CONTENTS_TARGET(HttpStatus.BAD_REQUEST, "B016", "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다."),
-    SHORTFORM_ORIGIN_MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B017", "숏폼 원본 미디어를 찾을 수 없습니다."),
-    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B018", "북마크를 찾을 수 없습니다"),
-    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B019", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요");
+    
+    // ========== Business (B) - 비즈니스 (조회 실패: 100번대) ==========
+    CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B101", "콘텐츠를 찾을 수 없습니다"),
+    SERIES_NOT_FOUND(HttpStatus.NOT_FOUND, "B102", "시리즈를 찾을 수 없습니다"),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "B103", "카테고리를 찾을 수 없습니다"),
+    TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B104", "태그를 찾을 수 없습니다"),
+    MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B105", "미디어를 찾을 수 없습니다"),
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B106", "댓글을 찾을 수 없습니다"),
+    BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B107", "북마크를 찾을 수 없습니다"),
 
+   // ========== Business (B) - 비즈니스 (정책/유효성: 200번대) ==========
+    SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B201", "검색어는 최소 2글자 이상이어야 합니다"),
+    DUPLICATE_TAG_IN_LIST(HttpStatus.BAD_REQUEST, "B202", "태그 목록에 중복된 값이 있습니다"),
+    INVALID_TAG_SELECTION(HttpStatus.BAD_REQUEST, "B203", "카테고리에 맞지 않는 태그가 포함되어 있습니다"),
+    INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B204", "허용되지 않는 역할 변경입니다"),
+    COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "B205", "본인이 작성한 댓글만 수정/삭제할 수 있습니다"),
+    INVALID_PLAYLIST_SOURCE(HttpStatus.BAD_REQUEST, "B206", "재생목록 소스(source)는 필수값입니다"),
+
+    // ========== Business (B) - 비즈니스 (미디어/파일 전용: 300번대) ==========
+    UNSUPPORTED_IMAGE_EXTENSION(HttpStatus.BAD_REQUEST, "B301", "지원하지 않는 이미지 확장자입니다"),
+    UNSUPPORTED_VIDEO_EXTENSION(HttpStatus.BAD_REQUEST, "B302", "지원하지 않는 동영상 확장자입니다"),
+    INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "B303", "파일 확장자가 올바르지 않습니다"),
+
+    // ========== Business (B) - 비즈니스 (특수 도메인 규칙/태그/숏폼: 400번대) ==========
+    INVALID_TAG_CATEGORY(HttpStatus.BAD_REQUEST, "B401", "유효하지 않은 태그 카테고리입니다."),
+    SHORTFORM_ORIGIN_MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B402", "쇼츠의 원본 미디어를 찾을 수 없습니다."),
+    INVALID_SHORTFORM_TARGET(HttpStatus.BAD_REQUEST, "B403", "seriesId와 contentsId 중 하나만 제공해야 합니다"),
+    INVALID_SHORTFORM_CONTENTS_TARGET(HttpStatus.BAD_REQUEST, "B404", "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다"),
+    INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B405", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요"),
+
+    // ========== Server (S) - 서버/시스템 ==========
+    STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다");
+  
 
     private final HttpStatus status;
     private final String code;
