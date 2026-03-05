@@ -9,8 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ott.api_user.playback.dto.request.PlaybackUpdateRequest;
 import com.ott.api_user.playback.service.PlaybackService;
 import com.ott.common.web.response.SuccessResponse;
-
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 

@@ -63,9 +63,9 @@ public class SeriesService {
                 Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId, Status.ACTIVE);
                 
                 // 마지막 시청지점이 있는지 조회 
-                Long resumMediaId = calculateResumeMediaId(series.getId(), memberId);
+                Long resumeMediaId = calculateResumeMediaId(series.getId(), memberId);
 
-                return SeriesDetailResponse.of(series, tags, categories, isBookmarked, isLiked , resumMediaId);
+                return SeriesDetailResponse.of(series, tags, categories, isBookmarked, isLiked , resumeMediaId);
         }
 
         // 시리즈 콘텐츠 목록 조회 (페이징)
@@ -93,7 +93,7 @@ public class SeriesService {
                 
                 // 미디어 컨텐츠들에 대한 이어보기 지점 IN 절로 한번에 조회
                 final Map<Long, Integer> playbackMap = mediaIds.isEmpty() ? new HashMap<>() : 
-                        playbackRepository.findAllByMmberIdAndMediaIds(memberId, mediaIds).stream()
+                        playbackRepository.findAllByMemberIdAndMediaIds(memberId, mediaIds).stream()
                         .collect(Collectors.toMap(
                                 p -> p.getContents().getMedia().getId(), 
                                 Playback::getPositionSec,

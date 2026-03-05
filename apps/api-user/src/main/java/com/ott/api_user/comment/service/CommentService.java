@@ -94,6 +94,7 @@ public class CommentService {
         }
 
         // 댓글 조회 - 본인 댓글만 조회 가능(최신순)
+        @Transactional(readOnly = true)
         public PageResponse<MyCommentResponse> getMyComments(
                 Long memberId,
                 Integer page,

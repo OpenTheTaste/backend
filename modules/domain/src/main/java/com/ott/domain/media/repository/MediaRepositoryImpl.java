@@ -198,7 +198,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
         public Page<Media> findTrendingPlaylists(MediaType mediaType, Long excludeMediaId, Pageable pageable) {
                 List<Media> content = queryFactory
                                 .selectFrom(media)
-                                .where(
+                                .where(         
+                                                mediaTypeEq(mediaType),
                                                 isActiveAndPublic(), // 활성 및 공개 상태 필터링
                                                 isDisplayable(), // 공통 노출 조건 사용
                                                 excludeId(excludeMediaId) // 현재 미디어 제외 (null이면 무시됨)
@@ -211,7 +212,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 JPAQuery<Long> countQuery = queryFactory
                                 .select(media.count())
                                 .from(media)
-                                .where(
+                                .where(         
+                                                mediaTypeEq(mediaType),
                                                 isActiveAndPublic(),
                                                 isDisplayable(),
                                                 excludeId(excludeMediaId));
@@ -228,6 +230,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .join(playback.contents.media, media) // 시청 기록과 미디어 정보 조인
                                 .where(
                                                 playback.member.id.eq(memberId), // 특정 사용자 필터링
+                                                mediaTypeEq(mediaType),
                                                 isActiveAndPublic(), // 활성/공개 상태 확인
                                                 isDisplayable(),
                                                 excludeId(excludeMediaId) // 현재 재생 중인 영상 제외
@@ -243,6 +246,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .join(playback.contents.media, media)
                                 .where(
                                                 playback.member.id.eq(memberId),
+                                                mediaTypeEq(mediaType),
                                                 isActiveAndPublic(),
                                                 isDisplayable(),
                                                 excludeId(excludeMediaId));
@@ -258,6 +262,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .join(bookmark.media, media)
                                 .where(
                                                 bookmark.member.id.eq(memberId),
+                                                mediaTypeEq(mediaType),
                                                 bookmark.status.eq(Status.ACTIVE),
                                                 isActiveAndPublic(),
                                                 isDisplayable(),
@@ -273,6 +278,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .join(bookmark.media, media)
                                 .where(
                                                 bookmark.member.id.eq(memberId),
+                                                mediaTypeEq(mediaType),
                                                 bookmark.status.eq(Status.ACTIVE),
                                                 isActiveAndPublic(),
                                                 isDisplayable(),
@@ -289,6 +295,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .join(mediaTag.media, media)
                                 .where(
                                                 mediaTag.tag.id.eq(tagId), // 요청된 태그 ID 필터링
+                                                mediaTypeEq(mediaType),
                                                 isActiveAndPublic(), // 활성/공개 상태 확인
                                                 isDisplayable(),
                                                 excludeId(excludeMediaId) // 현재 재생 중인 영상 제외
@@ -304,6 +311,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .join(mediaTag.media, media)
                                 .where(
                                                 mediaTag.tag.id.eq(tagId),
+                                                mediaTypeEq(mediaType),
                                                 isActiveAndPublic(),
                                                 isDisplayable(),
                                                 excludeId(excludeMediaId));
@@ -317,9 +325,10 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 return queryFactory.selectFrom(media)
                                 .join(mediaTag).on(mediaTag.media.id.eq(media.id))
                                 .where(
-                                                isActiveAndPublic(),
-                                                isDisplayable(),
                                                 mediaTag.tag.id.eq(tagId),
+                                                isActiveAndPublic(),
+                                                mediaTypeEq(mediaType),
+                                                isDisplayable(),
                                                 excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
                                 .orderBy(media.id.desc())
                                 .limit(limit)
@@ -336,6 +345,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                         return queryFactory.selectFrom(media)
                                         .where(
                                                         isActiveAndPublic(),
+                                                        mediaTypeEq(mediaType),
                                                         isDisplayable(),
                                                         excludeId(excludeMediaId))
                                         .orderBy(media.id.desc())
@@ -359,6 +369,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .join(mediaTag).on(mediaTag.media.id.eq(media.id))
                                 .where(
                                                 isActiveAndPublic(),
+                                                mediaTypeEq(mediaType),
                                                 isDisplayable(),
                                                 excludeId(excludeMediaId))
                                 .groupBy(media.id)

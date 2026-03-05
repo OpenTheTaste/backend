@@ -37,10 +37,11 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long> {
                 SELECT p FROM Playback p 
                 WHERE p.member.id = :memberId 
                 AND p.contents.media.id IN :mediaIds
+                ORDER BY p.modifiedDate DESC
                 """)
-        List<Playback> findAllByMmberIdAndMediaIds(
+        List<Playback> findAllByMemberIdAndMediaIds(
             @Param("memberId") Long memberId,
-            @Param("mediaIds") List<Long> mediaIds);
+            @Param("mediaIdList") List<Long> mediaIdList);
 
         
         // 단건 조회(컨텐츠 or 에피별) 에 대해 시청기록 조회

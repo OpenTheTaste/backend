@@ -12,6 +12,7 @@ import lombok.Setter;
 @Schema(description = "시청 이력 생성 DTO")
 public class WatchHistoryRequest {
 
+    @NotNull(message = "미디어 ID는 필수입니다.")
     @Schema(type =  "Long", description = "미디어 ID", example = "101")
     private Long mediaId;
 }

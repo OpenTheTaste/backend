@@ -72,7 +72,11 @@ public class PlaylisStrategytService {
             }
         }
         
-        List<Long> targetMediaIds = new ArrayList<>(mediaToTargetIdMap.values());
+        // List<Long> targetMediaIds = new ArrayList<>(mediaToTargetIdMap.values());
+        List<Long> targetMediaIds = mediaToTargetIdMap.values().stream()
+                                    .filter(java.util.Objects::nonNull)
+                                    .distinct()
+                                    .toList();
 
         
         // 재생 시간(duration) 맵 세팅
@@ -85,8 +89,8 @@ public class PlaylisStrategytService {
                 ));
                 
         // 이어보기 지점(positionSec) 맵 세팅 
-        final Map<Long, Integer> playbackMap = targetMediaIds.isEmpty() ? new HashMap<>() : 
-            playbackRepository.findAllByMmberIdAndMediaIds(memberId, targetMediaIds).stream()
+        final Map<Long, Integer> playbackMap = (memberId == null || targetMediaIds.isEmpty()) ? new HashMap<>() :
+            playbackRepository.findAllByMemberIdAndMediaIds(memberId, targetMediaIds).stream()
                 .collect(Collectors.toMap(
                         p -> p.getContents().getMedia().getId(), 
                         p -> p.getPositionSec() != null ? p.getPositionSec() : 0,

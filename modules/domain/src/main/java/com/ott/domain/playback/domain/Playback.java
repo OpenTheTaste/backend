@@ -42,6 +42,10 @@ public class Playback extends BaseEntity {
     private Integer positionSec;
 
     public void updatePosition(Integer positionSec){
-        this.positionSec = positionSec;
+            if (positionSec == null || positionSec < 0) {
+                this.positionSec = 0;
+            } else {
+                this.positionSec = positionSec;
+            }
     }
 }
