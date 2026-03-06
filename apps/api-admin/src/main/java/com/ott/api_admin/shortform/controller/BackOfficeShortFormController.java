@@ -3,7 +3,9 @@ package com.ott.api_admin.shortform.controller;
 import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
+import com.ott.api_admin.shortform.dto.response.ShortFormUpdateResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
+import com.ott.api_admin.shortform.dto.request.ShortFormUpdateRequest;
 import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
 import com.ott.api_admin.shortform.service.BackOfficeShortFormService;
 import com.ott.common.web.response.PageResponse;
@@ -12,9 +14,10 @@ import com.ott.domain.common.PublicStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,7 +61,7 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
     @Override
     @GetMapping("/{mediaId}")
     public ResponseEntity<SuccessResponse<ShortFormDetailResponse>> getShortFormDetail(
-            @PathVariable Long mediaId,
+            @PathVariable("mediaId") Long mediaId,
             Authentication authentication
     ) {
         return ResponseEntity.ok(
@@ -69,8 +72,19 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
     @Override
     @PostMapping("/upload")
     public ResponseEntity<SuccessResponse<ShortFormUploadResponse>> createShortFormUpload(
-            @Valid @RequestBody ShortFormUploadRequest request
+            @Valid @RequestBody ShortFormUploadRequest request,
+            @AuthenticationPrincipal Long memberId
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.createShortFormUpload(request)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.createShortFormUpload(request, memberId)));
+    }
+
+    @Override
+    @PatchMapping("/{shortformId}/upload")
+    public ResponseEntity<SuccessResponse<ShortFormUpdateResponse>> updateShortFormUpload(
+            @PathVariable("shortformId") Long shortformId,
+            @Valid @RequestBody ShortFormUpdateRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.updateShortFormUpload(shortformId, request, authentication)));
     }
 }

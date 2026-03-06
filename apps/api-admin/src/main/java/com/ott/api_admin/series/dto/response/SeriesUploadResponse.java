@@ -2,7 +2,7 @@ package com.ott.api_admin.series.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(type = "Object", description = "시리즈 업로드 응답")
+@Schema(description = "시리즈 업로드 응답")
 public record SeriesUploadResponse(
         @Schema(type = "Long", description = "생성된 시리즈 ID", example = "10")
         Long seriesId,

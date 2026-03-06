@@ -35,4 +35,8 @@ public class Series extends BaseEntity {
 
     @Column(name = "actors", nullable = false)
     private String actors;
+
+    public void updateActors(String actors) {
+        this.actors = actors;
+    }
 }

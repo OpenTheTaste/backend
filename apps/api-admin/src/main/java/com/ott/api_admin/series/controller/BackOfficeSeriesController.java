@@ -1,9 +1,11 @@
 package com.ott.api_admin.series.controller;
 
+import com.ott.api_admin.series.dto.request.SeriesUpdateRequest;
 import com.ott.api_admin.series.dto.request.SeriesUploadRequest;
 import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
 import com.ott.api_admin.series.dto.response.SeriesListResponse;
 import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
+import com.ott.api_admin.series.dto.response.SeriesUpdateResponse;
 import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
 import com.ott.api_admin.series.service.BackOfficeSeriesService;
 import com.ott.common.web.response.PageResponse;
@@ -11,9 +13,10 @@ import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,8 +65,18 @@ public class BackOfficeSeriesController implements BackOfficeSeriesApi {
     @Override
     @PostMapping("/upload")
     public ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
-            @Valid @RequestBody SeriesUploadRequest request
+            @Valid @RequestBody SeriesUploadRequest request,
+            @AuthenticationPrincipal Long memberId
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(backOfficeSeriesService.createSeriesUpload(request)));
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeSeriesService.createSeriesUpload(request, memberId)));
+    }
+
+    @Override
+    @PatchMapping("/{seriesId}/upload")
+    public ResponseEntity<SuccessResponse<SeriesUpdateResponse>> updateSeriesUpload(
+            @PathVariable("seriesId") Long seriesId,
+            @Valid @RequestBody SeriesUpdateRequest request
+    ) {
+        return ResponseEntity.ok(SuccessResponse.of(backOfficeSeriesService.updateSeriesUpload(seriesId, request)));
     }
 }
