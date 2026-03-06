@@ -66,7 +66,7 @@ management:
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET_BASE64:}
-  access-token-expiry: 1800000       # 30분
+  access-token-expiry: 60000       # 1분
   refresh-token-expiry: 1209600000   # 14일
 
 springdoc:
