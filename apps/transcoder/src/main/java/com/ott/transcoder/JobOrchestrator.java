@@ -1,11 +1,16 @@
 package com.ott.transcoder;
 
+import com.ott.transcoder.command.Command;
+import com.ott.transcoder.command.CommandExtractor;
+import com.ott.transcoder.command.CommandType;
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
 import com.ott.transcoder.inspection.DiskSpaceGuard;
 import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import com.ott.transcoder.pipeline.CommandPipeline;
+import com.ott.transcoder.pipeline.CommandPipelineExecutor;
+import com.ott.transcoder.pipeline.CommandPipelineFactory;
 import com.ott.transcoder.queue.TranscodeMessage;
 import com.ott.transcoder.storage.VideoStorage;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.List;
 
 import static com.ott.transcoder.constant.IngestJobConstant.DirectoryConstant.*;
 
@@ -32,7 +38,9 @@ public class JobOrchestrator {
     private final DiskSpaceGuard diskSpaceGuard;
     private final VideoStorage videoStorage;
     private final Inspector inspector;
-    private final CommandPipeline pipeline;
+
+    private final CommandExtractor commandExtractor;
+    private final CommandPipelineExecutor commandPipelineExecutor;
 
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
@@ -60,10 +68,14 @@ public class JobOrchestrator {
             ProbeResult probeResult = inspector.inspect(inputFile);
 
             // 5. 커맨드 추출
-//            List<CommandType> commandList = commandExtractor.extractCommand(probeResult, message);
+            List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
+            
+            // 6. 커맨드별 파이프라인 실행
+            for (Command command : commandList)
+                commandPipelineExecutor.execute(command);
 
             // 6. 파이프라인 실행
-            pipeline.execute(mediaId, inputFile, workDir, probeResult);
+//            pipeline.execute(mediaId, inputFile, workDir, probeResult);
 
             log.info("모든 작업 성공 - mediaId: {}", mediaId);
 
