@@ -30,7 +30,7 @@ import java.util.List;
 
 @RequestMapping("/playlists")
 @SecurityRequirement(name = "BearerAuth") // 인증인가 확인
-@Tag(name = "Playlist", description = "플레이리스트 API")
+@Tag(name = "Playlist", description = "플레이리스트& 재생목록 API, excludeId 는 재생목록 API 호출 시에만 포함시킵니다")
 @ApiResponses(value = {
     @ApiResponse(responseCode = "200", description = "조회 성공", 
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
@@ -47,7 +47,7 @@ public interface PlayListAPI {
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getRecommendPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
                 @PositiveOrZero @Parameter(description = "페이지 번호(0부터 시작)", example = "0") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
@@ -61,7 +61,7 @@ public interface PlayListAPI {
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
                 @PositiveOrZero @Max(value = 2, message = "인덱스는 2 이하여야 합니다.") @Parameter(description = "유저 취향 순위 (0, 1, 2)", required = true) @RequestParam(value = "index") Integer index,
                 @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
@@ -77,7 +77,7 @@ public interface PlayListAPI {
                 @Parameter(description = "태그 ID", required = true) @PathVariable(value = "tagId") Long tagId,
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
                 @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
@@ -86,7 +86,7 @@ public interface PlayListAPI {
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTrendingPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
                 @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
@@ -95,7 +95,7 @@ public interface PlayListAPI {
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getHistoryPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
                 @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
@@ -104,7 +104,7 @@ public interface PlayListAPI {
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getBookmarkPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
                 @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
@@ -113,7 +113,7 @@ public interface PlayListAPI {
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getSearchPlaylists(
                 @Parameter(description = "현재 영상 ID", required = true) @RequestParam(value = "excludeMediaId") Long excludeMediaId,
                 @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
