@@ -1,15 +1,17 @@
 package com.ott.transcoder.storage;
 
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.retryable.StorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -35,40 +37,31 @@ public class LocalVideoStorage implements VideoStorage {
         try {
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new UncheckedIOException("원본 파일 다운로드 실패 - source: " + sourceKey, e);
+            throw new StorageException(TranscodeErrorCode.STORAGE_FAILED, "원본 파일 다운로드 실패 - source: " + sourceKey, e);
         }
 
         log.info("원본 다운로드 완료 - {} → {}", sourceKey, target);
         return target;
     }
 
-    /**
-     * workDir 내 모든 파일을 output-dir/{destinationPrefix}/ 하위로 복사
-     * 디렉토리 구조(360p/, 720p/, 1080p/) 그대로 유지
-     */
     @Override
     public String upload(Path localDir, String destinationPrefix) {
         Path destination = Path.of(outputDir, destinationPrefix);
 
-        try {
+        try (Stream<Path> fileStream = Files.walk(localDir)) {
             Files.createDirectories(destination);
 
-            try (Stream<Path> fileStream = Files.walk(localDir)) {
-                fileStream.filter(Files::isRegularFile).forEach(file -> {
-                    // workDir 기준 상대 경로를 유지하여 복사 (예: 360p/media.m3u8)
-                    Path relativePath = localDir.relativize(file);
-                    Path targetFile = destination.resolve(relativePath);
+            List<Path> fileList = fileStream.filter(Files::isRegularFile).toList();
 
-                    try {
-                        Files.createDirectories(targetFile.getParent());
-                        Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException("파일 업로드 실패 - " + file, e);
-                    }
-                });
+            for (Path file : fileList) {
+                Path relativePath = localDir.relativize(file);
+                Path targetFile = destination.resolve(relativePath);
+                Files.createDirectories(targetFile.getParent());
+                Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
-            throw new UncheckedIOException("업로드 디렉토리 생성 실패 - " + destination, e);
+            throw new StorageException(TranscodeErrorCode.STORAGE_FAILED,
+                    "업로드 실패 - " + destination, e);
         }
 
         log.info("업로드 완료 - {} → {}", localDir, destination);

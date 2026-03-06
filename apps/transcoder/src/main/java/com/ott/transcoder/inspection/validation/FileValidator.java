@@ -1,5 +1,7 @@
 package com.ott.transcoder.inspection.validation;
 
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.fatal.InvalidInputException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -10,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HexFormat;
 import java.util.Map;
+
+import static com.ott.transcoder.constant.IngestJobConstant.ValidateConstant.*;
 
 /**
  * probe 전 파일 수준 검증.
@@ -45,12 +49,14 @@ public class FileValidator {
     public void validate(Path inputFile) {
         // 1. 파일 존재
         if (!Files.exists(inputFile)) {
-            throw new IllegalStateException("파일이 존재하지 않음 - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_FOUND,
+                    "파일이 존재하지 않음 - " + inputFile);
         }
 
         // 2. 읽기 권한
         if (!Files.isReadable(inputFile)) {
-            throw new IllegalStateException("파일 읽기 권한 없음 - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_READABLE,
+                    "파일 읽기 권한 없음 - " + inputFile);
         }
 
         // 3. 파일 크기
@@ -58,21 +64,24 @@ public class FileValidator {
         try {
             fileSize = Files.size(inputFile);
         } catch (IOException e) {
-            throw new IllegalStateException("파일 크기 확인 실패 - " + inputFile, e);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_READABLE,
+                    "파일 크기 확인 실패 - " + inputFile, e);
         }
 
         if (fileSize == 0) {
-            throw new IllegalStateException("파일 크기가 0 bytes - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_EMPTY,
+                    "파일 크기가 0 bytes - " + inputFile);
         }
         if (fileSize > maxFileSizeBytes) {
-            throw new IllegalStateException(
+            throw new InvalidInputException(TranscodeErrorCode.FILE_SIZE_EXCEEDED,
                     "파일 크기 상한 초과 - size: " + fileSize + " bytes, max: " + maxFileSizeBytes + " bytes");
         }
 
         // 4. 매직 바이트 검증
         String detectedFormat = detectFormatByMagicBytes(inputFile);
         if (detectedFormat == null) {
-            throw new IllegalStateException("알 수 없는 파일 포맷 (매직 바이트 불일치) - " + inputFile);
+            throw new InvalidInputException(TranscodeErrorCode.INVALID_FILE_FORMAT,
+                    "알 수 없는 파일 포맷 (매직 바이트 불일치) - " + inputFile);
         }
 
         // 5. 확장자 vs 매직 바이트 불일치 경고
@@ -97,7 +106,8 @@ public class FileValidator {
         try (InputStream is = Files.newInputStream(inputFile)) {
             bytesRead = is.read(header);
         } catch (IOException e) {
-            throw new IllegalStateException("매직 바이트 읽기 실패 - " + inputFile, e);
+            throw new InvalidInputException(TranscodeErrorCode.FILE_NOT_READABLE,
+                    "매직 바이트 읽기 실패 - " + inputFile, e);
         }
 
         if (bytesRead < 8) {
@@ -106,27 +116,27 @@ public class FileValidator {
 
         // MP4/MOV: offset 4~7이 "ftyp"
         if (header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70) {
-            return "MP4"; // MP4/MOV/3GP 계열
+            return MP4; // MP4/MOV/3GP 계열
         }
 
         // MKV/WebM: EBML 헤더 (0x1A 0x45 0xDF 0xA3)
         if (header[0] == 0x1A && header[1] == 0x45 && header[2] == (byte) 0xDF && header[3] == (byte) 0xA3) {
-            return "MKV"; // MKV/WebM
+            return MKV; // MKV/WebM
         }
 
         // AVI: "RIFF"
         if (header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F') {
-            return "AVI";
+            return AVI;
         }
 
         // FLV: "FLV"
         if (header[0] == 'F' && header[1] == 'L' && header[2] == 'V') {
-            return "FLV";
+            return FLV;
         }
 
         // MPEG-TS: sync byte 0x47
         if (header[0] == 0x47) {
-            return "MPEG-TS";
+            return MPEG_TS;
         }
 
         log.debug("매직 바이트 미식별 - hex: {}", HexFormat.of().formatHex(header, 0, bytesRead));
@@ -142,9 +152,9 @@ public class FileValidator {
 
     /** MP4/MOV는 동일 ftyp 계열이므로 호환으로 취급 */
     private boolean isCompatibleFormat(String expected, String detected) {
-        if ("MP4".equals(expected) && "MP4".equals(detected)) return true;
-        if ("MOV".equals(expected) && "MP4".equals(detected)) return true;
-        if ("WEBM".equals(expected) && "MKV".equals(detected)) return true;
+        if (MP4.equals(expected) && MP4.equals(detected)) return true;
+        if (MOV.equals(expected) && MP4.equals(detected)) return true;
+        if (WEBM.equals(expected) && MKV.equals(detected)) return true;
         return false;
     }
 }

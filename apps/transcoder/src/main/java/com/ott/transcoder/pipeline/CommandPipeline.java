@@ -1,14 +1,14 @@
 package com.ott.transcoder.pipeline;
 
-import com.ott.transcoder.inspection.probe.ProbeResult;
-
-import java.nio.file.Path;
+import com.ott.transcoder.command.Command;
 
 /**
  * 커맨드별 미디어 처리 파이프라인
  * 구현체는 미디어 처리 자체에만 집중
  */
-public interface CommandPipeline {
+public interface CommandPipeline<T extends Command> {
 
-    void execute(Long mediaId, Path inputFile, Path workDir, ProbeResult probeResult) throws Exception;
+   boolean support(Command command);
+
+    void execute(T command);
 }
