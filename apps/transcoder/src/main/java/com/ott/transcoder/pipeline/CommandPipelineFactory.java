@@ -10,9 +10,9 @@ import java.util.List;
 @Component
 public class CommandPipelineFactory {
 
-    private final List<CommandPipeline> commandPipelineList;
+    private final List<CommandPipeline<?>> commandPipelineList;
 
-    public CommandPipeline find(Command command) {
+    public CommandPipeline<?> find(Command command) {
         return commandPipelineList.stream()
                 .filter(p -> p.support(command))
                 .findFirst()
