@@ -1,6 +1,5 @@
 package com.ott.transcoder.config;
 
-import com.ott.transcoder.exception.retryable.RetryableException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.ImmediateAcknowledgeAmqpException;

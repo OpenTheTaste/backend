@@ -2,15 +2,12 @@ package com.ott.transcoder;
 
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.command.CommandExtractor;
-import com.ott.transcoder.command.CommandType;
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
 import com.ott.transcoder.inspection.DiskSpaceGuard;
 import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
-import com.ott.transcoder.pipeline.CommandPipeline;
 import com.ott.transcoder.pipeline.CommandPipelineExecutor;
-import com.ott.transcoder.pipeline.CommandPipelineFactory;
 import com.ott.transcoder.queue.TranscodeMessage;
 import com.ott.transcoder.storage.VideoStorage;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +21,8 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.ott.transcoder.constant.IngestJobConstant.DirectoryConstant.*;
+import static com.ott.transcoder.constant.IngestJobConstant.DirectoryConstant.PREFIX_WORK_DIR;
+import static com.ott.transcoder.constant.IngestJobConstant.DirectoryConstant.SUFFIX_WORK_DIR;
 
 /**
  * 작업 전체 흐름 조율
@@ -69,7 +67,7 @@ public class JobOrchestrator {
 
             // 5. 커맨드 추출
             List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
-            
+
             // 6. 커맨드별 파이프라인 실행
             for (Command command : commandList)
                 commandPipelineExecutor.execute(command);

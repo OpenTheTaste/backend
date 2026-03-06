@@ -9,8 +9,9 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.ott.transcoder.constant.IngestJobConstant.VideoConstant.*;
-import static com.ott.transcoder.constant.IngestJobConstant.AudioConstant.*;
+import static com.ott.transcoder.constant.IngestJobConstant.AudioConstant.AAC;
+import static com.ott.transcoder.constant.IngestJobConstant.VideoConstant.LIBX264;
+import static com.ott.transcoder.constant.IngestJobConstant.VideoConstant.PRESET_FAST;
 
 /**
  * ProbeResult를 분석하여 HLS 트랜스코딩 대상 해상도/비트레이트 결정
