@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class ShortFormFeedService {
     private final ShortFormRepository shortFormRepository;
-    private final ClickRepository clickRepository;
     private final LikesRepository likesRepository;
     private final BookmarkRepository bookmarkRepository;
     private final PlaylistPreferenceService playlistPreferenceService;

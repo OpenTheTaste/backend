@@ -98,6 +98,7 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
         NumberExpression<Integer> scoreExpression = new CaseBuilder()
                 .when(mediaTag.tag.id.isNotNull()).then(0).otherwise(0);
 
+        // tagScores 에 대한 SQL 수학식 생성
         for (Map.Entry<Long, Integer> entry : tagScores.entrySet()) {
             scoreExpression = scoreExpression.add(
                     new CaseBuilder()

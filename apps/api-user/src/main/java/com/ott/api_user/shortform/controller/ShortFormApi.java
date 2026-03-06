@@ -74,10 +74,7 @@ public interface ShortFormApi {
     @PostMapping("/cta")
     ResponseEntity<SuccessResponse<Void>> recordCtaClick(
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId,
-            @Valid @RequestBody ShortFormEventRequest request{
-
-        clickEventService.saveClickEvent(memberId, request.getShortFormId(), ClickType.CTA_CLICK);
-        return ResponseEntity.ok(SuccessResponse.of(null));
+            @Valid @RequestBody ShortFormEventRequest request
     );
 
 }
