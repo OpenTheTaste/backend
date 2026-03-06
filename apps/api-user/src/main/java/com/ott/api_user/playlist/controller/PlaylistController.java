@@ -30,32 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/playlists")
 public class PlaylistController implements PlayListAPI {
-
-    private final PlaylistService playlistService;
     private final PlaylisStrategytService playlisStrategytService;
-
-    // 태그 별 추천 리스트 조회
-    @Override
-    @GetMapping("/me/{tagId}")
-    public ResponseEntity<SuccessResponse<List<TagPlaylistResponse>>> getRecommendContentsByTag(
-            @AuthenticationPrincipal Long memberId,
-            @Positive @PathVariable Long tagId
-    ) {
-        return ResponseEntity.ok(SuccessResponse.of(playlistService.getRecommendContentsByTag(memberId, tagId)));
-    }
-
-
-    // 과거 시청 이력 조회, 10개씩 조회
-    @Override
-    @GetMapping("/me/history")
-    public ResponseEntity<SuccessResponse<PageResponse<RecentWatchResponse>>> getWatchHistoryPlaylist(
-            @AuthenticationPrincipal Long memberId,
-            @PositiveOrZero @RequestParam(defaultValue = "0") Integer page
-    ) {
-        return ResponseEntity.ok(SuccessResponse.of(playlistService.getWatchHistoryPlaylist(memberId, page)));
-
-    }
-
 
     // 1. 종합 추천
     @Override
@@ -188,4 +163,28 @@ public class PlaylistController implements PlayListAPI {
 
         return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getPlaylists(condition, pageable)));
     }
+
+    
+
+    // 태그 별 추천 리스트 조회
+    // @Override
+    // @GetMapping("/me/{tagId}")
+    // public ResponseEntity<SuccessResponse<List<TagPlaylistResponse>>> getRecommendContentsByTag(
+    //         @AuthenticationPrincipal Long memberId,
+    //         @Positive @PathVariable Long tagId
+    // ) {
+    //     return ResponseEntity.ok(SuccessResponse.of(playlistService.getRecommendContentsByTag(memberId, tagId)));
+    // }
+
+
+    // // 과거 시청 이력 조회, 10개씩 조회
+    // @Override
+    // @GetMapping("/me/history")
+    // public ResponseEntity<SuccessResponse<PageResponse<RecentWatchResponse>>> getWatchHistoryPlaylist(
+    //         @AuthenticationPrincipal Long memberId,
+    //         @PositiveOrZero @RequestParam(defaultValue = "0") Integer page
+    // ) {
+    //     return ResponseEntity.ok(SuccessResponse.of(playlistService.getWatchHistoryPlaylist(memberId, page)));
+
+    // }
 }
