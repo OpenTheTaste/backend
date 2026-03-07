@@ -21,6 +21,7 @@ public class TrendingPlaylistStrategy implements PlaylistStrategy {
     public Page<Media> getPlaylist(PlaylistCondition condition, Pageable pageable) {
         // 리포지토리 내부에서 excludeMediaId의 유무를 알아서 판단하여 처리합니다.
         return mediaRepository.findTrendingPlaylists(
+            condition.getMediaType(),
             condition.getExcludeMediaId(), 
             pageable
         );

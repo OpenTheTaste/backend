@@ -31,14 +31,10 @@ public class SeriesContentsResponse {
     @Schema(type = "Integer", example = "3600", description = "재생 시간 (초)")
     private Integer duration;
 
-    // 이어보기 지점도 응답에 포함
     @Schema(type = "Integer", example = "1200", description = "사용자가 마지막으로 시청한 지점 (초)")
     private Integer positionSec;
 
-    public static SeriesContentsResponse from(Contents content) {
-        // 임시 이어보기용 (나중에 로직 작성 후 파라미터로 받게 수정 예정)
-        Integer positionSec = 0;
-
+    public static SeriesContentsResponse from(Contents content, Integer positionSec) {
         return SeriesContentsResponse.builder()
                 .id(content.getMedia().getId())
                 .seriesMediaId(content.getSeries().getMedia().getId())
@@ -46,7 +42,7 @@ public class SeriesContentsResponse {
                 .title(content.getMedia().getTitle())
                 .description(content.getMedia().getDescription())
                 .thumbnailUrl(content.getMedia().getThumbnailUrl())
-                .positionSec(positionSec)
+                .positionSec(positionSec != null ? positionSec : 0)
                 .build();
     }
 }

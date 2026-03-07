@@ -34,7 +34,7 @@ public interface SeriesApi {
         })
         @GetMapping("/{mediaId}")
         ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
-                        @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId,
+                        @Parameter(description = "미디어 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId,
                         @Parameter(hidden = true) @AuthenticationPrincipal Long memberId // 토큰에서 추출 (스웨거에서는 숨김)
         );
 
@@ -52,7 +52,7 @@ public interface SeriesApi {
 
         @GetMapping("/{mediaId}/contents")
         ResponseEntity<SuccessResponse<PageResponse<SeriesContentsResponse>>> getSeriesContents(
-                        @Parameter(description = "시리즈 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId,
+                        @Parameter(description = "미디어 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId,
                         @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(defaultValue = "0") Integer page,
                         @Parameter(description = "페이지 크기", example = "24") @RequestParam(defaultValue = "24") Integer size,
                         @Parameter(hidden = true) @AuthenticationPrincipal Long memberId);

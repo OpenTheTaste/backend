@@ -28,14 +28,24 @@ public class PlaylistResponse {
     
     @Schema(description = "미디어 타입 (UI 분기 처리 및 라우팅용)", example = "SERIES")
     private MediaType mediaType;
+
     
-    public static PlaylistResponse from(Media media) {
+    @Schema(description= "재생 시간 (초)", example = "3600")
+    private Integer duration;
+
+    @Schema(description = "기존 이어보기 지점(없으면 0)", example = "150")
+    private Integer positionSec;
+
+    
+    public static PlaylistResponse from(Media media, Integer duration, Integer positionSec) {
         return PlaylistResponse.builder()
                 .mediaId(media.getId())
                 .title(media.getTitle())
                 .posterUrl(media.getPosterUrl())
                 .thumbnailUrl(media.getThumbnailUrl())
                 .mediaType(media.getMediaType())
+                .duration(duration != null ? duration : 0) // null 방어
+                .positionSec(positionSec != null ? positionSec : 0)
                 .build();
     }
 }

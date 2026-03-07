@@ -43,13 +43,15 @@ public enum ErrorCode {
 
     
     // ========== Business (B) - 비즈니스 (조회 실패: 100번대) ==========
-    CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B101", "콘텐츠를 찾을 수 없습니다"),
+    CONTENTS_NOT_FOUND(HttpStatus.NOT_FOUND, "B101", "콘텐츠를 찾을 수 없습니다"),
     SERIES_NOT_FOUND(HttpStatus.NOT_FOUND, "B102", "시리즈를 찾을 수 없습니다"),
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "B103", "카테고리를 찾을 수 없습니다"),
     TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B104", "태그를 찾을 수 없습니다"),
     MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B105", "미디어를 찾을 수 없습니다"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B106", "댓글을 찾을 수 없습니다"),
     BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B107", "북마크를 찾을 수 없습니다"),
+    EPISODE_NOT_REGISTERED(HttpStatus.NOT_FOUND, "B108", "아직 에피소드가 등록되지 않았습니다."),
+  
 
    // ========== Business (B) - 비즈니스 (정책/유효성: 200번대) ==========
     SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B201", "검색어는 최소 2글자 이상이어야 합니다"),
@@ -70,10 +72,10 @@ public enum ErrorCode {
     INVALID_SHORTFORM_TARGET(HttpStatus.BAD_REQUEST, "B403", "seriesId와 contentsId 중 하나만 제공해야 합니다"),
     INVALID_SHORTFORM_CONTENTS_TARGET(HttpStatus.BAD_REQUEST, "B404", "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다"),
     INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B405", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요"),
-
+    
     // ========== Server (S) - 서버/시스템 ==========
     STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다");
-  
+    
 
     private final HttpStatus status;
     private final String code;

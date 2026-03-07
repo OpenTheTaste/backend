@@ -4,10 +4,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.playlist.dto.request.PlaylistCondition;
@@ -56,7 +52,6 @@ public class PlaylistController implements PlayListAPI {
 
     }
 
-
     // 1. 종합 추천
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getRecommendPlaylists(
@@ -93,6 +88,7 @@ public class PlaylistController implements PlayListAPI {
         Pageable pageable = PageRequest.of(page, size);
 
         return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getTopTagPlaylistWithMetadata(condition, pageable)));
+        
     }
 
     // 3. 특정 태그 단건 리스트
@@ -189,3 +185,4 @@ public class PlaylistController implements PlayListAPI {
         return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getPlaylists(condition, pageable)));
     }
 }
+

@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +26,15 @@ import java.time.LocalDateTime;
 @Entity
 @Builder
 @Getter
-@Table(name = "watch_history")
+@Table(
+    name = "watch_history",
+    uniqueConstraints  = {
+        @UniqueConstraint(
+            name = "uk_watch_history_member_contents",
+            columnNames = {"member_id", "contents_id"}
+        )
+    }
+)
 public class WatchHistory extends BaseEntity {
 
     @Id
@@ -42,4 +51,8 @@ public class WatchHistory extends BaseEntity {
 
     @Column(name = "last_watched_at")
     private LocalDateTime lastWatchedAt;
+
+    public void updateLastWatchedAt(){
+        this.lastWatchedAt = LocalDateTime.now();
+    }
 }
