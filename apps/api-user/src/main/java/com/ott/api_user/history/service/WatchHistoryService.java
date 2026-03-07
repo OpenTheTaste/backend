@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
@@ -30,7 +31,7 @@ public class WatchHistoryService {
 
     //사용자가 영상 클릭 시 시청 이력 생성
     public void upsertWatchHistory(Long memberId, Long mediaId){
-        Contents contents = contentsRepository.findByMediaId(mediaId)
+        Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                 .orElseThrow(()-> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         
         watchHistoryRepository.upsertWatchHistory(memberId, contents.getId());

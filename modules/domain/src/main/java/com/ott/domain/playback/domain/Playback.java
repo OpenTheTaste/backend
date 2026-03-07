@@ -49,12 +49,4 @@ public class Playback extends BaseEntity {
 
     @Column(name = "position_sec", nullable = false)
     private Integer positionSec;
-
-    public void updatePosition(Integer positionSec){
-            if (positionSec == null || positionSec < 0) {
-                this.positionSec = 0;
-            } else {
-                this.positionSec = positionSec;
-            }
-    }
 }

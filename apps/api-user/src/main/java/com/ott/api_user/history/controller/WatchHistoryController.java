@@ -25,7 +25,7 @@ public class WatchHistoryController implements WatchHistoryApi{
 
     @Override
     @PutMapping
-    public ResponseEntity<SuccessResponse<Void>> upsertWatchHistory(
+    public ResponseEntity<Void> upsertWatchHistory(
         @AuthenticationPrincipal Long memberId,
         @Valid @RequestBody WatchHistoryRequest request){
             

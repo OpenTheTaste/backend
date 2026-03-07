@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.domain.common.PublicStatus;
+import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.member.domain.Member;
@@ -26,7 +28,11 @@ public class PlaybackService {
 
     public void upsertPlayback(Long memberId, Long mediaId, Integer positionSec){
 
-        Contents contents = contentsRepository.findByMediaId(mediaId)
+        if(positionSec == null || positionSec < 0){
+            positionSec =0;
+        }
+
+        Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         
         //기존의 JPA 안에서의 if-else 로 조회 -> 업데이트 -> 없으면 예외처리 -> 다시 조회 -> 업데이트 

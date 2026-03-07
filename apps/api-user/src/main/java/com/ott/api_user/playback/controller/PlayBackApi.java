@@ -30,7 +30,7 @@ public interface PlayBackApi {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 미디어 ID", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
     })
-        ResponseEntity<SuccessResponse<Void>> upsertPlayBack(
+        ResponseEntity<Void> upsertPlayBack(
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId, 
             @Valid @RequestBody PlaybackUpdateRequest request 
     );

@@ -21,7 +21,7 @@ public class PlayBackController implements PlayBackApi {
 
     @Override
     @PutMapping
-    public ResponseEntity<SuccessResponse<Void>> upsertPlayBack(
+    public ResponseEntity<Void> upsertPlayBack(
         @AuthenticationPrincipal Long memberId,
         @Valid @RequestBody PlaybackUpdateRequest request){
 

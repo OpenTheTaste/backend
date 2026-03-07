@@ -32,7 +32,7 @@ public interface WatchHistoryApi {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
         })
         @PutMapping
-        ResponseEntity<SuccessResponse<Void>> createWatchHistory(
+        ResponseEntity<Void> upsertWatchHistory(
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId, 
                 @Valid @RequestBody WatchHistoryRequest request
         );
