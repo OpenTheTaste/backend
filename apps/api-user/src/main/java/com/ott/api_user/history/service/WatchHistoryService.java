@@ -31,24 +31,10 @@ public class WatchHistoryService {
     //사용자가 영상 클릭 시 시청 이력 생성
     public void updateWatchHistory(Long memberId, Long mediaId){
         Contents contents = contentsRepository.findByMediaId(mediaId)
-                .orElseThrow(()-> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                .orElseThrow(()-> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         
-        Optional<WatchHistory> watchhistoryOpt = watchHistoryRepository.findByMember_IdAndContents_IdAndStatus(memberId, contents.getId(),Status.ACTIVE);
+        watchHistoryRepository.upsertWatchHistory(memberId, contents.getId());
 
-        if(watchhistoryOpt.isPresent()){
-            watchhistoryOpt.get().updateLastWatchedAt();
-        }else{
-            Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-            watchHistoryRepository.save(
-                WatchHistory.builder()
-                    .member(member)
-                    .contents(contents)
-                    .lastWatchedAt(LocalDateTime.now())
-                    .build()
-            );
-        }
     }
     
 }

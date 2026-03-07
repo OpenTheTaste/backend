@@ -47,7 +47,7 @@ public class CommentService {
                         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
                 Contents contents = contentsRepository.findByIdAndStatus(request.getContentId(), Status.ACTIVE)
-                        .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                        .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
                 // 한 유저가 한 콘텐츠에 여러 댓글 허용?
                 Comment saved = commentRepository.save(
@@ -121,7 +121,7 @@ public class CommentService {
         public PageResponse<ContentsCommentResponse> getContentsCommentList(Long contentsId, int page, int size, boolean includeSpoiler) {
 
                 if (!contentsRepository.existsByIdAndStatus(contentsId, Status.ACTIVE)) {
-                throw new BusinessException(ErrorCode.CONTENT_NOT_FOUND);
+                throw new BusinessException(ErrorCode.CONTENTS_NOT_FOUND);
                 }
 
                 Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));

@@ -125,7 +125,7 @@ public class BackOfficeShortFormService {
         @Transactional(readOnly = true)
         public ShortFormDetailResponse getShortFormDetail(Long mediaId, Authentication authentication) {
                 ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByMediaId(mediaId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
                 Long memberId = (Long) authentication.getPrincipal();
                 boolean isEditor = authentication.getAuthorities().stream()
@@ -237,7 +237,7 @@ public class BackOfficeShortFormService {
                         return null;
                 }
                 Contents contents = contentsRepository.findById(contentsId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
                 // 시리즈에 속한 콘텐츠는 숏폼 원본으로 허용하지 않습니다.
                 if (contents.getSeries() != null) {
                         throw new BusinessException(ErrorCode.INVALID_SHORTFORM_CONTENTS_TARGET);

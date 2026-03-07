@@ -73,7 +73,7 @@ public class BackOfficeContentsService {
     @Transactional(readOnly = true)
     public ContentsDetailResponse getContentsDetail(Long mediaId) {
         Contents contents = contentsRepository.findWithMediaAndUploaderByMediaId(mediaId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
         Media media = contents.getMedia();
         String uploaderNickname = media.getUploader().getNickname();
