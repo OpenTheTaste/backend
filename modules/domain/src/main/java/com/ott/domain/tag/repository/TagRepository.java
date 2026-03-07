@@ -35,4 +35,6 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     // ACTIVE한 특정 태그 조회
    Optional<Tag> findByIdAndStatus(Long tagId, Status status);
+
+    List<Tag> findAllByCategory(Category category);
 }
