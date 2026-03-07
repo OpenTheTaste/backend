@@ -49,6 +49,6 @@ public interface BackOfficeTagApi {
             )
     })
     ResponseEntity<SuccessResponse<List<TagResponse>>> getTagListByCategory(
-            @Positive @Parameter(description = "카테고리 ID", example = "1") Long categoryId
+            @Parameter(description = "카테고리 ID", example = "1") @PathVariable(value = "categoryId") Long categoryId
     );
 }
