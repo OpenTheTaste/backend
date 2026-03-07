@@ -218,7 +218,7 @@ public class BackOfficeShortFormService {
         @Transactional
         public ShortFormUpdateResponse updateShortFormUpload(Long shortformId, ShortFormUpdateRequest request, Authentication authentication) {
                 ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortformId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
                 Media media = shortForm.getMedia();
                 Long memberId = (Long) authentication.getPrincipal();

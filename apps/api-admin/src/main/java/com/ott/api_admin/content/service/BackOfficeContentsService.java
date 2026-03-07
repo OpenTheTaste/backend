@@ -161,7 +161,7 @@ public class BackOfficeContentsService {
     @Transactional
     public ContentsUpdateResponse updateContentsUpload(Long contentsId, ContentsUpdateRequest request) {
         Contents contents = contentsRepository.findWithMediaById(contentsId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
         Media media = contents.getMedia();
         Series series = resolveSeries(request.seriesId());
