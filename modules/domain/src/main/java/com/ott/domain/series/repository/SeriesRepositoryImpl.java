@@ -23,6 +23,17 @@ public class SeriesRepositoryImpl implements SeriesRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
+    public Optional<Series> findWithMediaById(Long seriesId) {
+        Series result = queryFactory
+                .selectFrom(series)
+                .join(series.media, media).fetchJoin()
+                .where(series.id.eq(seriesId))
+                .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
     public Optional<Series> findWithMediaAndUploaderByMediaId(Long mediaId) {
         Series result = queryFactory
                 .selectFrom(series)
