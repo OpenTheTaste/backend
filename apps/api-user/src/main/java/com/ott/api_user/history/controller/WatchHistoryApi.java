@@ -25,8 +25,7 @@ public interface WatchHistoryApi {
 
         @Operation(summary = "시청 이력 생성 및 갱신", description = "영상을 시청하기 시작할 때 시청 이력을 남깁니다.")
         @ApiResponses(value = {
-                @ApiResponse(responseCode = "200", description = "시청 이력 기록 성공", content = {
-                        @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessResponse.class)) }),
+                @ApiResponse(responseCode = "204", description = "시청 이력 기록 성공, 응답 본문 없음"),
                 @ApiResponse(responseCode = "400", description = "잘못된 요청 (mediaId 누락 등)", content = {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) }),
                 @ApiResponse(responseCode = "404", description = "존재하지 않는 미디어 ID", content = {

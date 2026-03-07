@@ -29,7 +29,7 @@ public class WatchHistoryService {
     private final MemberRepository memberRepository;
 
     //사용자가 영상 클릭 시 시청 이력 생성
-    public void updateWatchHistory(Long memberId, Long mediaId){
+    public void upsertWatchHistory(Long memberId, Long mediaId){
         Contents contents = contentsRepository.findByMediaId(mediaId)
                 .orElseThrow(()-> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         

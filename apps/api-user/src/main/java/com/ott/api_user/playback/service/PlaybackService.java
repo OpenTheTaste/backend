@@ -24,7 +24,8 @@ public class PlaybackService {
     private final PlaybackRepository playbackRepository;
     private final ContentsRepository contentsRepository;
 
-    public void updatePlayback(Long memberId, Long mediaId, Integer positionSec){
+    public void upsertPlayback(Long memberId, Long mediaId, Integer positionSec){
+
         Contents contents = contentsRepository.findByMediaId(mediaId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         
