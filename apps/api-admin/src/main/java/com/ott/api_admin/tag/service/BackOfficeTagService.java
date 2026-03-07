@@ -30,6 +30,10 @@ public class BackOfficeTagService {
 
     @Transactional(readOnly = true)
     public List<TagViewResponse> getTagViewStats(Long categoryId) {
+        boolean exist = categoryRepository.existsById(categoryId);
+        if (!exist)
+            throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
+
         LocalDateTime startDate = LocalDate.now().withDayOfMonth(1).atStartOfDay();
         LocalDateTime endDate = startDate.plusMonths(1);
 
