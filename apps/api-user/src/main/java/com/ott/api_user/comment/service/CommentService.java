@@ -150,7 +150,7 @@ public class CommentService {
 
         private boolean isCommentOwner(Comment comment, Long currentMemberId) {
                 if (currentMemberId == null) {
-                        return false;
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
                 }
                 return comment.getMember().getId().equals(currentMemberId);
         }
