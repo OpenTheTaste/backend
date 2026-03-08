@@ -11,9 +11,9 @@ import lombok.*;
 @Schema(description = "댓글 등록 요청 DTO")
 public class CreateCommentRequest {
 
-    @NotNull(message = "콘텐츠 ID는 필수 입니다.")
-    @Schema(type= "Long", example = "1", description = "콘텐츠 ID")
-    private Long contentId;
+    @NotNull(message = "미디어 ID는 필수 입니다.")
+    @Schema(type= "Long", example = "1", description = "미디어 ID")
+    private Long mediaId;
 
     @NotBlank(message = "댓글 내용은 필수 입니다.")
     @Size(max = 100, message = "댓글은 100자 이내로 입력해주세요.")

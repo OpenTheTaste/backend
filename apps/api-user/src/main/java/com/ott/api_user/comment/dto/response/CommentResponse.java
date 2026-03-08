@@ -17,8 +17,8 @@ public class CommentResponse {
     @Schema(type = "Long", example = "1", description = "댓글 ID")
     private Long commentId;
 
-    @Schema(type = "Long", example = "5", description = "콘텐츠 ID")
-    private Long contentsId;
+    @Schema(type = "Long", example = "5", description = "미디어 ID")
+    private Long mediaId;
 
     @Schema(type = "String", example = "밤티 하네 ㅋㅋ", description = "댓글 내용")
     private String content;
@@ -35,7 +35,7 @@ public class CommentResponse {
     public static CommentResponse from(Comment comment) {
         return CommentResponse.builder()
                 .commentId(comment.getId())
-                .contentsId(comment.getContents().getId())
+                .mediaId(comment.getContents().getMedia().getId())
                 .content(comment.getContent())
                 .isSpoiler(comment.getIsSpoiler())
                 .createdDate(comment.getCreatedDate())
