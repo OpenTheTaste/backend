@@ -49,7 +49,7 @@ public class AuthService {
         }
 
         // 권한 추출
-        List<String> authorities = jwtTokenProvider.getAuthorities(refreshToken);
+        List<String> authorities = List.of(member.getRole().getKey());
 
         // access + refresh 재발급
         String newAccessToken = jwtTokenProvider.createAccessToken(memberId, authorities);

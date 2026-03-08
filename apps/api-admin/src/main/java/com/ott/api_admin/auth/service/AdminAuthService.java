@@ -87,7 +87,7 @@ public class AdminAuthService {
         }
 
         // 3. 새 토큰 발급
-        List<String> authorities = jwtTokenProvider.getAuthorities(refreshToken);
+        List<String> authorities = List.of(member.getRole().getKey());
         String newAccessToken = jwtTokenProvider.createAccessToken(memberId, authorities);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId, authorities);
 
