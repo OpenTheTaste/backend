@@ -30,127 +30,147 @@ import java.util.List;
 
 @RequestMapping("/playlists")
 @SecurityRequirement(name = "BearerAuth") // 인증인가 확인
-@Tag(name = "Playlist", description = "플레이리스트 API")
+@Tag(name = "Playlist", description = "플레이리스트& 재생목록 API, excludeId 는 재생목록 API 호출 시에만 포함시킵니다")
+@ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "조회 성공", 
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
+    @ApiResponse(responseCode = "401", description = "인증 실패", 
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "400", description = "요청 파라미터 오류", 
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+})
 public interface PlayListAPI {
 
-    // -------------------------------------------------------
-    // 태그별 추천 콘텐츠 목록 조회
-    // -------------------------------------------------------
-    @Operation(summary = "[마이페이지] 태그별 추천 콘텐츠 리스트 조회", description = "해당 태그에 속하는 콘텐츠를 최대 20개 반환"
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200", description = "조회 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = TagPlaylistResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400", description = "요청 파라미터 오류",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "404", description = "회원 또는 태그를 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
-                    )
-            )
-    })
-    @GetMapping("/me/{tagId}")
-    ResponseEntity<SuccessResponse<List<TagPlaylistResponse>>> getRecommendContentsByTag(
-            @AuthenticationPrincipal Long memberId,
-            @Positive @PathVariable Long tagId
-    );
+
+        @Operation(summary = "OO 님이 좋아하실만한 콘텐츠", description = "유저 취향을 합산하여 추천합니다. (홈 화면 셔플 지원)")
+        @GetMapping("/recommend")
+        ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getRecommendPlaylists(
+                @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
+                @PositiveOrZero @Parameter(description = "페이지 번호(0부터 시작)", example = "0") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
+                @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+        );
+
+        
+
+        @Operation(summary = "선호 태그 순위별 리스트", description = "유저의 Top 3 태그 순위를 기반으로 제공합니다.")
+        @ApiResponses(
+                @ApiResponse(responseCode = "200", description = "태그 순위별 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))))
+        @GetMapping("/tags/top")
+        ResponseEntity<SuccessResponse<TopTagPlaylistResponse>> getTopTagPlaylists(
+                @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
+                @PositiveOrZero @Max(value = 2, message = "인덱스는 2 이하여야 합니다.") @Parameter(description = "유저 취향 순위 (0, 1, 2)", required = true) @RequestParam(value = "index") Integer index,
+                @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
+                @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+        );
+
+        
+
+        @Operation(summary = "상세 페이지 - 특정 해시태그 리스트", description = "해당 태그의 영상만 제공합니다.")
+                @ApiResponses({
+                @ApiResponse(responseCode = "200", description = "태그별 리스트 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))),
+                @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        })
+        @GetMapping("/tags/{tagId}")
+        ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTagPlaylists(
+                @Parameter(description = "태그 ID", required = true) @PathVariable(value = "tagId") Long tagId,
+                @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
+                @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
+                @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+        );
+
+        @Operation(summary = "인기 차트 (Trending)", description = "북마크가 많은 인기 순서대로 제공합니다.")
+        @GetMapping("/trending")
+        ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTrendingPlaylists(
+                @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
+                @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
+                @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+        );
+
+        @Operation(summary = "시청 이력 (History)", description = "유저가 최근 시청한 영상 목록을 제공합니다.")
+        @GetMapping("/history")
+        ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getHistoryPlaylists(
+                @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
+                @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
+                @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+        );
+
+        @Operation(summary = "북마크 목록 (Bookmark)", description = "유저가 북마크한 영상 목록을 제공합니다.")
+        @GetMapping("/bookmarks")
+        ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getBookmarkPlaylists(
+                @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
+                @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
+                @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+        );
+
+        @Operation(summary = "검색 상세 페이지 재생목록", description = "검색 결과에서 진입 시 종합 추천 리스트로 대체하여 제공합니다.")
+        @GetMapping("/search")
+        ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getSearchPlaylists(
+                @Parameter(description = "현재 영상 ID", required = true) @RequestParam(value = "excludeMediaId") Long excludeMediaId,
+                @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "20") Integer size,
+                @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+        );
 
 
-    // -------------------------------------------------------
-    // 전체 시청이력 플레이리스트 페이징 조회
-    // -------------------------------------------------------
-    @Operation(summary = "[마이페이지] 과거 시청 이력 리스트 조회", description = "전체 시청이력을 최신순으로 10개씩 페이징 조회합니다. 이어보기 시점 포함.")
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200", description = "조회 성공",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
-            @ApiResponse(
-                    responseCode = "401", description = "인증 실패",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(
-                    responseCode = "404", description = "회원을 찾을 수 없음",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/me/history")
-    ResponseEntity<SuccessResponse<PageResponse<RecentWatchResponse>>> getWatchHistoryPlaylist(
-            @AuthenticationPrincipal Long memberId,
-            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-            @PositiveOrZero @RequestParam(defaultValue = "0") Integer page
-    );
+                // -------------------------------------------------------
+        // 태그별 추천 콘텐츠 목록 조회
+        // -------------------------------------------------------
+        //     @Operation(summary = "[마이페이지] 태그별 추천 콘텐츠 리스트 조회", description = "해당 태그에 속하는 콘텐츠를 최대 20개 반환"
+        //     )
+        //     @ApiResponses({
+        //             @ApiResponse(
+        //                     responseCode = "200", description = "조회 성공",
+        //                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = TagPlaylistResponse.class)
+        //                     )
+        //             ),
+        //             @ApiResponse(
+        //                     responseCode = "400", description = "요청 파라미터 오류",
+        //                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
+        //                     )
+        //             ),
+        //             @ApiResponse(
+        //                     responseCode = "401", description = "인증 실패 (토큰 없음 또는 만료)",
+        //                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
+        //                     )
+        //             ),
+        //             @ApiResponse(
+        //                     responseCode = "404", description = "회원 또는 태그를 찾을 수 없음",
+        //                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)
+        //                     )
+        //             )
+        //     })
+        //     @GetMapping("/me/{tagId}")
+        //     ResponseEntity<SuccessResponse<List<TagPlaylistResponse>>> getRecommendContentsByTag(
+        //             @AuthenticationPrincipal Long memberId,
+        //             @Positive @PathVariable Long tagId
+        //     );
 
-    @Operation(summary = "OO 님이 좋아하실만한 콘텐츠", description = "유저 취향을 합산하여 추천합니다. (홈 화면 셔플 지원)")
-    @GetMapping("/recommend")
-    ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getRecommendPlaylists(
-            @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
-            @PositiveOrZero @Parameter(description = "페이지 번호(0부터 시작)", example = "0") @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
-    );
 
-    @Operation(summary = "선호 태그 순위별 리스트", description = "유저의 Top 3 태그 순위를 기반으로 제공합니다.")
-    @GetMapping("/tags/top")
-    ResponseEntity<SuccessResponse<TopTagPlaylistResponse>> getTopTagPlaylists(
-            @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
-            @PositiveOrZero @Max(value = 2, message = "인덱스는 2 이하여야 합니다.") @Parameter(description = "유저 취향 순위 (0, 1, 2)", required = true) @RequestParam(value = "index") Integer index,
-            @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
-    );
-
-    @Operation(summary = "상세 페이지 - 특정 해시태그 리스트", description = "해당 태그의 영상만 제공합니다.")
-    @GetMapping("/tags/{tagId}")
-    ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTagPlaylists(
-            @Parameter(description = "태그 ID", required = true) @PathVariable(value = "tagId") Long tagId,
-            @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
-            @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
-    );
-
-    @Operation(summary = "인기 차트 (Trending)", description = "북마크가 많은 인기 순서대로 제공합니다.")
-    @GetMapping("/trending")
-    ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTrendingPlaylists(
-            @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
-            @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
-    );
-
-    @Operation(summary = "시청 이력 (History)", description = "유저가 최근 시청한 영상 목록을 제공합니다.")
-    @GetMapping("/history")
-    ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getHistoryPlaylists(
-            @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
-            @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
-    );
-
-    @Operation(summary = "북마크 목록 (Bookmark)", description = "유저가 북마크한 영상 목록을 제공합니다.")
-    @GetMapping("/bookmarks")
-    ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getBookmarkPlaylists(
-            @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
-            @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
-    );
-
-    @Operation(summary = "검색 상세 페이지 재생목록", description = "검색 결과에서 진입 시 종합 추천 리스트로 대체하여 제공합니다.")
-    @GetMapping("/search")
-    ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getSearchPlaylists(
-            @Parameter(description = "현재 영상 ID", required = true) @RequestParam(value = "excludeMediaId") Long excludeMediaId,
-            @PositiveOrZero @Parameter(description = "페이지 번호") @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @Positive @Parameter(description = "페이지 크기") @RequestParam(value = "size", defaultValue = "10") Integer size,
-            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
-    );
+        // -------------------------------------------------------
+        // 전체 시청이력 플레이리스트 페이징 조회
+        // -------------------------------------------------------
+        //     @Operation(summary = "[마이페이지] 과거 시청 이력 리스트 조회", description = "전체 시청이력을 최신순으로 10개씩 페이징 조회합니다. 이어보기 시점 포함.")
+        //     @ApiResponses({
+        //             @ApiResponse(
+        //                     responseCode = "200", description = "조회 성공",
+        //                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
+        //             @ApiResponse(
+        //                     responseCode = "401", description = "인증 실패",
+        //                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        //             @ApiResponse(
+        //                     responseCode = "404", description = "회원을 찾을 수 없음",
+        //                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+        //     })
+        //     @GetMapping("/me/history")
+        //     ResponseEntity<SuccessResponse<PageResponse<RecentWatchResponse>>> getWatchHistoryPlaylist(
+        //             @AuthenticationPrincipal Long memberId,
+        //             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+        //             @PositiveOrZero @RequestParam(defaultValue = "0") Integer page
+        //     );
 }
