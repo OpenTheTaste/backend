@@ -15,10 +15,8 @@ import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.media.domain.Media;
-import com.ott.domain.playback.domain.Playback;
 import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.tag.domain.Tag;
-import com.ott.domain.watch_history.domain.WatchHistory;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -28,18 +26,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class PlaylisStrategytService {
+public class PlaylistStrategyService {
 
     private final Map<String, PlaylistStrategy> strategyMap;
     private final PlaylistPreferenceService preferenceService;

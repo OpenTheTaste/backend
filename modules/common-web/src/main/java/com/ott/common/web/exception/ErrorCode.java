@@ -1,8 +1,9 @@
 package com.ott.common.web.exception;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 /**
  * 코드 체계:
@@ -52,6 +53,7 @@ public enum ErrorCode {
     BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B107", "북마크를 찾을 수 없습니다"),
     EPISODE_NOT_REGISTERED(HttpStatus.NOT_FOUND, "B108", "아직 에피소드가 등록되지 않았습니다."),
   
+    SHORT_FORM_NOT_FOUND(HttpStatus.NOT_FOUND, "B109", "숏폼을 찾을 수 없습니다"),
 
    // ========== Business (B) - 비즈니스 (정책/유효성: 200번대) ==========
     SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B201", "검색어는 최소 2글자 이상이어야 합니다"),

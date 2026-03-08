@@ -339,7 +339,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
         // PlaylistPrefereceService 에서 받아온 tagScores 로 추천 종합 쿼리
         @Override
         public List<Media> findRecommendedMedias(Map<Long, Integer> tagScores, MediaType mediaType, Long excludeMediaId, int limit, long offset) {
-                // 선호태그 조차 고르지 않은 백지 상태의 유저
+                // 시청이력도 없고, 선호태그 조차 고르지 않은 백지 상태의 유저
                 // 이때는 가장 최근 신작 노출
                 if (tagScores.isEmpty()) {
                         return queryFactory.selectFrom(media)
