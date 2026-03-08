@@ -16,7 +16,22 @@ public interface WatchHistoryRepository extends JpaRepository<WatchHistory, Long
     @Modifying(clearAutomatically = true)
     @Query("UPDATE WatchHistory w SET w.status = 'DELETE' WHERE w.member.id = :memberId")
     void softDeleteAllByMemberId(@Param("memberId") Long memberId);
+
+
+    @Modifying
+    @Query(value = """
+            INSERT INTO watch_history (member_id, contents_id, last_watched_at, created_date, modified_date, status)
+            VALUES (:memberId, :contentsId, NOW(), NOW(), NOW(), 'ACTIVE')
+            ON DUPLICATE KEY UPDATE 
+                last_watched_at = NOW(),
+                modified_date = NOW(),
+                status = 'ACTIVE'
+            """, nativeQuery = true)
+    void upsertWatchHistory(
+            @Param("memberId") Long memberId, 
+            @Param("contentsId") Long contentsId
+    );
     
-    Optional<WatchHistory> findByMember_IdAndContents_IdAndStatus(Long memberId, Long contentsId , Status status);
+    // Optional<WatchHistory> findByMember_IdAndContents_IdAndStatus(Long memberId, Long contentsId , Status status);
 
 }

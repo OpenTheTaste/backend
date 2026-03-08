@@ -9,7 +9,7 @@ import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.playlist.dto.request.PlaylistCondition;
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
 import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
-import com.ott.api_user.playlist.service.PlaylisStrategytService;
+import com.ott.api_user.playlist.service.PlaylistStrategyService;
 import com.ott.api_user.playlist.dto.response.RecentWatchResponse;
 import com.ott.api_user.playlist.service.PlaylistService;
 import com.ott.api_user.playlist.dto.response.TagPlaylistResponse;
@@ -28,7 +28,7 @@ import java.util.List;
 public class PlaylistController implements PlayListAPI {
 
     private final PlaylistService playlistService;
-    private final PlaylisStrategytService playlisStrategytService;
+    private final PlaylistStrategyService playlisStrategytService;
 
     // 태그 별 추천 리스트 조회
     @Override

@@ -2,8 +2,10 @@ package com.ott.transcoder.inspection.probe.execution.processbuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ott.transcoder.inspection.probe.execution.FfprobeExecutor;
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.retryable.ProbeException;
 import com.ott.transcoder.inspection.probe.ProbeResult;
+import com.ott.transcoder.inspection.probe.execution.FfprobeExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,17 +56,19 @@ public class ProcessBuilderFfprobeExecutor implements FfprobeExecutor {
             boolean finished = process.waitFor(2, TimeUnit.MINUTES);
             if (!finished) {
                 process.destroyForcibly();
-                throw new RuntimeException("ffprobe 타임아웃 - input: " + inputFile);
+                throw new ProbeException(TranscodeErrorCode.PROBE_TIMEOUT,
+                        "ffprobe 타임아웃 - input: " + inputFile);
             }
             if (process.exitValue() != 0) {
-                throw new RuntimeException(
+                throw new ProbeException(TranscodeErrorCode.PROBE_FAILED,
                         "ffprobe 실패 - exitCode: " + process.exitValue() + ", output: " + output);
             }
 
             return parseJson(output);
 
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("ffprobe 실행 실패 - input: " + inputFile, e);
+            throw new ProbeException(TranscodeErrorCode.PROBE_FAILED,
+                    "ffprobe 실행 실패 - input: " + inputFile, e);
         }
     }
 
@@ -85,7 +89,8 @@ public class ProcessBuilderFfprobeExecutor implements FfprobeExecutor {
         }
 
         if (videoStream == null) {
-            throw new RuntimeException("비디오 스트림을 찾을 수 없음");
+            throw new ProbeException(TranscodeErrorCode.NO_VIDEO_STREAM,
+                    "비디오 스트림을 찾을 수 없음");
         }
 
         JsonNode format = root.get("format"); // null 가능성 존재

@@ -52,7 +52,8 @@ public class ShortFormFeedService {
 
         // 숏폼 리스트에서 Id 만 꺼낸 리스트
         List<Long> recommendIdList = recommendList.stream()
-                            .map(ShortForm::getId).toList();
+                                .map(sf -> sf.getMedia().getId())
+                                .toList();
 
         
         // 위 숏폼에서 추천된 리스트는 제외하고 최신순 숏폼 가져오기

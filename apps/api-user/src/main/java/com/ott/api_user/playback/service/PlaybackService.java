@@ -2,11 +2,14 @@ package com.ott.api_user.playback.service;
 
 import java.util.Optional;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.domain.common.PublicStatus;
+import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.member.domain.Member;
@@ -22,28 +25,19 @@ import lombok.RequiredArgsConstructor;
 public class PlaybackService {
     private final PlaybackRepository playbackRepository;
     private final ContentsRepository contentsRepository;
-    private final MemberRepository memberRepository;
 
-    public void updatePlayback(Long memberId, Long mediaId, Integer positionSec){
-        Contents contents = contentsRepository.findByMediaId(mediaId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
-        
-    
-        Optional<Playback> playbackOpt = playbackRepository.findByMemberIdAndMediaId(memberId, mediaId);
+    public void upsertPlayback(Long memberId, Long mediaId, Integer positionSec){
 
-        if(playbackOpt.isPresent()){
-            playbackOpt.get().updatePosition(positionSec);
-        }else{
-            Member member = memberRepository.findById(memberId)
-                .orElseThrow(()-> new BusinessException(ErrorCode.USER_NOT_FOUND));
-            
-            playbackRepository.save(
-                Playback.builder()
-                    .member(member)
-                    .contents(contents)
-                    .positionSec(positionSec)
-                    .build()
-            );
+        if(positionSec == null || positionSec < 0){
+            positionSec =0;
         }
+
+        Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
+        
+        //기존의 JPA 안에서의 if-else 로 조회 -> 업데이트 -> 없으면 예외처리 -> 다시 조회 -> 업데이트 
+        // 위 과정 대신, 네이티브 쿼리를 통해 DB 안에서의 UP-SERT 로 수정.
+        playbackRepository.upsertPlayback(memberId, contents.getId(), positionSec);
+        
     }
 }

@@ -9,6 +9,7 @@ package com.ott.transcoder.queue;
 public record TranscodeMessage(
 
         Long mediaId,
+        Long ingestJobId,
         String originUrl
 ) {
 }

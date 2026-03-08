@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +24,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Builder
 @Getter
-@Table(name = "playback")
+@Table(
+        name = "playback", 
+        uniqueConstraints  = {
+            @UniqueConstraint(
+                name = "uk_playback_member_contents",
+                columnNames = {"member_id", "contents_id"}
+          )
+       }
+)
 public class Playback extends BaseEntity {
 
     @Id
@@ -40,12 +49,4 @@ public class Playback extends BaseEntity {
 
     @Column(name = "position_sec", nullable = false)
     private Integer positionSec;
-
-    public void updatePosition(Integer positionSec){
-            if (positionSec == null || positionSec < 0) {
-                this.positionSec = 0;
-            } else {
-                this.positionSec = positionSec;
-            }
-    }
 }

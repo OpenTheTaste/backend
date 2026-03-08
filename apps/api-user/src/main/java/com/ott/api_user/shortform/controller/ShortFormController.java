@@ -31,8 +31,8 @@ public class ShortFormController implements ShortFormApi {
     @GetMapping
     public ResponseEntity<SuccessResponse<PageResponse<ShortFormFeedResponse>>> getShortFormFeed(
             @AuthenticationPrincipal Long memberId,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "10") Integer size) {
 
         PageResponse<ShortFormFeedResponse> response = shortFormFeedService.getShortFormFeed(memberId, page, size);
         return ResponseEntity.ok(SuccessResponse.of(response));
@@ -40,21 +40,21 @@ public class ShortFormController implements ShortFormApi {
 
     @Override
     @PostMapping("/events")
-    public ResponseEntity<SuccessResponse<Void>> recordShortFormView(
+    public ResponseEntity<Void> recordShortFormView(
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody ShortFormEventRequest request) {
 
         clickEventService.saveClickEvent(memberId, request.getShortFormId(), ClickType.SHORT_CLICK);
-        return ResponseEntity.ok(SuccessResponse.of(null));
+        return ResponseEntity.noContent().build();
     }
 
     @Override
     @PostMapping("/cta")
-    public ResponseEntity<SuccessResponse<Void>> recordCtaClick(
+    public ResponseEntity<Void> recordCtaClick(
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody ShortFormEventRequest request) {
 
         clickEventService.saveClickEvent(memberId, request.getShortFormId(), ClickType.CTA_CLICK);
-        return ResponseEntity.ok(SuccessResponse.of(null));
+        return ResponseEntity.noContent().build();
     }
 }

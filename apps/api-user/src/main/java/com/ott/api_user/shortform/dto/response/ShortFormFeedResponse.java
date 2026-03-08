@@ -48,7 +48,11 @@ public class ShortFormFeedResponse {
                 .isLiked(isLiked)
                 .shortMasterPlaylistUrl(shortForm.getMasterPlaylistUrl())
                 // CTA 클릭 시 이동할 본편 Media ID
-                .originMediaId(shortForm.getMedia() != null ? shortForm.getMedia().getId() : null)
+                .originMediaId(
+                    shortForm.getSeries() != null ? shortForm.getSeries().getMedia().getId()
+                            : shortForm.getContents() != null ? shortForm.getContents().getMedia().getId()
+                            : null
+                )
                 .build();
     }
 

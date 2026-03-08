@@ -37,7 +37,7 @@ public class ContentsService {
         // 재생 상세
         public ContentsDetailResponse getContentDetail(Long mediaId, Long memberId) {
                 Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
                 List<String> tags = tagRepository.findTagNamesByMediaId(mediaId, Status.ACTIVE);
                 List<String> categories = categoryRepository.findCategoryNamesByMediaId(mediaId, Status.ACTIVE);

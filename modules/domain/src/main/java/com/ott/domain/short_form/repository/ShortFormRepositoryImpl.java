@@ -5,6 +5,7 @@ import com.ott.domain.media.domain.QMedia;
 import com.ott.domain.short_form.domain.ShortForm;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -88,15 +89,15 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
                     .leftJoin(shortForm.contents, contents)
                     .where(shortForm.status.eq(Status.ACTIVE)) // 활성 상태의 숏폼만
                     // 무한 스와이프를 위해 DB에서 정렬 후 자름
-                    .orderBy(originBookmarkCount.desc().nullsLast(), shortForm.id.desc())
+                    .orderBy(originBookmarkCount.desc().nullsLast(), shortForm.createdDate.desc(), shortForm.id.desc())
                     .limit(limit)
                     .offset(offset)
                     .fetch();
         }
 
         // 2. 가중치 합산 로직: 숏폼의 '본편 미디어(Media)'에 달린 태그와 유저 취향 점수를 매칭
-        NumberExpression<Integer> scoreExpression = new CaseBuilder()
-                .when(mediaTag.tag.id.isNotNull()).then(0).otherwise(0);
+        // 초기값은 0으로 표기.
+        NumberExpression<Integer> scoreExpression = Expressions.asNumber(0);
 
         // tagScores 에 대한 SQL 수학식 생성
         for (Map.Entry<Long, Integer> entry : tagScores.entrySet()) {
@@ -117,7 +118,7 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
                 )
                 .where(shortForm.status.eq(Status.ACTIVE)) // 활성 상태의 숏폼만
                 .groupBy(shortForm.id)
-                .orderBy(scoreExpression.sum().desc(), shortForm.id.desc())
+                .orderBy(scoreExpression.sum().desc(), shortForm.createdDate.desc(), shortForm.id.desc())
                 .limit(limit)
                 .offset(offset)
                 .fetch();
@@ -127,8 +128,8 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
     public List<ShortForm> findLatestShortForms(int limit, long offset, List<Long> excludeIds) {
         
         // 추천 리스트에 이미 들어간 숏폼 ID 제외 
-        BooleanExpression excludeCondition = (excludeIds != null && !excludeIds.isEmpty()) 
-                ? shortForm.id.notIn(excludeIds) 
+        BooleanExpression excludeCondition = (excludeIds != null && !excludeIds.isEmpty())
+                ? shortForm.media.id.notIn(excludeIds)
                 : null;
 
         return queryFactory.selectFrom(shortForm)
@@ -136,7 +137,7 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
                         excludeCondition,
                         shortForm.status.eq(Status.ACTIVE) // 활성 상태의 숏폼만
                 )
-                .orderBy(shortForm.id.desc()) // 무조건 최신 업로드 순
+                .orderBy(shortForm.createdDate.desc(), shortForm.id.desc()) // 무조건 최신 업로드 순
                 .limit(limit)
                 .offset(offset)
                 .fetch();

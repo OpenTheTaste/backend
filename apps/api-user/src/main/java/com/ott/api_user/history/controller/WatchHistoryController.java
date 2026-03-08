@@ -25,12 +25,12 @@ public class WatchHistoryController implements WatchHistoryApi{
 
     @Override
     @PutMapping
-    public ResponseEntity<SuccessResponse<Void>> createWatchHistory(
+    public ResponseEntity<Void> upsertWatchHistory(
         @AuthenticationPrincipal Long memberId,
         @Valid @RequestBody WatchHistoryRequest request){
             
-            watchHistoryService.updateWatchHistory(memberId, request.getMediaId());
-                return ResponseEntity.ok(SuccessResponse.of(null));
+            watchHistoryService.upsertWatchHistory(memberId, request.getMediaId());
+                return ResponseEntity.noContent().build(); // 204 No Content
         }
 }
 

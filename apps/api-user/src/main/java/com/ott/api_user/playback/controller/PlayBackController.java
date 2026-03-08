@@ -21,12 +21,12 @@ public class PlayBackController implements PlayBackApi {
 
     @Override
     @PutMapping
-    public ResponseEntity<SuccessResponse<Void>> createPlayBack(
+    public ResponseEntity<Void> upsertPlayBack(
         @AuthenticationPrincipal Long memberId,
         @Valid @RequestBody PlaybackUpdateRequest request){
 
-            playbackService.updatePlayback(memberId, request.getMediaId(), request.getPositionSec());
+            playbackService.upsertPlayback(memberId, request.getMediaId(), request.getPositionSec());
 
-            return ResponseEntity.ok(SuccessResponse.of(null));
+            return ResponseEntity.noContent().build();
     }
 }
