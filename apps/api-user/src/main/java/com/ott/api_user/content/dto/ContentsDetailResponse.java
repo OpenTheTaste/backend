@@ -15,9 +15,9 @@ import lombok.Getter;
 @Schema(description = "컨텐츠 상세(재생) 조회 응답 DTO")
 public class ContentsDetailResponse {
     @Schema(description = "미디어 고유 ID", example = "1")
-    private Long id;
+    private Long mediaId;
 
-    @Schema(description = "시리즈 본체의 미디어 ID (단편이면 null)", example = "101")
+    @Schema(description = "해당 미디어의 시리즈ID (본체 미디어 ID) (단편이면 null)", example = "101")
     private Long seriesMediaId;
 
 
@@ -60,12 +60,13 @@ public class ContentsDetailResponse {
             Integer positionSec) {
 
         Long seriesMediaId = null;
+
         if (contents.getSeries() != null && contents.getSeries().getMedia() != null) {
             seriesMediaId = contents.getSeries().getMedia().getId();
         }
 
         return ContentsDetailResponse.builder()
-                .id(contents.getMedia().getId())
+                .mediaId(contents.getMedia().getId())
                 .seriesMediaId(seriesMediaId) 
                 .title(contents.getMedia().getTitle())
                 .description(contents.getMedia().getDescription())
