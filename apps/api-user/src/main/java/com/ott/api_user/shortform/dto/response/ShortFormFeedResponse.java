@@ -2,6 +2,8 @@ package com.ott.api_user.shortform.dto.response;
 
 import java.time.LocalDateTime;
 
+import com.ott.domain.common.MediaType;
+import com.ott.domain.media.domain.Media;
 import com.ott.domain.short_form.domain.ShortForm;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,23 +38,24 @@ public class ShortFormFeedResponse {
     @Schema(type = "Long", description = "연결된 본편 미디어 ID", example = "105")
     private Long originMediaId;
 
-    public static ShortFormFeedResponse of(ShortForm shortForm, Boolean isBookmarked, Boolean isLiked){
-            
+    @Schema(type = "String", description = "연결된 본편의 미디어 타입 (UI 분기 처리 및 라우팅용)", example = "SERIES")
+    private MediaType mediaType;
+
+
+   public static ShortFormFeedResponse of(ShortForm shortForm, Boolean isBookmarked, Boolean isLiked) {
+        // 엔티티에 이미 구현된 findOriginMedia() 활용
+        Media originMedia = shortForm.findOriginMedia().orElse(null);
+
         return ShortFormFeedResponse.builder()
                 .shortFormId(shortForm.getId())
                 .title(shortForm.getMedia().getTitle())
-                // ShortForm 엔티티에 등록된 에디터/작성자 정보 
-                .editorName(shortForm.getMedia().getUploader() != null ? shortForm.getMedia().getUploader().getNickname() : "알 수 없음")
+                .editorName(shortForm.getMedia().getUploader().getNickname())
                 .uploadDate(shortForm.getCreatedDate())
                 .isBookmarked(isBookmarked)
                 .isLiked(isLiked)
                 .shortMasterPlaylistUrl(shortForm.getMasterPlaylistUrl())
-                // CTA 클릭 시 이동할 본편 Media ID
-                .originMediaId(
-                    shortForm.getSeries() != null ? shortForm.getSeries().getMedia().getId()
-                            : shortForm.getContents() != null ? shortForm.getContents().getMedia().getId()
-                            : null
-                )
+                .originMediaId(originMedia != null ? originMedia.getId() : null)
+                .mediaType(originMedia != null ? originMedia.getMediaType() : null)
                 .build();
     }
 
