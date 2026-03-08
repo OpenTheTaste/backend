@@ -30,7 +30,7 @@ import java.util.List;
 
 @RequestMapping("/playlists")
 @SecurityRequirement(name = "BearerAuth") // 인증인가 확인
-@Tag(name = "Playlist", description = "플레이리스트& 재생목록 API, excludeId 는 재생목록 API 호출 시에만 포함시킵니다")
+@Tag(name = "Playlist", description = "플레이리스트& 재생목록 API, excludeMediaId 는 재생목록 API 호출 시에만 포함시킵니다")
 @ApiResponses(value = {
     @ApiResponse(responseCode = "200", description = "조회 성공", 
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
@@ -68,10 +68,7 @@ public interface PlayListAPI {
         
 
         @Operation(summary = "상세 페이지 - 특정 해시태그 리스트", description = "해당 태그의 영상만 제공합니다.")
-                @ApiResponses({
-                @ApiResponse(responseCode = "200", description = "태그별 리스트 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))),
-                @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-        })
+        @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
         @GetMapping("/tags/{tagId}")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTagPlaylists(
                 @Parameter(description = "태그 ID", required = true) @PathVariable(value = "tagId") Long tagId,

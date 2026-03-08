@@ -31,21 +31,23 @@ public class SearchService {
     public PageResponse search(String searchWord, int page, int size) {
         
         // 1. 파라미터 유효성 검증
-        if (searchWord == null || searchWord.length() < 2) {
+        if (searchWord == null || searchWord.trim().length() < 2) {
             throw new BusinessException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
         }
+
+        String keyword = searchWord.trim();
 
         // 2. DB 레벨의 페이징 및 최신순 정렬 (생성일 기준 내림차순)
         Pageable pageable = PageRequest.of(page, size);
         
         // 3. 통합 검색 쿼리 실행
-        Page<Media> mediaPage = mediaRepository.findUserSearchMediaList(pageable, searchWord);
+        Page<Media> mediaPage = mediaRepository.findUserSearchMediaList(pageable, keyword);
 
 
         // 4. Entity -> DTO 변환
         List<SearchItemResponse> pagedResult = mediaPage.getContent().stream()
                 .map(m -> SearchItemResponse.builder()
-                         .mediatype(m.getMediaType())
+                         .mediaType(m.getMediaType())
                          .mediaId(m.getId())
                          .title(m.getTitle())
                          .posterUrl(m.getPosterUrl())

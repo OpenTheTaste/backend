@@ -16,7 +16,7 @@ import lombok.Getter;
 @Schema(description = "검색 결과 항목 응답 DTO")
 public class SearchItemResponse {
     @Schema(description = "미디어 타입 (콘텐츠 또는 시리즈)", example = "CONTENTS")
-    private MediaType mediatype;
+    private MediaType mediaType;
 
     @Schema(description = "콘텐츠 또는 시리즈의 고유 ID", example = "101")
     private Long mediaId;
@@ -26,4 +26,5 @@ public class SearchItemResponse {
 
     @Schema(description = "포스터 이미지 URL", example = "https://cdn.ott.com/posters/101.jpg")
     private String posterUrl;
+
 }
