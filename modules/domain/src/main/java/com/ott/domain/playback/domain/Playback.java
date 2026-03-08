@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +24,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Builder
 @Getter
-@Table(name = "playback")
+@Table(
+        name = "playback", 
+        uniqueConstraints  = {
+            @UniqueConstraint(
+                name = "uk_playback_member_contents",
+                columnNames = {"member_id", "contents_id"}
+          )
+       }
+)
 public class Playback extends BaseEntity {
 
     @Id

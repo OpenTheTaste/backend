@@ -34,7 +34,7 @@ public class SeriesDetailResponse {
     private String category;
 
     @Schema(description = "태그 목록", example = "드라마, 범죄, 수사")
-    private List<String> tags;
+    private List<String> tagList;
 
     @Schema(description = "사용자 북마크 여부", example = "true")
     private Boolean isBookmarked;
@@ -42,9 +42,12 @@ public class SeriesDetailResponse {
     @Schema(description = "사용자 좋아요 여부", example = "true")
     private Boolean isLiked;
 
+    @Schema(description = "이어볼 에피소드의 Media ID. 시청 이력이 없으면 1화 ID 반환", example = "501")
+    private Long resumeMediaId;
+
     // 정적 팩토리 메서드 사용
     public static SeriesDetailResponse of(Series series, List<String> tags, List<String> categories,
-            Boolean isBookmarked, Boolean isLiked) {
+            Boolean isBookmarked, Boolean isLiked , Long resumeMediaId) {
         return SeriesDetailResponse.builder()
                 .id(series.getMedia().getId())
                 .actors(series.getActors())
@@ -52,9 +55,10 @@ public class SeriesDetailResponse {
                 .description(series.getMedia().getDescription())
                 .thumbnailUrl(series.getMedia().getThumbnailUrl())
                 .category(categories.isEmpty() ? null : categories.get(0))
-                .tags(tags)
+                .tagList(tags)
                 .isBookmarked(isBookmarked)
                 .isLiked(isLiked)
+                .resumeMediaId(resumeMediaId)
                 .build();
     }
 

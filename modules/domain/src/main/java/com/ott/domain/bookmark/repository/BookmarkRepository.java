@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long>, BookmarkRepositoryCustom {
     boolean existsByMemberIdAndMediaIdAndStatus(Long memberId, Long mediaId, Status status);
@@ -49,5 +50,16 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long>, Bookm
     SET m.bookmark_count = GREATEST(0, m.bookmark_count - 1)
     """, nativeQuery = true)
     void decreaseBookmarkCountByMemberId(@Param("memberId") Long memberId);
+
+
+    //주어진 미디어 중 북마크한 미디어들의 Id 리스트 조회
+    @Query("SELECT b.media.id FROM Bookmark b " +
+           "WHERE b.member.id = :memberId " +
+           "AND b.media.id IN :mediaIds " +
+           "AND b.status = 'ACTIVE'")
+    Set<Long> findBookmarkedMediaIds(
+            @Param("memberId") Long memberId, 
+            @Param("mediaIds") List<Long> mediaIds
+    );
 
 }

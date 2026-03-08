@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Modifying;
 
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Pageable;
 
@@ -50,4 +51,15 @@ public interface LikesRepository extends JpaRepository<Likes, Long> {
     SET m.likes_count = GREATEST(0, m.likes_count - 1)
     """, nativeQuery = true)
     void decreaseLikesCountByMemberId(@Param("memberId") Long memberId);
+
+
+    @Query("SELECT l.media.id FROM Likes l " +
+           "WHERE l.member.id = :memberId " +
+           "AND l.media.id IN :mediaIds " +
+           "AND l.status = 'ACTIVE'") 
+    Set<Long> findLikedMediaIds(
+            @Param("memberId") Long memberId, 
+            @Param("mediaIds") List<Long> mediaIds
+    );
+    
 }

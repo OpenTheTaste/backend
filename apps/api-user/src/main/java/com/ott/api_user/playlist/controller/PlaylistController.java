@@ -4,16 +4,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.playlist.dto.request.PlaylistCondition;
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
 import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
-import com.ott.api_user.playlist.service.PlaylisStrategytService;
+import com.ott.api_user.playlist.service.PlaylistStrategyService;
 import com.ott.api_user.playlist.dto.response.RecentWatchResponse;
 import com.ott.api_user.playlist.service.PlaylistService;
 import com.ott.api_user.playlist.dto.response.TagPlaylistResponse;
@@ -30,7 +26,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/playlists")
 public class PlaylistController implements PlayListAPI {
-    private final PlaylisStrategytService playlisStrategytService;
+
+    private final PlaylistService playlistService;
+    private final PlaylistStrategyService playlisStrategytService;
 
     // 1. 종합 추천
     @Override
@@ -68,6 +66,7 @@ public class PlaylistController implements PlayListAPI {
         Pageable pageable = PageRequest.of(page, size);
 
         return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getTopTagPlaylistWithMetadata(condition, pageable)));
+        
     }
 
     // 3. 특정 태그 단건 리스트
@@ -150,23 +149,7 @@ public class PlaylistController implements PlayListAPI {
         return execute(condition, page, size, memberId);
     }
 
-
-    // 공통 응답 메서드
-    private ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> execute(
-            PlaylistCondition condition, Integer pageParam, Integer sizeParam, Long memberId) {
-
-        if (memberId != null) {
-            condition.setMemberId(memberId);
-        }
-
-        Pageable pageable = PageRequest.of(pageParam, sizeParam);
-
-        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getPlaylists(condition, pageable)));
-    }
-
-    
-
-    // 태그 별 추천 리스트 조회
+        // // 태그 별 추천 리스트 조회
     // @Override
     // @GetMapping("/me/{tagId}")
     // public ResponseEntity<SuccessResponse<List<TagPlaylistResponse>>> getRecommendContentsByTag(
@@ -187,4 +170,19 @@ public class PlaylistController implements PlayListAPI {
     //     return ResponseEntity.ok(SuccessResponse.of(playlistService.getWatchHistoryPlaylist(memberId, page)));
 
     // }
+
+
+    // 공통 응답 메서드
+    private ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> execute(
+            PlaylistCondition condition, Integer pageParam, Integer sizeParam, Long memberId) {
+
+        if (memberId != null) {
+            condition.setMemberId(memberId);
+        }
+
+        Pageable pageable = PageRequest.of(pageParam, sizeParam);
+
+        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getPlaylists(condition, pageable)));
+    }
 }
+

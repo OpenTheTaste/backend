@@ -1,7 +1,9 @@
 package com.ott.transcoder.ffmpeg.execution.processbuilder;
 
-import com.ott.transcoder.ffmpeg.execution.FfmpegExecutor;
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.retryable.FfmpegException;
 import com.ott.transcoder.ffmpeg.TranscodeProfile;
+import com.ott.transcoder.ffmpeg.execution.FfmpegExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -31,56 +33,64 @@ public class ProcessBuilderFfmpegExecutor implements FfmpegExecutor {
     private int segmentDuration;
 
     @Override
-    public Path execute(Path inputFile, Path outputDir, TranscodeProfile profile) throws IOException, InterruptedException {
+    public Path execute(Path inputFile, Path outputDir, TranscodeProfile profile) {
         String resolutionKey = profile.resolution().getKey().toLowerCase();
 
-        // 해상도별 하위 디렉토리 생성 (예: workDir/360p/)
-        Path resolutionDir = outputDir.resolve(resolutionKey);
-        Files.createDirectories(resolutionDir);
+        try {
+            // 해상도별 하위 디렉토리 생성 (예: workDir/360p/)
+            Path resolutionDir = outputDir.resolve(resolutionKey);
+            Files.createDirectories(resolutionDir);
 
-        Path playlistPath = resolutionDir.resolve("media.m3u8");
-        String segmentPattern = resolutionDir.resolve("segment_%03d.ts").toString();
+            Path playlistPath = resolutionDir.resolve("media.m3u8");
+            String segmentPattern = resolutionDir.resolve("segment_%03d.ts").toString();
 
-        // FFmpeg 명령어 조립 — TranscodeProfile에서 설정값을 가져옴
-        // TODO: FFmpeg Filter Chain 구성 로직 추가 필요
-        List<String> command = List.of(
-                ffmpegPath, "-i", inputFile.toString(),
-                "-vf", "scale=-2:" + profile.height(),
-                "-c:v", profile.videoCodec(), "-preset", profile.preset(),
-                "-c:a", profile.audioCodec(), "-b:a", profile.audioBitrate(),
-                "-b:v", profile.videoBitrate(),
-                "-f", "hls",
-                "-hls_time", String.valueOf(segmentDuration),
-                "-hls_list_size", "0",
-                "-hls_segment_filename", segmentPattern,
-                playlistPath.toString()
-        );
+            // FFmpeg 명령어 조립 — TranscodeProfile에서 설정값을 가져옴
+            // TODO: FFmpeg Filter Chain 구성 로직 추가 필요
+            List<String> command = List.of(
+                    ffmpegPath, "-i", inputFile.toString(),
+                    "-vf", "scale=-2:" + profile.height(),
+                    "-c:v", profile.videoCodec(), "-preset", profile.preset(),
+                    "-c:a", profile.audioCodec(), "-b:a", profile.audioBitrate(),
+                    "-b:v", profile.videoBitrate(),
+                    "-f", "hls",
+                    "-hls_time", String.valueOf(segmentDuration),
+                    "-hls_list_size", "0",
+                    "-hls_segment_filename", segmentPattern,
+                    playlistPath.toString()
+            );
 
-        log.info("FFmpeg 실행 - resolution: {}, command: {}", resolutionKey, String.join(" ", command));
+            log.info("FFmpeg 실행 - resolution: {}, command: {}", resolutionKey, String.join(" ", command));
 
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.redirectErrorStream(true);
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.redirectErrorStream(true);
 
-        Process process = processBuilder.start();
+            Process process = processBuilder.start();
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                log.debug("[FFmpeg] {}", line);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    log.debug("[FFmpeg] {}", line);
+                }
             }
-        }
 
-        boolean finished = process.waitFor(30, TimeUnit.MINUTES);
-        if (!finished) {
-            process.destroyForcibly();
-            throw new RuntimeException("FFmpeg 타임아웃 - resolution: " + resolutionKey);
-        }
-        int exitCode = process.exitValue();
-        if (exitCode != 0) {
-            throw new RuntimeException("FFmpeg 실패 - resolution: " + resolutionKey + ", exitCode: " + exitCode);
-        }
+            boolean finished = process.waitFor(30, TimeUnit.MINUTES);
+            if (!finished) {
+                process.destroyForcibly();
+                throw new FfmpegException(TranscodeErrorCode.FFMPEG_TIMEOUT,
+                        "FFmpeg 타임아웃 - resolution: " + resolutionKey);
+            }
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                throw new FfmpegException(TranscodeErrorCode.FFMPEG_FAILED,
+                        "FFmpeg 실패 - resolution: " + resolutionKey + ", exitCode: " + exitCode);
+            }
 
-        log.info("FFmpeg 완료 - resolution: {}, output: {}", resolutionKey, playlistPath);
-        return playlistPath;
+            log.info("FFmpeg 완료 - resolution: {}, output: {}", resolutionKey, playlistPath);
+            return playlistPath;
+
+        } catch (IOException | InterruptedException e) {
+            throw new FfmpegException(TranscodeErrorCode.FFMPEG_FAILED,
+                    "FFmpeg 실행 실패 - resolution: " + resolutionKey, e);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.ott.api_admin.tag.controller;
 
+import com.ott.api_admin.tag.dto.response.TagResponse;
 import com.ott.api_admin.tag.dto.response.TagViewResponse;
 import com.ott.api_admin.tag.service.BackOfficeTagService;
 import com.ott.common.web.response.SuccessResponse;
@@ -23,6 +24,16 @@ public class BackOfficeTagController implements BackOfficeTagApi {
     ) {
         return ResponseEntity.ok(
                 SuccessResponse.of(backOfficeTagService.getTagViewStats(categoryId))
+        );
+    }
+
+    @Override
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<SuccessResponse<List<TagResponse>>> getTagListByCategory(
+            @PathVariable(value = "categoryId") Long categoryId
+    ) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(backOfficeTagService.getTagListByCategory(categoryId))
         );
     }
 }

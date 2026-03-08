@@ -8,5 +8,5 @@ package com.ott.transcoder.queue;
  */
 public interface MessageListener {
 
-    void listen(TranscodeMessage message) throws Exception;
+    void listen(TranscodeMessage message);
 }

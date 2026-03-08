@@ -30,7 +30,7 @@ public interface SearchApi {
                                         @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
         })
         @GetMapping
-        ResponseEntity<SuccessResponse<PageResponse>> search(
+        ResponseEntity<SuccessResponse<PageResponse<SearchItemResponse>>> search(
                         @Parameter(description = "검색어를 입력해주세요.", required = true) @RequestParam(value = "searchWord") String searchWord,
 
                         @Parameter(description = "페이지 번호 (0부터 시작)", schema = @Schema(defaultValue = "0")) @RequestParam(value = "page", defaultValue = "0") Integer page,

@@ -14,7 +14,7 @@ public interface MediaTagRepository extends JpaRepository<MediaTag, Long>, Media
     // [2단계] 미디어에 대한 태그들을 전부 가져옴
     @Query("""
             SELECT mt.tag.id FROM MediaTag mt
-            WHERE mt.media IN :mediaIds
+            WHERE mt.media.id IN :mediaIds
             """)
     List<Long> findTagIdsByMediaIds(@Param("mediaIds") List<Long> mediaIds);
 

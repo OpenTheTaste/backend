@@ -19,6 +19,7 @@ public class HistoryPlaylistStrategy implements PlaylistStrategy {
         
         return mediaRepository.findHistoryPlaylists(
             condition.getMemberId(), 
+            condition.getMediaType(),
             condition.getExcludeMediaId(), 
             pageable
         );

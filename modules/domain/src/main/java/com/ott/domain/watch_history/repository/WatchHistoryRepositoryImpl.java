@@ -1,5 +1,6 @@
 package com.ott.domain.watch_history.repository;
 
+import com.ott.domain.common.Status;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -10,6 +11,7 @@ import org.springframework.data.support.PageableExecutionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static com.ott.domain.common.Status.ACTIVE;
 import static com.ott.domain.contents.domain.QContents.contents;
@@ -140,4 +142,20 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
+
+    @Override
+    public Optional<Long> findLatestContentMediaIdByMemberIdAndSeriesId(Long memberId, Long seriesId){
+        Long resultMediaId = queryFactory
+                .select(contents.media.id)
+                .from(watchHistory)
+                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .where(
+                        watchHistory.member.id.eq(memberId), 
+                        contents.series.id.eq(seriesId),
+                        watchHistory.status.eq(Status.ACTIVE)
+                )
+                .orderBy(watchHistory.lastWatchedAt.desc())
+                .fetchFirst();
+        return Optional.ofNullable(resultMediaId);
+    }
 }
