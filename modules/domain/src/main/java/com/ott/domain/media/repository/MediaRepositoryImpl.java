@@ -399,7 +399,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 isDisplayable(),           // 숏폼 및 에피소드 제외 로직 재활용
                                 titleContains(searchWord)  // 검색어 동적 필터링
                         )
-                        .orderBy(media.createdDate.desc()) // 최신순 정렬
+                        .orderBy(media.createdDate.desc(), media.id.desc()) // 최신순 정렬
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();
