@@ -35,12 +35,11 @@ public class AdminAuthService {
         Member member = memberRepository.findByEmailAndProvider(request.getEmail(), Provider.LOCAL)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        // 2. 비밀번호 검증
-//        String encodedPassword = member.getPassword();
-//        if (encodedPassword == null || !passwordEncoder.matches(request.getPassword(), encodedPassword)) {
-//            throw new BusinessException(ErrorCode.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
-//        }
-
+        // 2. 비밀번호 검증 -> 추후 비밀번호 암호화 하여 검증 예정
+        String encodedPassword = member.getPassword();
+        if (encodedPassword == null || !encodedPassword.equals(request.getPassword())) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다.");
+        }
 
         // 3. 권한 확인 (ADMIN, EDITOR만 허용)
         if (member.getRole() != Role.ADMIN && member.getRole() != Role.EDITOR) {
