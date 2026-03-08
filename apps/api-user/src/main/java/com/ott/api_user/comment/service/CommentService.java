@@ -11,6 +11,7 @@ import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.comment.domain.Comment;
 import com.ott.domain.comment.repository.CommentRepository;
+import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
@@ -117,16 +118,17 @@ public class CommentService {
                 return PageResponse.toPageResponse(pageInfo, responseList);
         }
         
+        // 콘텐츠 상세 조회 댓글 목록
         @Transactional(readOnly = true)
-        public PageResponse<ContentsCommentResponse> getContentsCommentList(Long contentsId, int page, int size, boolean includeSpoiler) {
+        public PageResponse<ContentsCommentResponse> getContentsCommentList(Long mediaId, int page, int size, boolean includeSpoiler) {
 
-                if (!contentsRepository.existsByIdAndStatus(contentsId, Status.ACTIVE)) {
-                throw new BusinessException(ErrorCode.CONTENTS_NOT_FOUND);
-                }
+                // mediaId를 기준으로 Contents 엔티티 조회
+                Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
                 Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
-                Page<Comment> commentPage = commentRepository.findByContents_IdAndStatusWithSpoilerCondition(contentsId, Status.ACTIVE, includeSpoiler, pageable);
+                Page<Comment> commentPage = commentRepository.findByContents_IdAndStatusWithSpoilerCondition(contents.getId(), Status.ACTIVE, includeSpoiler, pageable);
 
                 List<ContentsCommentResponse> responseList = commentPage.getContent().stream()
                         .map(ContentsCommentResponse::from)

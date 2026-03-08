@@ -66,14 +66,15 @@ public class CommentController implements CommentApi {
         return ResponseEntity.ok(SuccessResponse.of(commentService.getMyComments(memberId, page, size)));
     }
 
+    // 콘텐츠 상세 페이지의 댓글 목록 조회
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<ContentsCommentResponse>>> getContentCommentsList(
-            @PathVariable(value = "contentsId") Long contentsId,
+            @PathVariable(value = "mediaId") Long mediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer pageParam,
             @RequestParam(value = "size", defaultValue = "20")  Integer sizeParam,
             @RequestParam(value = "includeSpoiler", defaultValue = "false") boolean includeSpoiler) {
         return ResponseEntity.ok(
-                SuccessResponse.of(commentService.getContentsCommentList(contentsId, pageParam,
+                SuccessResponse.of(commentService.getContentsCommentList(mediaId, pageParam,
                         sizeParam, includeSpoiler)));
 
     }
