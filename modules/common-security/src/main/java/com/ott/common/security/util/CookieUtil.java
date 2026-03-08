@@ -8,13 +8,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class CookieUtil {
 
-    public void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+    public void addCookie(HttpServletResponse response, String name, String value, int maxAgeMillis) {
         ResponseCookie cookie = ResponseCookie.from(name, value)
                 .domain("openthetaste.cloud")  // 로컬 테스트 시 주석처리!!!
                 .httpOnly(true) // JS 접근 차단 -> 크로스 사이트 스크립트 공격 대비
                 .secure(true) // HTTPS 요청만 허용
                 .path("/")  // 모든 경로로 전송
-                .maxAge(maxAge)
+                .maxAge(maxAgeMillis / 1000) // 밀리초 → 초 변환
                 .sameSite("None")  // 크로스 사이트에 대해서 쿠키 전송 허용
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
