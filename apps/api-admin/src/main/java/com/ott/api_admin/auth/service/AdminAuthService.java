@@ -19,7 +19,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AdminAuthService {
 
     private final MemberRepository memberRepository;
@@ -30,6 +29,7 @@ public class AdminAuthService {
      * 관리자 로그인
      * 토큰은 Controller에서 쿠키로 세팅
      */
+    @Transactional
     public AdminLoginResponse login(AdminLoginRequest request) {
         // 1. 이메일 + LOCAL provider로 회원 조회
         Member member = memberRepository.findByEmailAndProvider(request.getEmail(), Provider.LOCAL)
@@ -65,6 +65,7 @@ public class AdminAuthService {
     /**
      * Access 발급 시 + Refresh Token 재발급
      */
+    @Transactional
     public AdminTokenResponse reissue(String refreshToken) {
         // 1. refresh token 검증
         ErrorCode errorCode = jwtTokenProvider.validateAndGetErrorCode(refreshToken);
@@ -86,12 +87,18 @@ public class AdminAuthService {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
 
-        // 3. 새 토큰 발급
+        // 3. 권한 재확인 (강등된 계정 차단)
+        if (member.getRole() != Role.ADMIN && member.getRole() != Role.EDITOR) {
+            member.clearRefreshToken();
+            throw new BusinessException(ErrorCode.FORBIDDEN, "관리자 권한이 없습니다.");
+        }
+
+        // 4. 새 토큰 발급
         List<String> authorities = List.of(member.getRole().getKey());
         String newAccessToken = jwtTokenProvider.createAccessToken(memberId, authorities);
         String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId, authorities);
 
-        // 4. refresh token 갱신
+        // 5. refresh token 갱신
         member.clearRefreshToken();
         member.updateRefreshToken(newRefreshToken);
 
@@ -101,6 +108,7 @@ public class AdminAuthService {
     /**
      * 로그아웃 — DB refresh token 삭제
      */
+    @Transactional
     public void logout(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
