@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -47,10 +46,10 @@ public class CommentService {
                 Member findMember = memberRepository.findById(memberId)
                         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-                Contents contents = contentsRepository.findByIdAndStatus(request.getContentId(), Status.ACTIVE)
+                Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(
+                                request.getMediaId(), Status.ACTIVE, PublicStatus.PUBLIC)
                         .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
-                // 한 유저가 한 콘텐츠에 여러 댓글 허용?
                 Comment saved = commentRepository.save(
                         Comment.builder()
                                 .member(findMember)
