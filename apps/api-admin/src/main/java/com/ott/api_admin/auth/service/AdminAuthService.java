@@ -72,6 +72,11 @@ public class AdminAuthService {
             throw new BusinessException(errorCode);
         }
 
+        // 추가: refresh 토큰 타입 검증
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
         // 2. DB 토큰 일치 확인
         Long memberId = jwtTokenProvider.getMemberId(refreshToken);
         Member member = memberRepository.findById(memberId)
