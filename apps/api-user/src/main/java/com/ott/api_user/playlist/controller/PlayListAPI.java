@@ -40,8 +40,6 @@ import java.util.List;
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
 })
 public interface PlayListAPI {
-
-
         @Operation(summary = "OO 님이 좋아하실만한 콘텐츠", description = "유저 취향을 합산하여 추천합니다. (홈 화면 셔플 지원)")
         @GetMapping("/recommend")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getRecommendPlaylists(

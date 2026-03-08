@@ -11,6 +11,7 @@ import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.comment.domain.Comment;
 import com.ott.domain.comment.repository.CommentRepository;
+import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
@@ -117,20 +118,27 @@ public class CommentService {
                 return PageResponse.toPageResponse(pageInfo, responseList);
         }
         
+        // 콘텐츠 상세 조회 댓글 목록
         @Transactional(readOnly = true)
-        public PageResponse<ContentsCommentResponse> getContentsCommentList(Long contentsId, int page, int size, boolean includeSpoiler) {
+        public PageResponse<ContentsCommentResponse> getContentsCommentList(Long mediaId, Long memberId, int page, int size, boolean includeSpoiler) {
 
-                if (!contentsRepository.existsByIdAndStatus(contentsId, Status.ACTIVE)) {
-                throw new BusinessException(ErrorCode.CONTENTS_NOT_FOUND);
-                }
+                // mediaId를 기준으로 Contents 엔티티 조회
+                Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
                 Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
 
-                Page<Comment> commentPage = commentRepository.findByContents_IdAndStatusWithSpoilerCondition(contentsId, Status.ACTIVE, includeSpoiler, pageable);
+                Page<Comment> commentPage = commentRepository.findByContents_IdAndStatusWithSpoilerCondition(contents.getId(), Status.ACTIVE, includeSpoiler, pageable);
 
                 List<ContentsCommentResponse> responseList = commentPage.getContent().stream()
-                        .map(ContentsCommentResponse::from)
-                        .collect(Collectors.toList());
+                        .map(comment -> {
+                                // 유저 ID가 댓글 작성자의 ID와 같다면 true
+                                Boolean isMine = isCommentOwner(comment, memberId);
+                                
+                                // 수정된 DTO의 of 메서드 사용
+                                return ContentsCommentResponse.from(comment, isMine);
+                        })
+                        .toList();
 
                 PageInfo pageInfo = PageInfo.toPageInfo(
                         commentPage.getNumber(),
@@ -138,5 +146,12 @@ public class CommentService {
                         commentPage.getSize());
 
                 return PageResponse.toPageResponse(pageInfo, responseList);
+        }
+
+        private boolean isCommentOwner(Comment comment, Long currentMemberId) {
+                if (currentMemberId == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                }
+                return comment.getMember().getId().equals(currentMemberId);
         }
 }

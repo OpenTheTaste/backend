@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.ott.domain.common.MediaType;
+import com.ott.domain.media.domain.Media;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -26,5 +27,14 @@ public class SearchItemResponse {
 
     @Schema(description = "포스터 이미지 URL", example = "https://cdn.ott.com/posters/101.jpg")
     private String posterUrl;
+
+    public static SearchItemResponse from(Media media) {
+        return SearchItemResponse.builder()
+                .mediaType(media.getMediaType())
+                .mediaId(media.getId())
+                .title(media.getTitle())
+                .posterUrl(media.getPosterUrl())
+                .build();
+    }
 
 }

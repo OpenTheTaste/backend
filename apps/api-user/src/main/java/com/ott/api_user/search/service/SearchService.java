@@ -46,13 +46,9 @@ public class SearchService {
 
         // 4. Entity -> DTO 변환
         List<SearchItemResponse> pagedResult = mediaPage.getContent().stream()
-                .map(m -> SearchItemResponse.builder()
-                         .mediaType(m.getMediaType())
-                         .mediaId(m.getId())
-                         .title(m.getTitle())
-                         .posterUrl(m.getPosterUrl())
-                         .build())
+                .map(SearchItemResponse::from) 
                 .collect(Collectors.toList());
+
 
         // 5. 응답용 PageInfo 생성
         PageInfo pageInfo = PageInfo.builder()

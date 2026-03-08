@@ -11,17 +11,12 @@ import com.ott.api_user.playlist.dto.request.PlaylistCondition;
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
 import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
 import com.ott.api_user.playlist.service.PlaylistStrategyService;
-import com.ott.api_user.playlist.dto.response.RecentWatchResponse;
 import com.ott.api_user.playlist.service.PlaylistService;
-import com.ott.api_user.playlist.dto.response.TagPlaylistResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Validated
 @RestController
@@ -29,7 +24,6 @@ import java.util.List;
 @RequestMapping("/playlists")
 public class PlaylistController implements PlayListAPI {
 
-    private final PlaylistService playlistService;
     private final PlaylistStrategyService playlisStrategytService;
 
     // 1. 종합 추천
