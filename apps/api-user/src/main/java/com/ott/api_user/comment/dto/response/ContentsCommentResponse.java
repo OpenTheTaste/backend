@@ -24,15 +24,15 @@ public class ContentsCommentResponse {
     private String content;
 
     @Schema(type = "Boolean", description = "스포일러 여부", example = "true")
-    private Boolean isSpoiler;
+    private boolean isSpoiler;
 
     @Schema(type = "LocalDateTime", description = "작성 일시")
     private LocalDateTime createdAt;
 
-    @Schema(type = "Boolean", description = "본인 댓글 여부(수정/삭제 버튼 노출용)", example = "ture")
-    private Boolean isMine;
+    @Schema(type = "Boolean", description = "본인 댓글 여부(수정/삭제 버튼 노출용)", example = "true")
+    private boolean isMine;
 
-    public static ContentsCommentResponse from(Comment comment, Boolean isMine) {
+    public static ContentsCommentResponse from(Comment comment, boolean isMine) {
         return ContentsCommentResponse.builder()
                 .commentId(comment.getId())
                 .nickname(comment.getMember().getNickname())

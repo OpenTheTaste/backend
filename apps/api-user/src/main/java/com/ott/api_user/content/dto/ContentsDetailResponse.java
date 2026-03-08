@@ -38,10 +38,10 @@ public class ContentsDetailResponse {
     @Schema(description = "태그 목록", example = "드라마, 범죄, 수사")
     private List<String> tags;
 
-    @Schema(description = "사용자 북마크 여부", example = "true")
+    @Schema(description = "사용자 북마크 여부(seriesMediaId 에 대한 여부)", example = "true")
     private Boolean isBookmarked;
 
-    @Schema(description = "사용자 좋아요 여부", example = "true")
+    @Schema(description = "사용자 좋아요 여부(seriesMediaId 에 대한 여부)", example = "true")
     private Boolean isLiked;
 
     @Schema(description = "마스터 재생목록 URL(HLS)", example = "https://example.com/master.m3u8")
