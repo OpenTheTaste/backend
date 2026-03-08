@@ -52,7 +52,14 @@ public class WatchHistory extends BaseEntity {
     @Column(name = "last_watched_at")
     private LocalDateTime lastWatchedAt;
 
+    @Column(name = "re_watch_count", nullable = false)
+    private Integer reWatchCount;
+
     public void updateLastWatchedAt(){
         this.lastWatchedAt = LocalDateTime.now();
+    }
+
+    public void incrementReWatchCount() {
+        this.reWatchCount++;
     }
 }
