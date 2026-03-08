@@ -32,7 +32,7 @@ import java.util.List;
 @SecurityRequirement(name = "BearerAuth") // 인증인가 확인
 @Tag(name = "Playlist", description = "플레이리스트& 재생목록 API, excludeId 는 재생목록 API 호출 시에만 포함시킵니다")
 @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "플레이리스트 조회 성공- 응답 구성", 
+    @ApiResponse(responseCode = "0", description = "플레이리스트 조회 성공- 응답 구성", 
         content = @Content(schema = @Schema(implementation = PlaylistResponse.class))),
     @ApiResponse(responseCode = "200", description = "조회 성공", 
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
@@ -56,9 +56,8 @@ public interface PlayListAPI {
         
 
         @Operation(summary = "선호 태그 순위별 리스트", description = "유저의 Top 3 태그 순위를 기반으로 제공합니다.")
-        @ApiResponses(
-                @ApiResponse(responseCode = "200", description = "태그 순위별 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))))
         @GetMapping("/tags/top")
+        @ApiResponse(responseCode = "200", description = "태그별 리스트 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class)))
         ResponseEntity<SuccessResponse<TopTagPlaylistResponse>> getTopTagPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
                 @PositiveOrZero @Max(value = 2, message = "인덱스는 2 이하여야 합니다.") @Parameter(description = "유저 취향 순위 (0, 1, 2)", required = true) @RequestParam(value = "index") Integer index,
@@ -67,13 +66,9 @@ public interface PlayListAPI {
                 @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
         );
 
-        
 
         @Operation(summary = "상세 페이지 - 특정 해시태그 리스트", description = "해당 태그의 영상만 제공합니다.")
-                @ApiResponses({
-                @ApiResponse(responseCode = "200", description = "태그별 리스트 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))),
-                @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-        })
+        @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
         @GetMapping("/tags/{tagId}")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTagPlaylists(
                 @Parameter(description = "태그 ID", required = true) @PathVariable(value = "tagId") Long tagId,
