@@ -10,8 +10,10 @@ import com.ott.common.web.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestParam;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/search")
