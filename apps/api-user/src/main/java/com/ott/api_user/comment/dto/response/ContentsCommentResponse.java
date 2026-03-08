@@ -14,28 +14,32 @@ import lombok.Getter;
 @AllArgsConstructor
 @Schema(description = "댓글 조회 응답 DTO")
 public class ContentsCommentResponse {
-    @Schema(description = "댓글 고유 ID", example = "1")
+    @Schema(type = "Long", description = "댓글 고유 ID", example = "1")
     private Long commentId;
 
-    @Schema(description = "작성자 닉네임", example = "영화광문어")
+    @Schema(type = "String", description = "작성자 닉네임", example = "영화광문어")
     private String nickname;
 
-    @Schema(description = "댓글 내용", example = "이 영화 진짜 시간 가는 줄 모르고 봤네요!! 강추합니다.")
+    @Schema(type = "String", description = "댓글 내용", example = "이 영화 진짜 시간 가는 줄 모르고 봤네요!! 강추합니다.")
     private String content;
 
-    @Schema(description = "스포일러 여부", example = "true")
-    private boolean isSpoiler;
+    @Schema(type = "Boolean", description = "스포일러 여부", example = "true")
+    private Boolean isSpoiler;
 
-    @Schema(description = "작성 일시")
+    @Schema(type = "LocalDateTime", description = "작성 일시")
     private LocalDateTime createdAt;
 
-    public static ContentsCommentResponse from(Comment comment) {
+    @Schema(type = "Boolean", description = "본인 댓글 여부(수정/삭제 버튼 노출용)", example = "ture")
+    private Boolean isMine;
+
+    public static ContentsCommentResponse from(Comment comment, Boolean isMine) {
         return ContentsCommentResponse.builder()
                 .commentId(comment.getId())
                 .nickname(comment.getMember().getNickname())
                 .content(comment.getContent())
                 .isSpoiler(comment.getIsSpoiler())
                 .createdAt(comment.getCreatedDate())
+                .isMine(isMine)
                 .build();
     }
 }

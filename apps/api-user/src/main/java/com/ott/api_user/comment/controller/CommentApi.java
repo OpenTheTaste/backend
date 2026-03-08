@@ -124,6 +124,7 @@ public interface CommentApi {
                         @Parameter(description = "미디어 ID", required = true, example = "10") @PathVariable("mediaId") Long contentsId,
                         @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") @RequestParam(value = "page", defaultValue = "0") Integer page,
                         @Parameter(description = "페이지 크기", example = "20") @RequestParam(value = "size", defaultValue = "20") Integer size,
-                        @Parameter(description = "스포일러 포함 여부 (true: 전체 조회, false: 스포 제외)", example = "false") @RequestParam(value = "includeSpoiler", defaultValue = "false") boolean includeSpoiler);
+                        @Parameter(description = "스포일러 포함 여부 (true: 전체 조회, false: 스포 제외)", example = "false") @RequestParam(value = "includeSpoiler", defaultValue = "false") boolean includeSpoiler,
+                        @AuthenticationPrincipal @Parameter(hidden = true) Long memberId);
 
 }

@@ -72,9 +72,10 @@ public class CommentController implements CommentApi {
             @PathVariable(value = "mediaId") Long mediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer pageParam,
             @RequestParam(value = "size", defaultValue = "20")  Integer sizeParam,
-            @RequestParam(value = "includeSpoiler", defaultValue = "false") boolean includeSpoiler) {
+            @RequestParam(value = "includeSpoiler", defaultValue = "false") boolean includeSpoiler,
+            @AuthenticationPrincipal Long memberId) {
         return ResponseEntity.ok(
-                SuccessResponse.of(commentService.getContentsCommentList(mediaId, pageParam,
+                SuccessResponse.of(commentService.getContentsCommentList(mediaId, memberId, pageParam,
                         sizeParam, includeSpoiler)));
 
     }
