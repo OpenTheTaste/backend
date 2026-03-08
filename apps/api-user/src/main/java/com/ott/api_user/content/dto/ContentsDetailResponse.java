@@ -15,11 +15,10 @@ import lombok.Getter;
 @Schema(description = "컨텐츠 상세(재생) 조회 응답 DTO")
 public class ContentsDetailResponse {
     @Schema(description = "미디어 고유 ID", example = "1")
-    private Long id;
+    private Long mediaId;
 
-    @Schema(description = "시리즈 본체의 미디어 ID (단편이면 null)", example = "101")
+    @Schema(description = "해당 미디어의 시리즈ID (본체 미디어 ID) (단편이면 null)", example = "101")
     private Long seriesMediaId;
-
 
     @Schema(description = "콘텐츠 제목", example = "비밀의 숲")
     private String title;
@@ -39,10 +38,10 @@ public class ContentsDetailResponse {
     @Schema(description = "태그 목록", example = "드라마, 범죄, 수사")
     private List<String> tags;
 
-    @Schema(description = "사용자 북마크 여부", example = "true")
+    @Schema(description = "사용자 북마크 여부(seriesMediaId 에 대한 여부)", example = "true")
     private Boolean isBookmarked;
 
-    @Schema(description = "사용자 좋아요 여부", example = "true")
+    @Schema(description = "사용자 좋아요 여부(seriesMediaId 에 대한 여부)", example = "true")
     private Boolean isLiked;
 
     @Schema(description = "마스터 재생목록 URL(HLS)", example = "https://example.com/master.m3u8")
@@ -60,12 +59,13 @@ public class ContentsDetailResponse {
             Integer positionSec) {
 
         Long seriesMediaId = null;
+
         if (contents.getSeries() != null && contents.getSeries().getMedia() != null) {
             seriesMediaId = contents.getSeries().getMedia().getId();
         }
 
         return ContentsDetailResponse.builder()
-                .id(contents.getMedia().getId())
+                .mediaId(contents.getMedia().getId())
                 .seriesMediaId(seriesMediaId) 
                 .title(contents.getMedia().getTitle())
                 .description(contents.getMedia().getDescription())

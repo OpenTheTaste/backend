@@ -36,14 +36,27 @@ public class ContentsService {
         
         // 재생 상세
         public ContentsDetailResponse getContentDetail(Long mediaId, Long memberId) {
+                
                 Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
+
+                // 북마크, 좋아요 종속을 위한 컨텐츠의 본체 MediaID 찾기 (단편이라면 본인 MediaId 그대로 반환)
+                Long targetMediaId = mediaId;
+
+                if (contents.getSeries() != null) {
+                        if (contents.getSeries().getMedia() == null) {
+                                // 시리즈 데이터는 있는데 부모 미디어가 없을 떄 - 데이터 정합성 오류 보장
+                                throw new BusinessException(ErrorCode.MEDIA_NOT_FOUND); 
+                        }
+                        targetMediaId = contents.getSeries().getMedia().getId();
+                }
+
 
                 List<String> tags = tagRepository.findTagNamesByMediaId(mediaId, Status.ACTIVE);
                 List<String> categories = categoryRepository.findCategoryNamesByMediaId(mediaId, Status.ACTIVE);
 
-                Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId,Status.ACTIVE);
-                Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, mediaId, Status.ACTIVE);
+                Boolean isBookmarked = bookmarkRepository.existsByMemberIdAndMediaIdAndStatus(memberId, targetMediaId, Status.ACTIVE);
+                Boolean isLiked = likesRepository.existsByMemberIdAndMediaIdAndStatus(memberId, targetMediaId, Status.ACTIVE);
 
                 //  이어보기 지점 조회
                 Integer positionSec = playbackRepository.findByMemberIdAndMediaId(memberId, mediaId)
