@@ -20,7 +20,6 @@ public class ContentsDetailResponse {
     @Schema(description = "해당 미디어의 시리즈ID (본체 미디어 ID) (단편이면 null)", example = "101")
     private Long seriesMediaId;
 
-
     @Schema(description = "콘텐츠 제목", example = "비밀의 숲")
     private String title;
 
