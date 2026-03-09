@@ -1,6 +1,7 @@
 package com.ott.api_user.media_matrics.controller;
 
 import com.ott.api_user.media_matrics.dto.request.RadarPreferenceRequest;
+import com.ott.api_user.media_matrics.dto.response.RadarMediaResponse;
 import com.ott.api_user.media_matrics.dto.response.RadarPreferenceResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -17,6 +18,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 @Tag(name = "Radar", description = "레이더 차트 API")
 public interface RadarPreferenceApi {
@@ -49,5 +52,19 @@ public interface RadarPreferenceApi {
     ResponseEntity<Void> updatePreference(
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody RadarPreferenceRequest request
+    );
+
+    @Operation(summary = "레이더 차트 추천 리스트 조회", description = "사용자의 슬라이더 설정 기반으로 가중합 추천 미디어 상위 20개를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "레이더 차트 추천 리스트 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = RadarMediaResponse.class))),
+            @ApiResponse(responseCode = "404", description = "레이더 차트 설정을 찾을 수 없음",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping
+    ResponseEntity<SuccessResponse<List<RadarMediaResponse>>> getRecommendationList(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
     );
 }
