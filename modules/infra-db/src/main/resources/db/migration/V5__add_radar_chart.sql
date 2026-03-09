@@ -19,6 +19,26 @@ CREATE TABLE IF NOT EXISTS media_metrics
     CONSTRAINT pk_media_metrics PRIMARY KEY (id)
 ) ENGINE = InnoDB;
 
+-- 사용자별 레이더 차트 슬라이더 설정값 (회원가입 시 생성, member와 1:1)
+CREATE TABLE IF NOT EXISTS member_radar_preference
+(
+    id            BIGINT AUTO_INCREMENT       NOT NULL,
+    member_id     BIGINT                      NOT NULL,
+    popularity    INT                         NOT NULL DEFAULT 0,
+    immersion     INT                         NOT NULL DEFAULT 0,
+    mania         INT                         NOT NULL DEFAULT 0,
+    recency       INT                         NOT NULL DEFAULT 0,
+    re_watch      INT                         NOT NULL DEFAULT 0,
+
+    created_date  DATETIME                    NOT NULL,
+    modified_date DATETIME                    NOT NULL,
+    status        ENUM ('DELETE','ACTIVE')    NOT NULL,
+
+    CONSTRAINT pk_member_radar_preference PRIMARY KEY (id)
+) ENGINE = InnoDB;
+
+
+-- Media Metrics
 ALTER TABLE media_metrics
     ADD CONSTRAINT uk_media_metrics_media
         UNIQUE (media_id);
@@ -31,3 +51,13 @@ ALTER TABLE media_metrics
 -- 재시청 횟수 추적 (첫 시청 = 0, 재시청마다 +1)
 ALTER TABLE watch_history
     ADD COLUMN re_watch_count INT NOT NULL DEFAULT 0;
+
+-- Member Radar Preference
+ALTER TABLE member_radar_preference
+    ADD CONSTRAINT uk_member_radar_preference_member
+        UNIQUE (member_id);
+
+ALTER TABLE member_radar_preference
+    ADD CONSTRAINT fk_member_radar_preference_member
+        FOREIGN KEY (member_id)
+            REFERENCES member (id);
