@@ -37,7 +37,7 @@ public class UploadHelper {
     }
 
     public String sanitizeFileName(String fileName) {
-        String trimmed = fileName == null ? "" : fileName.trim();
+        String trimmed = fileName.trim();
         int extensionDelimiterIndex = trimmed.lastIndexOf('.');
         String baseName = extensionDelimiterIndex > 0 ? trimmed.substring(0, extensionDelimiterIndex) : trimmed;
         String extensionPart = extensionDelimiterIndex > 0 ? trimmed.substring(extensionDelimiterIndex + 1) : "";
@@ -166,7 +166,8 @@ public class UploadHelper {
             String originFileName
     ) {
         UploadFileResult posterUpload = prepareRequiredUpload(resourceRoot, resourceId, "poster", posterFileName, false);
-        UploadFileResult thumbnailUpload = prepareRequiredUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName, false);
+        UploadFileResult thumbnailUpload =
+                thumbnailFileName == null ? null : prepareRequiredUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName, false);
         UploadFileResult originUpload = prepareRequiredUpload(resourceRoot, resourceId, "origin", originFileName, true);
 
         String masterPlaylistObjectKey = buildMasterPlaylistObjectKey(resourceRoot, resourceId);
@@ -174,75 +175,16 @@ public class UploadHelper {
 
         return new MediaCreateUploadResult(
                 posterUpload.objectKey(),
-                thumbnailUpload.objectKey(),
+                thumbnailUpload == null ? null : thumbnailUpload.objectKey(),
                 originUpload.objectKey(),
                 masterPlaylistObjectKey,
                 posterUpload.objectUrl(),
-                thumbnailUpload.objectUrl(),
+                thumbnailUpload == null ? null : thumbnailUpload.objectUrl(),
                 originUpload.objectUrl(),
                 masterPlaylistObjectUrl,
                 posterUpload.uploadUrl(),
-                thumbnailUpload.uploadUrl(),
+                thumbnailUpload == null ? null : thumbnailUpload.uploadUrl(),
                 originUpload.uploadUrl()
-        );
-    }
-
-    public MediaUpdateUploadResult prepareMediaUpdate(
-            String resourceRoot,
-            Long resourceId,
-            String posterFileName,
-            String thumbnailFileName,
-            String originFileName,
-            String currentPosterUrl,
-            String currentThumbnailUrl,
-            String currentOriginUrl,
-            String currentMasterPlaylistUrl
-    ) {
-        UploadFileResult posterUpload = prepareOptionalUpload(resourceRoot, resourceId, "poster", posterFileName, false);
-        UploadFileResult thumbnailUpload = prepareOptionalUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName, false);
-        UploadFileResult originUpload = prepareOptionalUpload(resourceRoot, resourceId, "origin", originFileName, true);
-
-        String posterObjectKey = null;
-        String thumbnailObjectKey = null;
-        String originObjectKey = null;
-        String posterUploadUrl = null;
-        String thumbnailUploadUrl = null;
-        String originUploadUrl = null;
-        String finalPosterUrl = currentPosterUrl;
-        String finalThumbnailUrl = currentThumbnailUrl;
-        String finalOriginUrl = currentOriginUrl;
-        String masterPlaylistObjectKey = buildMasterPlaylistObjectKey(resourceRoot, resourceId);
-        String finalMasterPlaylistUrl = currentMasterPlaylistUrl;
-
-        if (posterUpload != null) {
-            posterObjectKey = posterUpload.objectKey();
-            posterUploadUrl = posterUpload.uploadUrl();
-            finalPosterUrl = posterUpload.objectUrl();
-        }
-        if (thumbnailUpload != null) {
-            thumbnailObjectKey = thumbnailUpload.objectKey();
-            thumbnailUploadUrl = thumbnailUpload.uploadUrl();
-            finalThumbnailUrl = thumbnailUpload.objectUrl();
-        }
-        if (originUpload != null) {
-            originObjectKey = originUpload.objectKey();
-            originUploadUrl = originUpload.uploadUrl();
-            finalOriginUrl = originUpload.objectUrl();
-            finalMasterPlaylistUrl = toObjectUrl(masterPlaylistObjectKey);
-        }
-
-        return new MediaUpdateUploadResult(
-                posterObjectKey,
-                thumbnailObjectKey,
-                originObjectKey,
-                masterPlaylistObjectKey,
-                posterUploadUrl,
-                thumbnailUploadUrl,
-                originUploadUrl,
-                finalPosterUrl,
-                finalThumbnailUrl,
-                finalOriginUrl,
-                finalMasterPlaylistUrl
         );
     }
 
@@ -285,21 +227,6 @@ public class UploadHelper {
             String posterUploadUrl,
             String thumbnailUploadUrl,
             String originUploadUrl
-    ) {
-    }
-
-    public record MediaUpdateUploadResult(
-            String posterObjectKey,
-            String thumbnailObjectKey,
-            String originObjectKey,
-            String masterPlaylistObjectKey,
-            String posterUploadUrl,
-            String thumbnailUploadUrl,
-            String originUploadUrl,
-            String nextPosterUrl,
-            String nextThumbnailUrl,
-            String nextOriginUrl,
-            String nextMasterPlaylistUrl
     ) {
     }
 }

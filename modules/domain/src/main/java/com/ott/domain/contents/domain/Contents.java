@@ -19,8 +19,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Objects;
-
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -61,10 +59,8 @@ public class Contents extends BaseEntity {
         this.masterPlaylistUrl = masterPlaylistUrl;
     }
 
-    public void updateMetadata(Series series, String actors, Integer duration, Integer videoSize) {
+    public void updateMetadata(Series series, String actors) {
         this.series = series;
         this.actors = actors;
-        this.duration = duration;
-        this.videoSize = videoSize;
     }
 }
