@@ -19,6 +19,7 @@ import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.domain.Provider;
 import com.ott.domain.member.repository.MemberRepository;
+import com.ott.domain.member_radar_preference.repository.MemberRadarPreferenceRepository;
 import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.preferred_tag.domain.PreferredTag;
 import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
@@ -52,6 +53,7 @@ public class MemberService {
     private final PlaybackRepository playbackRepository;
     private final CommentRepository commentRepository;
     private final ClickRepository clickRepository;
+    private final MemberRadarPreferenceRepository memberRadarPreferenceRepository;
 
     /**
      * 마이 페이지 조회 : 닉네임, 선호태그 List 반환
@@ -176,6 +178,7 @@ public class MemberService {
         playbackRepository.softDeleteAllByMemberId(memberId);
         commentRepository.softDeleteAllByMemberId(memberId);
         clickRepository.softDeleteAllByMemberId(memberId);
+        memberRadarPreferenceRepository.softDeleteByMemberId(memberId);
     }
 
     /**
