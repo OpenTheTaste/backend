@@ -29,10 +29,15 @@ public class BackOfficeSeriesMapper {
         );
     }
 
-    public SeriesTitleListResponse toSeriesTitleList(Series series) {
+    public SeriesTitleListResponse toSeriesTitleList(Series series, List<MediaTag> mediaTagList) {
+        String categoryName = extractCategoryName(mediaTagList);
+        List<String> tagNameList = extractTagNameList(mediaTagList);
+
         return new SeriesTitleListResponse(
                 series.getId(),
-                series.getMedia().getTitle()
+                series.getMedia().getTitle(),
+                categoryName,
+                tagNameList
         );
     }
 
