@@ -35,6 +35,11 @@ public class AuthService {
             throw new BusinessException(errorCode);
         }
 
+        // 추가: refresh 토큰 타입 검증
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
         // DB에 저장된 토큰과 일치 여부 확인
         Long memberId = jwtTokenProvider.getMemberId(refreshToken);
         Member member = findMemberById(memberId);
@@ -44,7 +49,7 @@ public class AuthService {
         }
 
         // 권한 추출
-        List<String> authorities = jwtTokenProvider.getAuthorities(refreshToken);
+        List<String> authorities = List.of(member.getRole().getKey());
 
         // access + refresh 재발급
         String newAccessToken = jwtTokenProvider.createAccessToken(memberId, authorities);
