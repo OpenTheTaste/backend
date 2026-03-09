@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface MediaMetricsRepository extends JpaRepository<MediaMetrics, Long> {
+public interface MediaMetricsRepository extends JpaRepository<MediaMetrics, Long>, MediaMetricsRepositoryCustom {
 
     Optional<MediaMetrics> findByMediaId(Long mediaId);
 }
