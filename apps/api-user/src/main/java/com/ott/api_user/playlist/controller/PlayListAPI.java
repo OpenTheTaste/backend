@@ -53,8 +53,12 @@ public interface PlayListAPI {
 
         
         @Operation(summary = "선호 태그 순위별 리스트", description = "유저의 Top 3 태그 순위를 기반으로 제공합니다.")
-        @ApiResponses(
-                @ApiResponse(responseCode = "0", description = "태그 순위별 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))))
+        @ApiResponses(value = {
+                @ApiResponse(responseCode = "200", description = "태그 순위별 조회 성공", 
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopTagPlaylistResponse.class))),
+                @ApiResponse(responseCode = "0", description = "태그 순위별 DTO 응답 구조", 
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = TopTagPlaylistResponse.class)))
+        })
         @GetMapping("/tags/top")
         ResponseEntity<SuccessResponse<TopTagPlaylistResponse>> getTopTagPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
@@ -70,7 +74,7 @@ public interface PlayListAPI {
         @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
                 content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class)))
         @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", 
-                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
         @GetMapping("/tags/{tagId}")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTagPlaylists(
                 @Parameter(description = "태그 ID", required = true) @PathVariable(value = "tagId") Long tagId,
