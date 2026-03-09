@@ -2,8 +2,11 @@ package com.ott.api_user.search.controller;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +37,14 @@ public interface SearchApi {
         })
         @GetMapping
         ResponseEntity<SuccessResponse<PageResponse<SearchItemResponse>>> search(
+                        @NotBlank(message = "검색어를 입력해주세요.") 
+                        @Size(min = 2, message = "검색어는 최소 2글자 이상이어야 합니다.")
                         @Parameter(description = "검색어를 입력해주세요.", required = true, example = "비밀") @RequestParam(value = "searchWord") String searchWord,
-                        @PositiveOrZero @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(value = "page", defaultValue = "0") Integer page,
-                        @Positive @Parameter(description = "한 페이지 당 최대 항목 개수(기본적으로 6의 배수)") @RequestParam(value = "size", defaultValue = "24") Integer size);
+                        
+                        @PositiveOrZero 
+                        @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(value = "page", defaultValue = "0") Integer page,
+                        
+                        @Positive @Max(100)
+                        @Parameter(description = "한 페이지 당 최대 항목 개수(기본적으로 6의 배수)") @RequestParam(value = "size", defaultValue = "24") Integer size);
 
 }
