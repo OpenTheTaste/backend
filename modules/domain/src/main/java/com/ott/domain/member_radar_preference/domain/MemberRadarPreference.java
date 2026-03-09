@@ -59,8 +59,9 @@ public class MemberRadarPreference extends BaseEntity {
                 .build();
     }
 
-    public void updatePreference(Integer popularity, Integer immersion,
-                                 Integer mania, Integer recency, Integer reWatch) {
+    public void updatePreference(
+            Integer popularity, Integer immersion, Integer mania, Integer recency, Integer reWatch
+    ) {
         this.popularity = popularity;
         this.immersion = immersion;
         this.mania = mania;

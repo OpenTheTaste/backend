@@ -75,6 +75,8 @@ public enum ErrorCode {
     INVALID_SHORTFORM_CONTENTS_TARGET(HttpStatus.BAD_REQUEST, "B404", "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다"),
     INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B405", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요"),
     
+    RADAR_PREFERENCE_NOT_FOUND(HttpStatus.NOT_FOUND, "B406", "레이더 차트 설정을 찾을 수 없습니다"),
+
     // ========== Server (S) - 서버/시스템 ==========
     STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다");
     
