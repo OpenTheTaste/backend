@@ -23,6 +23,7 @@ import java.util.List;
 public class JwtTokenProvider {
 
     private static final String CLAIM_AUTH = "auth";
+    private static final String CLAIM_TYPE = "type";
 
     private final SecretKey key;
     private final long accessTokenExpiry;
@@ -40,23 +41,25 @@ public class JwtTokenProvider {
 
     // Access JWT 생성
     public String createAccessToken(Long memberId, List<String> authorities) {
-        return createToken(memberId, authorities, accessTokenExpiry);
+        return createToken(memberId, authorities, accessTokenExpiry, "access");
     }
 
     // Refresh JWT 생성
     public String createRefreshToken(Long memberId, List<String> authorities) {
-        return createToken(memberId, authorities, refreshTokenExpiry);
+        return createToken(memberId, authorities, refreshTokenExpiry, "refresh");
     }
 
     // JWT 생성
     // header는 자동으로 생김
     // claim -> sub, auth, iat(issued at), exp(expiration)이 들어감
+    // claim -> 추가로 type을 넣어서 access, refresh 토큰 구별
     // signature -> Ec(header+payload)
-    private String createToken(Long memberId, List<String> authorities, long expiryMillis) {
+    private String createToken(Long memberId, List<String> authorities, long expiryMillis, String type) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(memberId))
                 .claim(CLAIM_AUTH, authorities) // ["ROLE_MEMBER", "ROLE_ADMIN", "ROLE_EDITOR"]
+                .claim(CLAIM_TYPE, type)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expiryMillis))
                 .signWith(key) // 서명
@@ -96,6 +99,15 @@ public class JwtTokenProvider {
         } catch (JwtException | IllegalArgumentException e) {
             return ErrorCode.INVALID_TOKEN; // A002
         }
+    }
+
+    // 타입 검증 메서드
+    public boolean isAccessToken(String token) {
+        return "access".equals(getClaims(token).get(CLAIM_TYPE));
+    }
+
+    public boolean isRefreshToken(String token) {
+        return "refresh".equals(getClaims(token).get(CLAIM_TYPE));
     }
 
 }

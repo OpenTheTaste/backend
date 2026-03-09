@@ -41,10 +41,6 @@ public record ShortFormUploadRequest(
         @NotBlank
         String posterFileName,
 
-        @Schema(type = "String", description = "썸네일 원본 파일명", example = "thumb.jpg")
-        @NotBlank
-        String thumbnailFileName,
-
         @Schema(type = "String", description = "원본 영상 파일명", example = "origin.mp4")
         @NotBlank
         String originFileName

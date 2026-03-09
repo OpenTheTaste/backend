@@ -44,21 +44,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             ErrorCode errorCode = jwtTokenProvider.validateAndGetErrorCode(token);
 
             if(errorCode == null) {
-                Long memberId = jwtTokenProvider.getMemberId(token);
+                // refresh 토큰으로 API 접근 차단
+                if(!jwtTokenProvider.isAccessToken(token)){
+                    request.setAttribute(JwtAuthenticationEntryPoint.ERROR_CODE, ErrorCode.INVALID_TOKEN);
+                } else {
+                    Long memberId = jwtTokenProvider.getMemberId(token);
 
-                // auth: ["ROLE_USER"]
-                List<String> authorities = jwtTokenProvider.getAuthorities(token);
+                    // auth: ["ROLE_USER"]
+                    List<String> authorities = jwtTokenProvider.getAuthorities(token);
 
-                // Authentication을 만듬 -> 민감한 정보 저장 x
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        memberId, // principal // 추후 UserDetails로 변경할 예정 아마도
-                        null, // credentials
-                        authorities.stream() // grantedAuthorities
-                                .map(SimpleGrantedAuthority::new)
-                                .toList()
-                );
-                // Authenication을 SecurityContext에 넣음
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // Authentication을 만듬 -> 민감한 정보 저장 x
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            memberId, // principal // 추후 UserDetails로 변경할 예정 아마도
+                            null, // credentials
+                            authorities.stream() // grantedAuthorities
+                                    .map(SimpleGrantedAuthority::new)
+                                    .toList()
+                    );
+                    // Authenication을 SecurityContext에 넣음
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             } else {
                 // 실패할 경우 해당 에러코드를 reqeust에 넣음
                 request.setAttribute(JwtAuthenticationEntryPoint.ERROR_CODE, errorCode);

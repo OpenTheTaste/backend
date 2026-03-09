@@ -45,4 +45,8 @@ public interface MediaRepositoryCustom {
 
         // 추천 종합 쿼리
         List<Media> findRecommendedMedias(Map<Long, Integer> tagScores, MediaType mediaType, Long excludeMediaId, int limit, long offset);
+
+
+        // 유저용 통합 검색 (활성 상태 및 공개 처리된 시리즈+단편만 조회)
+        Page<Media> findUserSearchMediaList(Pageable pageable, String searchWord);
 }

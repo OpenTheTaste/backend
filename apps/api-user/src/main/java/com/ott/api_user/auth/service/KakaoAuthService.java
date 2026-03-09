@@ -32,9 +32,9 @@ public class KakaoAuthService {
                 .findByProviderAndProviderId(Provider.KAKAO, kakaoUserInfo.getProviderId())
                 .map(existingMember -> {
                     existingMember.reactivate();
-                    existingMember.updateKakaoProfile(
-                            kakaoUserInfo.getEmail(),
-                            kakaoUserInfo.getNickname());
+//                    existingMember.updateKakaoProfile(
+//                            kakaoUserInfo.getEmail(),
+//                            kakaoUserInfo.getNickname());
                     return existingMember;
                 })
                 .orElseGet(() -> memberRepository.save(

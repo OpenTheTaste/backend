@@ -18,6 +18,7 @@ public class ApiUserApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ApiUserApplication.class, args);
+		
 	}
 
 }

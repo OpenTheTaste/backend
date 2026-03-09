@@ -73,21 +73,15 @@ public class BackOfficeContentsMapper {
             Long contentsId,
             String posterObjectKey,
             String thumbnailObjectKey,
-            String originObjectKey,
-            String masterPlaylistObjectKey,
             String posterUploadUrl,
-            String thumbnailUploadUrl,
-            String originUploadUrl
+            String thumbnailUploadUrl
     ) {
         return new ContentsUpdateResponse(
                 contentsId,
                 posterObjectKey,
                 thumbnailObjectKey,
-                originObjectKey,
-                masterPlaylistObjectKey,
                 posterUploadUrl,
-                thumbnailUploadUrl,
-                originUploadUrl
+                thumbnailUploadUrl
         );
     }
 
