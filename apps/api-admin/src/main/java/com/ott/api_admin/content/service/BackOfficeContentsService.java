@@ -81,16 +81,18 @@ public class BackOfficeContentsService {
         // 2. 소속 시리즈 제목 및 태그 추출
         Long originMediaId = mediaId;
         String seriesTitle = null;
+        Long seriesId = null;
         if (contents.getSeries() != null) {
             Media originMedia = contents.getSeries().getMedia();
             originMediaId = originMedia.getId();
             seriesTitle = originMedia.getTitle();
+            seriesId = contents.getSeries().getId();
         }
 
         // 3. 태그 조회
         List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(originMediaId);
 
-        return backOfficeContentsMapper.toContentsDetailResponse(contents, media, uploaderNickname, seriesTitle, mediaTagList);
+        return backOfficeContentsMapper.toContentsDetailResponse(seriesId, contents, media, uploaderNickname, seriesTitle, mediaTagList);
     }
 
     @Transactional

@@ -24,12 +24,13 @@ public class BackOfficeContentsMapper {
         );
     }
 
-    public ContentsDetailResponse toContentsDetailResponse(Contents contents, Media media, String uploaderNickname, String seriesTitle, List<MediaTag> mediaTagList) {
+    public ContentsDetailResponse toContentsDetailResponse(Long seriesId, Contents contents, Media media, String uploaderNickname, String seriesTitle, List<MediaTag> mediaTagList) {
         String categoryName = extractCategoryName(mediaTagList);
         List<String> tagNameList = extractTagNameList(mediaTagList);
 
         return new ContentsDetailResponse(
                 contents.getId(),
+                seriesId,
                 media.getPosterUrl(),
                 media.getThumbnailUrl(),
                 media.getTitle(),

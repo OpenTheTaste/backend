@@ -12,6 +12,8 @@ public record ContentsDetailResponse(
 
         @Schema(type = "Long", description = "콘텐츠 ID", example = "1") Long contentsId,
 
+        @Schema(type = "Long", description = "시리즈 ID", example = "1") Long seriesId,
+
         @Schema(type = "String", description = "포스터 URL", example = "https://cdn.example.com/poster.jpg") String posterUrl,
 
         @Schema(type = "String", description = "썸네일 URL", example = "https://cdn.example.com/thumb.jpg") String thumbnailUrl,
