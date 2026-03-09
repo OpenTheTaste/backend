@@ -38,6 +38,10 @@ CREATE TABLE IF NOT EXISTS member_radar_preference
 ) ENGINE = InnoDB;
 
 
+-- 재시청 횟수 추적 (첫 시청 = 0, 재시청마다 +1)
+ALTER TABLE watch_history
+    ADD COLUMN re_watch_count INT NOT NULL DEFAULT 0;
+
 -- Media Metrics
 ALTER TABLE media_metrics
     ADD CONSTRAINT uk_media_metrics_media
@@ -48,10 +52,6 @@ ALTER TABLE media_metrics
         FOREIGN KEY (media_id)
             REFERENCES media (id);
 
--- 재시청 횟수 추적 (첫 시청 = 0, 재시청마다 +1)
-ALTER TABLE watch_history
-    ADD COLUMN re_watch_count INT NOT NULL DEFAULT 0;
-
 -- Member Radar Preference
 ALTER TABLE member_radar_preference
     ADD CONSTRAINT uk_member_radar_preference_member
@@ -61,3 +61,9 @@ ALTER TABLE member_radar_preference
     ADD CONSTRAINT fk_member_radar_preference_member
         FOREIGN KEY (member_id)
             REFERENCES member (id);
+
+-- 기존 회원에 대한 레이더 설정 기본값 백필
+INSERT INTO member_radar_preference (member_id, popularity, immersion, mania, recency, re_watch, created_date, modified_date, status)
+SELECT id, 0, 0, 0, 0, 0, NOW(), NOW(), 'ACTIVE'
+FROM member
+WHERE id NOT IN (SELECT member_id FROM member_radar_preference);
