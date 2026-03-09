@@ -32,6 +32,10 @@ public class SearchService {
         
         String keyword = searchWord.trim();
 
+        if (keyword.length() < 2) {
+            throw new BusinessException(ErrorCode.SEARCH_KEYWORD_TOO_SHORT);
+        }
+
         // 2. DB 레벨의 페이징 및 최신순 정렬 (생성일 기준 내림차순)
         Pageable pageable = PageRequest.of(page, size);
         
