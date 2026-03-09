@@ -3,18 +3,13 @@ package com.ott.api_user.media_matrics.controller;
 import com.ott.api_user.media_matrics.dto.request.RadarPreferenceRequest;
 import com.ott.api_user.media_matrics.dto.response.RadarMediaResponse;
 import com.ott.api_user.media_matrics.dto.response.RadarPreferenceResponse;
-import com.ott.api_user.media_matrics.service.RadarRecommendService;
 import com.ott.api_user.media_matrics.service.RadarPreferenceService;
 import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,7 +19,6 @@ import java.util.List;
 public class RadarPreferenceController implements RadarPreferenceApi {
 
     private final RadarPreferenceService radarPreferenceService;
-    private final RadarRecommendService radarRecommendService;
 
     @Override
     @GetMapping
@@ -52,7 +46,7 @@ public class RadarPreferenceController implements RadarPreferenceApi {
             @AuthenticationPrincipal Long memberId
     ) {
         return ResponseEntity.ok(
-                SuccessResponse.of(radarRecommendService.getRecommendations(memberId))
+                SuccessResponse.of(radarPreferenceService.getRecommendations(memberId))
         );
     }
 }
