@@ -1,8 +1,8 @@
-package com.ott.api_user.media_matrics.service;
+package com.ott.api_user.radar_preference.service;
 
-import com.ott.api_user.media_matrics.dto.request.RadarPreferenceRequest;
-import com.ott.api_user.media_matrics.dto.response.RadarMediaResponse;
-import com.ott.api_user.media_matrics.dto.response.RadarPreferenceResponse;
+import com.ott.api_user.media_metrics.dto.request.RadarPreferenceRequest;
+import com.ott.api_user.media_metrics.dto.response.RadarMediaResponse;
+import com.ott.api_user.media_metrics.dto.response.RadarPreferenceResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.media.domain.Media;
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ott.api_user.media_matrics.constant.RadarPreferenceConstant.*;
+import static com.ott.api_user.media_metrics.constant.RadarPreferenceConstant.*;
 
 @Service
 @RequiredArgsConstructor

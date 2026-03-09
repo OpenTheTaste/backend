@@ -1,4 +1,4 @@
-package com.ott.api_user.media_matrics.dto.response;
+package com.ott.api_user.media_metrics.dto.response;
 
 import com.ott.domain.common.MediaType;
 import com.ott.domain.media.domain.Media;

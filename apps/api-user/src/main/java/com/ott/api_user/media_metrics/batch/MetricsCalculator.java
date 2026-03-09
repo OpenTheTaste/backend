@@ -1,4 +1,4 @@
-package com.ott.api_user.media_matrics.batch;
+package com.ott.api_user.media_metrics.batch;
 
 import com.ott.domain.media_metrics.repository.MediaMetricsJdbcRepository;
 import com.ott.domain.media_metrics.repository.MediaMetricsProjection;

@@ -1,4 +1,4 @@
-package com.ott.api_user.media_matrics.batch;
+package com.ott.api_user.media_metrics.batch;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

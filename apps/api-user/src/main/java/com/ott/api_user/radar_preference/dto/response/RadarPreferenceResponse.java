@@ -1,4 +1,4 @@
-package com.ott.api_user.media_matrics.dto.response;
+package com.ott.api_user.media_metrics.dto.response;
 
 import com.ott.domain.member_radar_preference.domain.MemberRadarPreference;
 import io.swagger.v3.oas.annotations.media.Schema;

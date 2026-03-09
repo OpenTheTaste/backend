@@ -1,4 +1,4 @@
-package com.ott.api_user.media_matrics.constant;
+package com.ott.api_user.radar_preference.constant;
 
 public final class RadarPreferenceConstant {
 
