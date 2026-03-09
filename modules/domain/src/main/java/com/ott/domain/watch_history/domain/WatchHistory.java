@@ -58,8 +58,4 @@ public class WatchHistory extends BaseEntity {
     public void updateLastWatchedAt(){
         this.lastWatchedAt = LocalDateTime.now();
     }
-
-    public void incrementReWatchCount() {
-        this.reWatchCount++;
-    }
 }

@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ott.api_user.media_metrics.constant.RadarPreferenceConstant.*;
+import static com.ott.api_user.radar_preference.constant.RadarPreferenceConstant.*;
 
 @Service
 @RequiredArgsConstructor

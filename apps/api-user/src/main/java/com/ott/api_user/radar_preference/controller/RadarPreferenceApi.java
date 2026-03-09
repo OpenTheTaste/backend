@@ -63,7 +63,7 @@ public interface RadarPreferenceApi {
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping
+    @GetMapping("/recommend")
     ResponseEntity<SuccessResponse<List<RadarMediaResponse>>> getRecommendationList(
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
     );
