@@ -167,27 +167,21 @@ public class BackOfficeContentsService {
         Series series = resolveSeries(request.seriesId());
 
         media.updateMetadata(request.title(), request.description(), request.publicStatus());
-        contents.updateMetadata(series, request.actors(), request.duration(), request.videoSize());
+        // 콘텐츠 수정 API에서는 영상(원본 URL, 길이, 용량)을 변경하지 않습니다.
+        contents.updateMetadata(series, request.actors());
 
-        UploadHelper.MediaUpdateUploadResult mediaUpdateUploadResult = uploadHelper.prepareMediaUpdate(
+        UploadHelper.ImageUpdateUploadResult imageUpdateUploadResult = uploadHelper.prepareImageUpdate(
                 "contents",
                 contentsId,
                 request.posterFileName(),
                 request.thumbnailFileName(),
-                request.originFileName(),
                 media.getPosterUrl(),
-                media.getThumbnailUrl(),
-                contents.getOriginUrl(),
-                contents.getMasterPlaylistUrl()
+                media.getThumbnailUrl()
         );
 
         media.updateImageKeys(
-                mediaUpdateUploadResult.nextPosterUrl(),
-                mediaUpdateUploadResult.nextThumbnailUrl()
-        );
-        contents.updateStorageKeys(
-                mediaUpdateUploadResult.nextOriginUrl(),
-                mediaUpdateUploadResult.nextMasterPlaylistUrl()
+                imageUpdateUploadResult.nextPosterUrl(),
+                imageUpdateUploadResult.nextThumbnailUrl()
         );
 
         mediaTagRepository.deleteAllByMedia_Id(media.getId());
@@ -195,13 +189,10 @@ public class BackOfficeContentsService {
 
         return backOfficeContentsMapper.toContentsUpdateResponse(
                 contentsId,
-                mediaUpdateUploadResult.posterObjectKey(),
-                mediaUpdateUploadResult.thumbnailObjectKey(),
-                mediaUpdateUploadResult.originObjectKey(),
-                mediaUpdateUploadResult.masterPlaylistObjectKey(),
-                mediaUpdateUploadResult.posterUploadUrl(),
-                mediaUpdateUploadResult.thumbnailUploadUrl(),
-                mediaUpdateUploadResult.originUploadUrl()
+                imageUpdateUploadResult.posterObjectKey(),
+                imageUpdateUploadResult.thumbnailObjectKey(),
+                imageUpdateUploadResult.posterUploadUrl(),
+                imageUpdateUploadResult.thumbnailUploadUrl()
         );
     }
 

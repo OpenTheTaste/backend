@@ -88,21 +88,15 @@ public class BackOfficeShortFormMapper {
             Long shortFormId,
             String posterObjectKey,
             String thumbnailObjectKey,
-            String originObjectKey,
-            String masterPlaylistObjectKey,
             String posterUploadUrl,
-            String thumbnailUploadUrl,
-            String originUploadUrl
+            String thumbnailUploadUrl
     ) {
         return new ShortFormUpdateResponse(
                 shortFormId,
                 posterObjectKey,
                 thumbnailObjectKey,
-                originObjectKey,
-                masterPlaylistObjectKey,
                 posterUploadUrl,
-                thumbnailUploadUrl,
-                originUploadUrl
+                thumbnailUploadUrl
         );
     }
 

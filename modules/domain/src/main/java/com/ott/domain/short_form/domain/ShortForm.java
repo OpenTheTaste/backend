@@ -21,7 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Optional;
-import java.util.Objects;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -64,11 +63,9 @@ public class ShortForm extends BaseEntity {
         this.masterPlaylistUrl = masterPlaylistUrl;
     }
 
-    public void updateMetadata(Series series, Contents contents, Integer duration, Integer videoSize) {
+    public void updateMetadata(Series series, Contents contents) {
         this.series = series;
         this.contents = contents;
-        this.duration = duration;
-        this.videoSize = videoSize;
     }
 
     public Optional<Media> findOriginMedia() {
