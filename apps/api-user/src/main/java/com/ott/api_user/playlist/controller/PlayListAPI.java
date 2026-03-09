@@ -32,6 +32,8 @@ import java.util.List;
 @SecurityRequirement(name = "BearerAuth") // 인증인가 확인
 @Tag(name = "Playlist", description = "플레이리스트& 재생목록 API, excludeMediaId 는 재생목록 API 호출 시에만 포함시킵니다")
 @ApiResponses(value = {
+    @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
+        content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class))),
     @ApiResponse(responseCode = "200", description = "조회 성공", 
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
     @ApiResponse(responseCode = "401", description = "인증 실패", 
