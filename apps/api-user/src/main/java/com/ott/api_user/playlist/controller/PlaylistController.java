@@ -4,32 +4,26 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 
 import com.ott.api_user.common.ContentSource;
 import com.ott.api_user.playlist.dto.request.PlaylistCondition;
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
 import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
 import com.ott.api_user.playlist.service.PlaylistStrategyService;
-import com.ott.api_user.playlist.dto.response.RecentWatchResponse;
-import com.ott.api_user.playlist.service.PlaylistService;
-import com.ott.api_user.playlist.dto.response.TagPlaylistResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/playlists")
 public class PlaylistController implements PlayListAPI {
 
-    private final PlaylistService playlistService;
-    private final PlaylistStrategyService playlisStrategytService;
-
+    private final PlaylistStrategyService playlistStrategytService;
 
     // 1. 종합 추천
     @Override
@@ -66,7 +60,7 @@ public class PlaylistController implements PlayListAPI {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getTopTagPlaylistWithMetadata(condition, pageable)));
+        return ResponseEntity.ok(SuccessResponse.of(playlistStrategytService.getTopTagPlaylistWithMetadata(condition, pageable)));
         
     }
 
@@ -183,9 +177,7 @@ public class PlaylistController implements PlayListAPI {
 
         Pageable pageable = PageRequest.of(pageParam, sizeParam);
 
-        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getPlaylists(condition, pageable)));
+        return ResponseEntity.ok(SuccessResponse.of(playlistStrategytService.getPlaylists(condition, pageable)));
     }
-
-
 }
 

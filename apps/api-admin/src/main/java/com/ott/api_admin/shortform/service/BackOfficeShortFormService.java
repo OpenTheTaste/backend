@@ -191,7 +191,7 @@ public class BackOfficeShortFormService {
 
                 Long shortFormId = shortForm.getId();
                 UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
-                                "short-forms", shortFormId, request.posterFileName(), request.thumbnailFileName(), request.originFileName()
+                                "short-forms", shortFormId, request.posterFileName(), null, request.originFileName()
                 );
 
                 media.updateImageKeys(
@@ -242,28 +242,22 @@ public class BackOfficeShortFormService {
 
 
                 media.updateMetadata(request.title(), request.description(), request.publicStatus());
-                shortForm.updateMetadata(series, contents, request.duration(), request.videoSize());
+                // 숏폼 수정 API에서는 영상(원본 URL, 길이, 용량)을 변경하지 않습니다.
+                shortForm.updateMetadata(series, contents);
 
                 Long shortFormId = shortForm.getId();
-                UploadHelper.MediaUpdateUploadResult mediaUpdateUploadResult = uploadHelper.prepareMediaUpdate(
+                UploadHelper.ImageUpdateUploadResult imageUpdateUploadResult = uploadHelper.prepareImageUpdate(
                                 "short-forms",
                                 shortFormId,
                                 request.posterFileName(),
-                                request.thumbnailFileName(),
-                                request.originFileName(),
+                                null,
                                 media.getPosterUrl(),
-                                media.getThumbnailUrl(),
-                                shortForm.getOriginUrl(),
-                                shortForm.getMasterPlaylistUrl()
+                                media.getThumbnailUrl()
                 );
 
                 media.updateImageKeys(
-                                mediaUpdateUploadResult.nextPosterUrl(),
-                                mediaUpdateUploadResult.nextThumbnailUrl()
-                );
-                shortForm.updateStorageKeys(
-                                mediaUpdateUploadResult.nextOriginUrl(),
-                                mediaUpdateUploadResult.nextMasterPlaylistUrl()
+                                imageUpdateUploadResult.nextPosterUrl(),
+                                imageUpdateUploadResult.nextThumbnailUrl()
                 );
 
                 Long originMediaId = resolveOriginMediaId(series, contents);
@@ -272,13 +266,10 @@ public class BackOfficeShortFormService {
 
                 return backOfficeShortFormMapper.toShortFormUpdateResponse(
                                 shortFormId,
-                                mediaUpdateUploadResult.posterObjectKey(),
-                                mediaUpdateUploadResult.thumbnailObjectKey(),
-                                mediaUpdateUploadResult.originObjectKey(),
-                                mediaUpdateUploadResult.masterPlaylistObjectKey(),
-                                mediaUpdateUploadResult.posterUploadUrl(),
-                                mediaUpdateUploadResult.thumbnailUploadUrl(),
-                                mediaUpdateUploadResult.originUploadUrl());
+                                imageUpdateUploadResult.posterObjectKey(),
+                                imageUpdateUploadResult.thumbnailObjectKey(),
+                                imageUpdateUploadResult.posterUploadUrl(),
+                                imageUpdateUploadResult.thumbnailUploadUrl());
         }
 
         private Contents resolveContents(Long contentsId) {
