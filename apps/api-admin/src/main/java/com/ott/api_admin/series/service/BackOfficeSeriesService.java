@@ -86,7 +86,9 @@ public class BackOfficeSeriesService {
                 .map(series -> series.getMedia().getId())
                 .toList();
 
-        Map<Long, List<MediaTag>> tagListByMediaId = mediaTagRepository.findWithTagAndCategoryByMediaIds(mediaIdList).stream()
+        Map<Long, List<MediaTag>> tagListByMediaId = mediaIdList.isEmpty()
+                ? Collections.emptyMap()
+                : mediaTagRepository.findWithTagAndCategoryByMediaIds(mediaIdList).stream()
                 .collect(Collectors.groupingBy(mt -> mt.getMedia().getId()));
 
         List<SeriesTitleListResponse> responseList = seriesPage.getContent().stream()
