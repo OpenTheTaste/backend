@@ -38,6 +38,11 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         private final JPAQueryFactory queryFactory;
 
+        
+        // ============================================================
+        // 백오피스 관련 쿼라
+        // ============================================================
+
         @Override
         public Page<Media> findMediaListByMediaTypeAndSearchWord(Pageable pageable, MediaType mediaType,
                         String searchWord) {
@@ -142,52 +147,57 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
         }
 
-    // 특정 태그를 가진 영상 조회
-    @Override
-    public List<Media> findMediasByTagId(Long tagId, Long excludeMediaId, int limit, long offset) {
-        return queryFactory.selectFrom(media)
-                .join(mediaTag).on(mediaTag.media.id.eq(media.id))
-                .where(
-                        media.status.eq(Status.ACTIVE),
-                        media.publicStatus.eq(PublicStatus.PUBLIC),
-                        mediaTag.tag.id.eq(tagId),
-                        excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
-                .orderBy(media.id.desc())
-                .limit(limit)
-                .offset(offset)
-                .fetch();
-    }
+        // ============================================================
+        // 유저 API 관련 쿼라
+        // ============================================================
 
-    // 특정 태그에 속하는 추천 콘텐츠 조회
-    @Override
-    public List<TagContentProjection> findRecommendContentsByTagId(Long tagId, int limit) {
-        return queryFactory
-                .select(Projections.constructor(TagContentProjection.class,
-                        media.id,
-                        media.posterUrl,
-                        media.mediaType
-                ))
-                .from(media)
-                .join(mediaTag).on(
-                        mediaTag.media.id.eq(media.id),
-                        mediaTag.tag.id.eq(tagId),
-                        mediaTag.status.eq(ACTIVE)
-                )
-                .leftJoin(contents).on(
-                        contents.media.id.eq(media.id),
-                        contents.series.isNull()
-                )
-                .where(
-                        media.status.eq(ACTIVE),
-                        media.publicStatus.eq(PUBLIC),
-                        // 시리즈 자체 OR 단편 콘텐츠 (시리즈 에피소드 제외)
-                        media.mediaType.eq(SERIES)
-                                .or(media.mediaType.eq(CONTENTS).and(contents.id.isNotNull()))
-                )
-                .orderBy(media.bookmarkCount.desc())  // 북마크 많은 순 정렬
-                .limit(limit)
-                .fetch();
-    }
+
+        // 특정 태그를 가진 영상 조회
+        @Override
+        public List<Media> findMediasByTagId(Long tagId, Long excludeMediaId, int limit, long offset) {
+                return queryFactory.selectFrom(media)
+                        .join(mediaTag).on(mediaTag.media.id.eq(media.id))
+                        .where(
+                                media.status.eq(Status.ACTIVE),
+                                media.publicStatus.eq(PublicStatus.PUBLIC),
+                                mediaTag.tag.id.eq(tagId),
+                                excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
+                        .orderBy(media.id.desc())
+                        .limit(limit)
+                        .offset(offset)
+                        .fetch();
+        }
+
+        // 특정 태그에 속하는 추천 콘텐츠 조회
+        @Override
+        public List<TagContentProjection> findRecommendContentsByTagId(Long tagId, int limit) {
+                return queryFactory
+                        .select(Projections.constructor(TagContentProjection.class,
+                                media.id,
+                                media.posterUrl,
+                                media.mediaType
+                        ))
+                        .from(media)
+                        .join(mediaTag).on(
+                                mediaTag.media.id.eq(media.id),
+                                mediaTag.tag.id.eq(tagId),
+                                mediaTag.status.eq(ACTIVE)
+                        )
+                        .leftJoin(contents).on(
+                                contents.media.id.eq(media.id),
+                                contents.series.isNull()
+                        )
+                        .where(
+                                media.status.eq(ACTIVE),
+                                media.publicStatus.eq(PUBLIC),
+                                // 시리즈 자체 OR 단편 콘텐츠 (시리즈 에피소드 제외)
+                                media.mediaType.eq(SERIES)
+                                        .or(media.mediaType.eq(CONTENTS).and(contents.id.isNotNull()))
+                        )
+                        .orderBy(media.bookmarkCount.desc())  // 북마크 많은 순 정렬
+                        .limit(limit)
+                        .fetch();
+        }
 
 
         /*
@@ -377,6 +387,33 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .limit(limit)
                                 .offset(offset)
                                 .fetch();
+        }
+
+        // 유저용 통합 검색 (시리즈/단편 검색)
+        @Override
+        public Page<Media> findUserSearchMediaList(Pageable pageable, String searchWord) {
+                List<Media> mediaList = queryFactory
+                        .selectFrom(media)
+                        .where(
+                                isActiveAndPublic(),       // 일반 유저용 핵심 방어 코드 (ACTIVE + PUBLIC)
+                                isDisplayable(),           // 숏폼 및 에피소드 제외 로직 재활용
+                                titleContains(searchWord)  // 검색어 동적 필터링
+                        )
+                        .orderBy(media.createdDate.desc(), media.id.desc()) // 최신순 정렬
+                        .offset(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .fetch();
+
+                JPAQuery<Long> countQuery = queryFactory
+                        .select(media.count())
+                        .from(media)
+                        .where(
+                                isActiveAndPublic(),
+                                isDisplayable(),
+                                titleContains(searchWord)
+                        );
+
+                return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
         }
 
         // --- 동적 쿼리 헬퍼 메서드 ---
