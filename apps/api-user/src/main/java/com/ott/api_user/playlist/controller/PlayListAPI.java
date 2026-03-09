@@ -32,8 +32,6 @@ import java.util.List;
 @SecurityRequirement(name = "BearerAuth") // 인증인가 확인
 @Tag(name = "Playlist", description = "플레이리스트& 재생목록 API, excludeMediaId 는 재생목록 API 호출 시에만 포함시킵니다")
 @ApiResponses(value = {
-    @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
-        content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class))),
     @ApiResponse(responseCode = "200", description = "조회 성공", 
         content = @Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))),
     @ApiResponse(responseCode = "401", description = "인증 실패", 
@@ -43,6 +41,8 @@ import java.util.List;
 })
 public interface PlayListAPI {
         @Operation(summary = "OO 님이 좋아하실만한 콘텐츠", description = "유저 취향을 합산하여 추천합니다. (홈 화면 셔플 지원)")
+        @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class)))
         @GetMapping("/recommend")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getRecommendPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
@@ -52,10 +52,9 @@ public interface PlayListAPI {
         );
 
         
-
         @Operation(summary = "선호 태그 순위별 리스트", description = "유저의 Top 3 태그 순위를 기반으로 제공합니다.")
         @ApiResponses(
-                @ApiResponse(responseCode = "200", description = "태그 순위별 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))))
+                @ApiResponse(responseCode = "0", description = "태그 순위별 조회 성공", content = @Content(schema = @Schema(implementation = TopTagPlaylistResponse.class))))
         @GetMapping("/tags/top")
         ResponseEntity<SuccessResponse<TopTagPlaylistResponse>> getTopTagPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
@@ -68,7 +67,10 @@ public interface PlayListAPI {
         
 
         @Operation(summary = "상세 페이지 - 특정 해시태그 리스트", description = "해당 태그의 영상만 제공합니다.")
-        @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+        @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class)))
+        @ApiResponse(responseCode = "404", description = "해당 태그를 찾을 수 없음", 
+                content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
         @GetMapping("/tags/{tagId}")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTagPlaylists(
                 @Parameter(description = "태그 ID", required = true) @PathVariable(value = "tagId") Long tagId,
@@ -79,6 +81,8 @@ public interface PlayListAPI {
         );
 
         @Operation(summary = "인기 차트 (Trending)", description = "북마크가 많은 인기 순서대로 제공합니다.")
+        @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class)))
         @GetMapping("/trending")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTrendingPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
@@ -88,6 +92,8 @@ public interface PlayListAPI {
         );
 
         @Operation(summary = "시청 이력 (History)", description = "유저가 최근 시청한 영상 목록을 제공합니다.")
+        @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class)))
         @GetMapping("/history")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getHistoryPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
@@ -97,6 +103,8 @@ public interface PlayListAPI {
         );
 
         @Operation(summary = "북마크 목록 (Bookmark)", description = "유저가 북마크한 영상 목록을 제공합니다.")
+        @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class)))
         @GetMapping("/bookmarks")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getBookmarkPlaylists(
                 @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
@@ -106,6 +114,8 @@ public interface PlayListAPI {
         );
 
         @Operation(summary = "검색 상세 페이지 재생목록", description = "검색 결과에서 진입 시 종합 추천 리스트로 대체하여 제공합니다.")
+        @ApiResponse(responseCode = "0", description = "플레이리스트 DTO 응답 구조", 
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = PlaylistResponse.class)))
         @GetMapping("/search")
         ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getSearchPlaylists(
                 @Parameter(description = "현재 영상 ID", required = true) @RequestParam(value = "excludeMediaId") Long excludeMediaId,
