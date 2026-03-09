@@ -44,7 +44,7 @@ public interface RadarPreferenceApi {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 (범위 초과 등)",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "레이더 차트 설정 설정을 찾을 수 없음",
+            @ApiResponse(responseCode = "404", description = "레이더 차트 설정을 찾을 수 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)))
     })
