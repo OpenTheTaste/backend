@@ -11,7 +11,6 @@ import com.ott.api_user.playlist.dto.request.PlaylistCondition;
 import com.ott.api_user.playlist.dto.response.PlaylistResponse;
 import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
 import com.ott.api_user.playlist.service.PlaylistStrategyService;
-import com.ott.api_user.playlist.service.PlaylistService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
@@ -24,14 +23,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/playlists")
 public class PlaylistController implements PlayListAPI {
 
-    private final PlaylistStrategyService playlisStrategytService;
+    private final PlaylistStrategyService playlistStrategytService;
 
     // 1. 종합 추천
     @Override
     public ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getRecommendPlaylists(
             @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         PlaylistCondition condition = new PlaylistCondition();
@@ -47,7 +46,7 @@ public class PlaylistController implements PlayListAPI {
             @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @RequestParam(value = "index") Integer index,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         PlaylistCondition condition = new PlaylistCondition();
@@ -61,7 +60,7 @@ public class PlaylistController implements PlayListAPI {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getTopTagPlaylistWithMetadata(condition, pageable)));
+        return ResponseEntity.ok(SuccessResponse.of(playlistStrategytService.getTopTagPlaylistWithMetadata(condition, pageable)));
         
     }
 
@@ -71,7 +70,7 @@ public class PlaylistController implements PlayListAPI {
             @PathVariable(value = "tagId") Long tagId,
             @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         PlaylistCondition condition = new PlaylistCondition();
@@ -87,7 +86,7 @@ public class PlaylistController implements PlayListAPI {
     public ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getTrendingPlaylists(
             @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         PlaylistCondition condition = new PlaylistCondition();
@@ -104,7 +103,7 @@ public class PlaylistController implements PlayListAPI {
     public ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getHistoryPlaylists(
             @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         PlaylistCondition condition = new PlaylistCondition();
@@ -119,7 +118,7 @@ public class PlaylistController implements PlayListAPI {
     public ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getBookmarkPlaylists(
             @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         PlaylistCondition condition = new PlaylistCondition();
@@ -134,7 +133,7 @@ public class PlaylistController implements PlayListAPI {
     public ResponseEntity<SuccessResponse<PageResponse<PlaylistResponse>>> getSearchPlaylists(
             @RequestParam(value = "excludeMediaId") Long excludeMediaId,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
             @AuthenticationPrincipal Long memberId) {
 
         PlaylistCondition condition = new PlaylistCondition();
@@ -178,7 +177,7 @@ public class PlaylistController implements PlayListAPI {
 
         Pageable pageable = PageRequest.of(pageParam, sizeParam);
 
-        return ResponseEntity.ok(SuccessResponse.of(playlisStrategytService.getPlaylists(condition, pageable)));
+        return ResponseEntity.ok(SuccessResponse.of(playlistStrategytService.getPlaylists(condition, pageable)));
     }
 }
 
