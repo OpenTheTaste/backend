@@ -261,7 +261,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                         // 4. 동일한 시리즈(드라마)의 여러 에피소드를 봤더라도 대표 썸네일 1개로 병합
                         .groupBy(media.id)
                         // 5. 묶인 에피소드들 중 가장 최근(Max)에 시청한 시간을 기준으로 내림차순 정렬
-                        .orderBy(playback.modifiedDate.max().desc())
+                        .orderBy(playback.modifiedDate.max().desc() , media.id.desc())
                         .offset(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .fetch();
