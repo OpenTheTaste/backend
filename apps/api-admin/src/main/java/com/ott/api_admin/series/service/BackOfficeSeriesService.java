@@ -82,8 +82,20 @@ public class BackOfficeSeriesService {
 
         Page<Series> seriesPage = seriesRepository.findSeriesListWithMediaBySearchWord(pageable, searchWord);
 
+        List<Long> mediaIdList = seriesPage.getContent().stream()
+                .map(series -> series.getMedia().getId())
+                .toList();
+
+        Map<Long, List<MediaTag>> tagListByMediaId = mediaIdList.isEmpty()
+                ? Collections.emptyMap()
+                : mediaTagRepository.findWithTagAndCategoryByMediaIds(mediaIdList).stream()
+                .collect(Collectors.groupingBy(mt -> mt.getMedia().getId()));
+
         List<SeriesTitleListResponse> responseList = seriesPage.getContent().stream()
-                .map(backOfficeSeriesMapper::toSeriesTitleList)
+                .map(series -> backOfficeSeriesMapper.toSeriesTitleList(
+                        series,
+                        tagListByMediaId.getOrDefault(series.getMedia().getId(), List.of())
+                ))
                 .toList();
 
         PageInfo pageInfo = PageInfo.toPageInfo(
