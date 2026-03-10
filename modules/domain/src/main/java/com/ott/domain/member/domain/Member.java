@@ -88,12 +88,4 @@ public class Member extends BaseEntity {
     public void completeOnboarding() {
         this.onboardingCompleted = true;
     }
-
-    // 회원 탈퇴 - Soft Delete (refreshToken 초기화 + status DELETE, providerid = null)
-    public void withdraw() {
-        this.refreshToken = null;
-        this.providerId = null;
-        this.updateStatus(Status.DELETE);
-        this.onboardingCompleted = false;
-    }
 }
