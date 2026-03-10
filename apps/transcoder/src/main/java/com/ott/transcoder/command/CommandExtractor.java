@@ -16,10 +16,14 @@ public class CommandExtractor {
     public List<Command> extractCommand(TranscodeMessage message, ProbeResult probeResult) {
         List<Command> commandList = new ArrayList<>();
 
-        for (Resolution resolution : Resolution.values())
+        for (Resolution resolution : Resolution.values()) {
+            if (probeResult.isUpscaleFor(resolution.getHeight())) {
+                continue;
+            }
             commandList.add(new TranscodeCommand(resolution));
+        }
 
-        // TODO ...
+        // TODO: Thumbnail, Sprite ...
 
         return commandList;
     }
