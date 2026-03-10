@@ -258,7 +258,7 @@
       },
       "id": 6,
       "panels": [],
-      "title": "Row title",
+      "title": "서비스 핵심 지표",
       "type": "row"
     },
     {
@@ -424,7 +424,7 @@
               "options": {
                 "mode": "exclude",
                 "names": [
-                  "{area=\"heap\", job=\"transcoder\"}"
+                  "transcoder"
                 ],
                 "prefix": "All except:",
                 "readOnly": true

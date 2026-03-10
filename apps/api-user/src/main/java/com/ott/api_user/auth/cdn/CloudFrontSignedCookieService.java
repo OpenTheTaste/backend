@@ -38,7 +38,7 @@ public class CloudFrontSignedCookieService {
     private String privateKeyBase64;
 
     @Value("${cloudfront.signed-cookie.ttl-seconds:}")
-    private int ttlSeconds;
+    private int ttlMillis;
 
     public void addSignedCookies(HttpServletResponse response) {
 
@@ -47,13 +47,14 @@ public class CloudFrontSignedCookieService {
         }
 
         try {
-            long expireEpoch = Instant.now().plusSeconds(ttlSeconds / 1000L).getEpochSecond();
+            long ttlInSeconds = ttlMillis / 1000L;
+            long expireEpoch = Instant.now().plusSeconds(ttlInSeconds).getEpochSecond();
             String policy = buildPolicy(resourceUrl, expireEpoch);
             byte[] signatureBytes = sign(policy, loadPrivateKey(privateKeyBase64));
 
-            cookieUtil.addCookie(response, POLICY_COOKIE, cloudFrontBase64(policy.getBytes(StandardCharsets.UTF_8)), ttlSeconds);
-            cookieUtil.addCookie(response, SIGNATURE_COOKIE, cloudFrontBase64(signatureBytes), ttlSeconds);
-            cookieUtil.addCookie(response, KEY_PAIR_ID_COOKIE, keyPairId, ttlSeconds);
+            cookieUtil.addCookie(response, POLICY_COOKIE, cloudFrontBase64(policy.getBytes(StandardCharsets.UTF_8)), ttlMillis);
+            cookieUtil.addCookie(response, SIGNATURE_COOKIE, cloudFrontBase64(signatureBytes), ttlMillis);
+            cookieUtil.addCookie(response, KEY_PAIR_ID_COOKIE, keyPairId, ttlMillis);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.CLOUDFRONT_SIGNED_COOKIE_ISSUE_FAILED);
         }
