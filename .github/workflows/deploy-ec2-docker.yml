@@ -184,4 +184,5 @@ jobs:
 
           deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/api-user/env"
           deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/api-admin/env"
-          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "" "/oplust/transcoder/env"
+          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "8082" "/oplust/transcoder/env"
+
