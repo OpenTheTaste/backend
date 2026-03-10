@@ -29,7 +29,7 @@ import static com.ott.domain.common.Status.ACTIVE;
 import static com.ott.domain.media.domain.QMedia.media;
 import static com.ott.domain.bookmark.domain.QBookmark.bookmark;
 import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
-
+import static com.ott.domain.series.domain.QSeries.series;
 
 
 
@@ -234,34 +234,55 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         @Override
         public Page<Media> findHistoryPlaylists(Long memberId, MediaType mediaType, Long excludeMediaId, Pageable pageable) {
-                List<Media> content = queryFactory
-                                .select(media)
-                                .from(playback)
-                                .join(playback.contents.media, media) // 시청 기록과 미디어 정보 조인
-                                .where(
-                                                playback.member.id.eq(memberId), // 특정 사용자 필터링
-                                                mediaTypeEq(mediaType),
-                                                isActiveAndPublic(), // 활성/공개 상태 확인
-                                                isDisplayable(),
-                                                excludeId(excludeMediaId) // 현재 재생 중인 영상 제외
-                                )
-                                .orderBy(playback.modifiedDate.desc()) // 최근 시청 시점 순 정렬
-                                .offset(pageable.getOffset())
-                                .limit(pageable.getPageSize())
-                                .fetch();
+                List<Media> contentList = queryFactory
+                        .select(media)
+                        .from(playback)
+                        // 1. 유저가 시청한 실제 영상(에피소드 or 단편) 조인
+                        .join(playback.contents, contents)
+                        // 2. 에피소드일 경우를 대비해 Series 레프트 조인
+                        .leftJoin(contents.series, series)
+                        
+                        // 3. 핵심 마법: 상황에 맞춰 알맞은 대표 Media를 물고 옵니다!
+                        .join(media).on(
+                                // 단편(영화)인 경우: 시청한 영상 자체의 Media를 조인
+                                series.isNull().and(media.id.eq(contents.media.id))
+                                // 에피소드인 경우: 부모인 Series가 가진 대표 Media를 조인
+                                .or(series.isNotNull().and(media.id.eq(series.media.id)))
+                        )
+                        
+                        .where(
+                                playback.member.id.eq(memberId),
+                                mediaTypeEq(mediaType),
+                                isActiveAndPublic(), 
+                                excludeId(excludeMediaId)
+                                // isDisplayable()은 위 조인 로직으로 인해 자연스럽게 충족되므로 뺐습니다!
+                        )
+                        
+                        // 4. 동일한 시리즈(드라마)의 여러 에피소드를 봤더라도 대표 썸네일 1개로 병합
+                        .groupBy(media.id)
+                        // 5. 묶인 에피소드들 중 가장 최근(Max)에 시청한 시간을 기준으로 내림차순 정렬
+                        .orderBy(playback.modifiedDate.max().desc() , media.id.desc())
+                        .offset(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .fetch();
 
                 JPAQuery<Long> countQuery = queryFactory
-                                .select(playback.count())
-                                .from(playback)
-                                .join(playback.contents.media, media)
-                                .where(
-                                                playback.member.id.eq(memberId),
-                                                mediaTypeEq(mediaType),
-                                                isActiveAndPublic(),
-                                                isDisplayable(),
-                                                excludeId(excludeMediaId));
+                        .select(media.id.countDistinct()) // 페이징 개수 계산 시에도 중복 제거
+                        .from(playback)
+                        .join(playback.contents, contents)
+                        .leftJoin(contents.series, series)
+                        .join(media).on(
+                                series.isNull().and(media.id.eq(contents.media.id))
+                                .or(series.isNotNull().and(media.id.eq(series.media.id)))
+                        )
+                        .where(
+                                playback.member.id.eq(memberId),
+                                mediaTypeEq(mediaType),
+                                isActiveAndPublic(),
+                                excludeId(excludeMediaId)
+                        );
 
-                return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+                return PageableExecutionUtils.getPage(contentList, pageable, countQuery::fetchOne);
         }
 
         @Override
