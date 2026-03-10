@@ -53,6 +53,6 @@ springdoc:
 cloudfront:
   signed-cookie:
     resource-url: https://cdn.openthetaste.cloud/*
-    key-pair-id: ${CF_SIGNED_COOKIE_KEY_PAIR_ID:}
-    private-key-base64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64:}
+    key-pair-id: ${CF_SIGNED_COOKIE_KEY_PAIR_ID}
+    private-key-base64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64}
     ttl-seconds: 2400000
