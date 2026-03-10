@@ -37,21 +37,6 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long>, Bookm
     void softDeleteAllByMemberId(@Param("memberId") Long memberId);
 
 
-    // 회원 탈퇴 전 ACTIVE인 유저가 북마크 row 상태 변경
-    @Modifying(clearAutomatically = true)
-    @Query(value = """
-    UPDATE media m
-    JOIN (
-        SELECT b.media_id
-        FROM bookmark b
-        WHERE b.member_id = :memberId
-          AND b.status = 'ACTIVE'
-    ) t ON t.media_id = m.id
-    SET m.bookmark_count = GREATEST(0, m.bookmark_count - 1)
-    """, nativeQuery = true)
-    void decreaseBookmarkCountByMemberId(@Param("memberId") Long memberId);
-
-
     //주어진 미디어 중 북마크한 미디어들의 Id 리스트 조회
     @Query("SELECT b.media.id FROM Bookmark b " +
            "WHERE b.member.id = :memberId " +
