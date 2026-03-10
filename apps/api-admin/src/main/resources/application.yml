@@ -39,7 +39,7 @@ management:
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET_BASE64}
-  access-token-expiry: 3600000     # 60분
+  access-token-expiry: 1800000     # 30분
   refresh-token-expiry: 1209600000 # 14일
 
 springdoc:
@@ -49,3 +49,10 @@ springdoc:
 
   swagger-ui:
     path: /back-office/swagger-ui/index.html
+
+cloudfront:
+  signed-cookie:
+    resource-url: https://cdn.openthetaste.cloud/*
+    key-pair-id: ${CF_SIGNED_COOKIE_KEY_PAIR_ID:}
+    private-key-base64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64:}
+    ttl-seconds: 2400000
