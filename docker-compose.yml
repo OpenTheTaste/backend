@@ -160,6 +160,24 @@ services:
     depends_on:
       - prometheus
 
+# ============ AI Server ============
+  machine:
+    build:
+      context: .
+      dockerfile: apps/machine/Dockerfile
+    container_name: ott-machine
+    ports:
+      - "8000:8000"
+    environment:
+      AI_EMOTION_TAG_POOL: ${AI_EMOTION_TAG_POOL:-[]}
+      AI_MODEL_PATH: ${AI_MODEL_PATH:-}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
 volumes:
   mysql-data:
   prometheus-data:
