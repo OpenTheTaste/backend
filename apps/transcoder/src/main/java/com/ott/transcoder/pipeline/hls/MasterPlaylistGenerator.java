@@ -10,21 +10,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 /** HLS 마스터 플레이리스트(master.m3u8) 생성기. ABR variant를 포함한다. */
 @Slf4j
 @Component
 public class MasterPlaylistGenerator {
-
-    /** 해상도별 variant 메타데이터 (대역폭, 화면 크기, 상대 경로) */
-    private record Variant(int bandwidth, String resolution, String playlistPath) {}
-
-    private static final Map<Resolution, Variant> VARIANT_MAP = Map.of(
-            Resolution.P360, new Variant(800_000, "640x360", "360p/media.m3u8"),
-            Resolution.P720, new Variant(2_400_000, "1280x720", "720p/media.m3u8"),
-            Resolution.P1080, new Variant(4_800_000, "1920x1080", "1080p/media.m3u8")
-    );
 
     /**
      * @param outputDir      마스터 플레이리스트를 생성할 디렉토리
@@ -36,10 +26,15 @@ public class MasterPlaylistGenerator {
         sb.append("#EXTM3U\n");
 
         for (Resolution resolution : resolutionList) {
-            Variant variant = VARIANT_MAP.get(resolution);
-            sb.append("#EXT-X-STREAM-INF:BANDWIDTH=").append(variant.bandwidth())
-                    .append(",RESOLUTION=").append(variant.resolution()).append("\n");
-            sb.append(variant.playlistPath()).append("\n");
+            sb
+                    .append("#EXT-X-STREAM-INF:BANDWIDTH=")
+                    .append(resolution.getVideoBitrate())
+                    .append(",RESOLUTION=").append(resolution.getWidth()).append("x").append(resolution.getHeight())
+                    .append("\n");
+            sb
+                    .append(resolution.getKey().toLowerCase())
+                    .append("/media.m3u8")
+                    .append("\n");
         }
 
         Path masterPath = outputDir.resolve("master.m3u8");
