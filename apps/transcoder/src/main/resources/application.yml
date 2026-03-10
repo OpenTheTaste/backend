@@ -47,7 +47,13 @@ transcoder:
 storage:
   provider: ${STORAGE_PROVIDER}
   local:
-    output-dir: ${STORAGE_OUTPUT_DIR}
+    output-dir: ${STORAGE_OUTPUT_DIR:}
+  s3:
+    bucket: ${AWS_S3_BUCKET:}
+
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+
 management:
   endpoints:
     web:
