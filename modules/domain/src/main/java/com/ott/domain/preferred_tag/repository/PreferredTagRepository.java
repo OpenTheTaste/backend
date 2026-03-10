@@ -28,7 +28,7 @@ public interface PreferredTagRepository extends JpaRepository<PreferredTag, Long
                                                                     @Param("status") Status status);
 
     // 선호 태그 삭제,  영속성 컨텍스트 들어있는 내용 삭제
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying
     @Query("DELETE FROM PreferredTag pt WHERE pt.member = :member")
     void deleteAllByMember(@Param("member") Member member);
 

@@ -4,12 +4,8 @@ import com.ott.api_user.auth.client.KakaoUnlinkClient;
 import com.ott.api_user.member.dto.request.SetPreferredTagRequest;
 import com.ott.api_user.member.dto.request.UpdateMemberRequest;
 import com.ott.api_user.member.dto.response.*;
-import com.ott.api_user.playlist.dto.response.RecentWatchResponse;
-import com.ott.api_user.playlist.dto.response.TagPlaylistResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
-import com.ott.common.web.response.PageInfo;
-import com.ott.common.web.response.PageResponse;
 import com.ott.domain.bookmark.repository.BookmarkRepository;
 import com.ott.domain.click_event.repository.ClickRepository;
 import com.ott.domain.comment.repository.CommentRepository;
@@ -25,11 +21,8 @@ import com.ott.domain.preferred_tag.domain.PreferredTag;
 import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
 import com.ott.domain.tag.domain.Tag;
 import com.ott.domain.tag.repository.TagRepository;
-import com.ott.domain.watch_history.repository.RecentWatchProjection;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,16 +153,21 @@ public class MemberService {
 
         // 벌크 쿼리 이후 영속성 컨텍스트가 초기화 되기 때문에 member.withdraw 먼저 수행
         // JPA가 변경 감지를 못해서 순서 변경
-        // 2. 회원 Soft Delete
-        member.withdraw();
+        // 2. 회원 Soft Delete ->
+//        member.withdraw();
+        memberRepository.softDeleteByMemberId(memberId);
 
-        // 탈퇴 회원의 ACTIVE한 북마크 수 차감
-        bookmarkRepository.decreaseBookmarkCountByMemberId(memberId);
+        // 탈퇴 회원의 ACTIVE한 북마크, 좋아요 수 차감 x -> 통계에 사용되는 데이터임
+        /**
+         * 해당 쿼리문은 JPQL bulk update 연산으로 DB로 직접 접근하여 실행함
+         * 그 다음 EntityNamger.clear()를 호출하는데 이때 영속성 컨텍스트가 비워짐
+         * 그래서 해당 트랜잭션이 끝나고 영속성 컨텍스트와 변경점을 찾아서 쿼리를 날리는데,
+         * 영속성 컨텍스트가 비워졌기 때문에 member.withdraw() 쿼리가 안날라감
+         *
+         * flushAutomatically : 반영 안된 변경 먼저 DB에 업데이트
+         * clearAutomatically : 해당 쿼리 실행 후 캐시된 엔티티 상태를 비워서 DB와 일치시킴
+         */
         bookmarkRepository.softDeleteAllByMemberId(memberId);
-
-
-        // 탈퇴 회원의 ACTIVE한 좋아요 수 차감
-        likesRepository.decreaseLikesCountByMemberId(memberId);
         likesRepository.softDeleteAllByMemberId(memberId);
 
         // 3. 연관 데이터 Soft Delete
@@ -177,7 +175,6 @@ public class MemberService {
         watchHistoryRepository.softDeleteAllByMemberId(memberId);
         playbackRepository.softDeleteAllByMemberId(memberId);
         commentRepository.softDeleteAllByMemberId(memberId);
-        clickRepository.softDeleteAllByMemberId(memberId);
         memberRadarPreferenceRepository.softDeleteByMemberId(memberId);
     }
 
