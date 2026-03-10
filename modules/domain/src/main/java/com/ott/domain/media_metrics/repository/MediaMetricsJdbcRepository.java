@@ -92,6 +92,7 @@ public class MediaMetricsJdbcRepository {
                     WHERE c.series_id IS NULL
                       AND wh.status = 'ACTIVE'
                       AND m.status = 'ACTIVE'
+                      AND m.public_status = 'PUBLIC'
                     GROUP BY c.media_id, m.bookmark_count
 
                     UNION ALL
@@ -104,6 +105,7 @@ public class MediaMetricsJdbcRepository {
                     JOIN media m ON s.media_id = m.id
                     WHERE wh.status = 'ACTIVE'
                       AND m.status = 'ACTIVE'
+                      AND m.public_status = 'PUBLIC'
                     GROUP BY s.media_id, m.bookmark_count
                 ) raw_data
                 """;
