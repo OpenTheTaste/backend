@@ -21,22 +21,15 @@ public class DiskSpaceGuard {
     @Value("${transcoder.validation.disk-space-multiplier:5}")
     private double multiplier;
 
-    public void check(Path originPath) {
-        try {
-            long fileSize = Files.size(originPath);
-            long requiredSpace = (long)(fileSize * multiplier);
-            long usableSpace = originPath.toFile().getUsableSpace();
+    public void check(Path workDir, long fileSize) {
+        long requiredSpace = (long)(fileSize * multiplier);
+        long usableSpace = workDir.toFile().getUsableSpace();
 
-            if (usableSpace < requiredSpace) {
-                throw new StorageException(
-                        TranscodeErrorCode.DISK_SPACE_INSUFFICIENT,
-                        String.format("디스크 공간 부족 - 필요: %dMB, 가용: %dMB",
-                                requiredSpace / 1_000_000, usableSpace / 1_000_000));
-            }
-        } catch (IOException e) {
+        if (usableSpace < requiredSpace) {
             throw new StorageException(
-                    TranscodeErrorCode.STORAGE_FAILED,
-                    "디스크 공간 확인 실패 - " + originPath, e);
+                    TranscodeErrorCode.DISK_SPACE_INSUFFICIENT,
+                    String.format("디스크 공간 부족 - 필요: %dMB, 가용: %dMB",
+                            requiredSpace / 1_000_000, usableSpace / 1_000_000));
         }
     }
 }

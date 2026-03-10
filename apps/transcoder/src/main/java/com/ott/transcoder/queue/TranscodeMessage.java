@@ -10,6 +10,7 @@ public record TranscodeMessage(
 
         Long mediaId,
         Long ingestJobId,
-        String originUrl
+        String originUrl,
+        Long fileSize
 ) {
 }
