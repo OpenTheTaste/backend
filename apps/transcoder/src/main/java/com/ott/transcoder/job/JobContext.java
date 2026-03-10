@@ -8,6 +8,7 @@ public record JobContext(
         Long mediaId,
         Long ingestJobId,
         Path workDir,
+        Path outputDir,
         Path inputFile,
         ProbeResult probeResult
 ) {

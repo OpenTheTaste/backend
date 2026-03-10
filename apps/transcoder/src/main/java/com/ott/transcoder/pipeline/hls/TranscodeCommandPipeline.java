@@ -33,7 +33,7 @@ public class TranscodeCommandPipeline implements CommandPipeline<TranscodeComman
                 jobContext.mediaId(), profile.resolution().getKey());
 
         // 2. main: FFmpeg 실행
-        ffmpegExecutor.execute(jobContext.inputFile(), jobContext.workDir(), profile);
+        ffmpegExecutor.execute(jobContext.inputFile(), jobContext.outputDir(), profile);
 
         log.info("HLS 트랜스코딩 완료 - mediaId: {}, resolution: {}",
                 jobContext.mediaId(), profile.resolution().getKey());

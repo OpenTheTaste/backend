@@ -58,11 +58,14 @@ public class JobOrchestrator {
         Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
 
         try {
-            // 1. 디스크 공간 확인
-            diskSpaceGuard.check(Path.of(message.originUrl()));
-
-            // 2. 작업 디렉토리 생성
+            // 1. 작업 디렉토리 생성 (공간 체크를 위해 디렉토리가 존재해야 함)
             createWorkDir(workDir);
+
+            // 2. 디스크 공간 확인 (메시지의 fileSize 기반)
+            diskSpaceGuard.check(workDir, message.fileSize() != null ? message.fileSize() : 0L);
+
+            Path outputDir = workDir.resolve("output");
+            createWorkDir(outputDir);
 
             // 3. 원본 다운로드 (RetryableException 발생 가능)
             Path inputFile = videoStorage.download(message.originUrl(), workDir);
@@ -74,7 +77,7 @@ public class JobOrchestrator {
             List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
 
             // 6. JobContext 생성
-            JobContext jobContext = new JobContext(mediaId, ingestJobId, workDir, inputFile, probeResult);
+            JobContext jobContext = new JobContext(mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult);
 
             // 7. 커맨드별 파이프라인 실행 (MAIN)
             for (Command command : commandList)
@@ -87,10 +90,10 @@ public class JobOrchestrator {
                     .filter(c -> c.getType() == CommandType.TRANSCODE)
                     .map(c -> ((TranscodeCommand) c).getResolution())
                     .toList();
-            masterPlaylistGenerator.generate(workDir, resolutionList);
+            masterPlaylistGenerator.generate(outputDir, resolutionList);
 
-            // 9. 결과물 업로드
-            String uploadedPath = videoStorage.upload(workDir, "media/" + mediaId + "/hls");
+            // 9. 결과물 업로드 (outputDir만 — 원본 제외)
+            String uploadedPath = videoStorage.upload(outputDir, "media/" + mediaId + "/hls");
 
             log.info("모든 작업 성공 - mediaId: {}, ingestJobId: {}, uploadedPath: {}",
                     mediaId, ingestJobId, uploadedPath);
