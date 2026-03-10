@@ -20,15 +20,16 @@ public interface WatchHistoryRepository extends JpaRepository<WatchHistory, Long
 
     @Modifying
     @Query(value = """
-            INSERT INTO watch_history (member_id, contents_id, last_watched_at, created_date, modified_date, status)
-            VALUES (:memberId, :contentsId, NOW(), NOW(), NOW(), 'ACTIVE')
-            ON DUPLICATE KEY UPDATE 
+            INSERT INTO watch_history (member_id, contents_id, last_watched_at, re_watch_count, created_date, modified_date, status)
+            VALUES (:memberId, :contentsId, NOW(), 0, NOW(), NOW(), 'ACTIVE')
+            ON DUPLICATE KEY UPDATE
                 last_watched_at = NOW(),
+                re_watch_count = re_watch_count + 1,
                 modified_date = NOW(),
                 status = 'ACTIVE'
             """, nativeQuery = true)
     void upsertWatchHistory(
-            @Param("memberId") Long memberId, 
+            @Param("memberId") Long memberId,
             @Param("contentsId") Long contentsId
     );
     

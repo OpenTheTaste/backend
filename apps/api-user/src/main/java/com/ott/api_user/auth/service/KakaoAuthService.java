@@ -3,10 +3,12 @@ package com.ott.api_user.auth.service;
 import com.ott.api_user.auth.oauth2.userinfo.KakaoUserInfo;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.domain.common.Status;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.domain.Provider;
 import com.ott.domain.member.repository.MemberRepository;
-import com.ott.domain.preferred_tag.repository.PreferredTagRepository;
+import com.ott.domain.member_radar_preference.domain.MemberRadarPreference;
+import com.ott.domain.member_radar_preference.repository.MemberRadarPreferenceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class KakaoAuthService {
 
     private final MemberRepository memberRepository;
+    private final MemberRadarPreferenceRepository memberRadarPreferenceRepository;
 
     // 카카오 사용자 정보로 회원 조회 or 신규 생성
     // 기존 회원일 경우 프로필 동기화 필요
@@ -33,15 +36,30 @@ public class KakaoAuthService {
                 .map(existingMember -> {
                     existingMember.reactivate();
 //                    existingMember.updateKakaoProfile(
-//                            kakaoUserInfo.getEmail(),
-//                            kakaoUserInfo.getNickname());
+//                          kakaoUserInfo.getEmail(),
+//                          kakaoUserInfo.getNickname());
+                    reactivateRadarPreference(existingMember);
                     return existingMember;
                 })
-                .orElseGet(() -> memberRepository.save(
-                        Member.createKakaoMember(
-                                kakaoUserInfo.getProviderId(),
-                                kakaoUserInfo.getEmail(),
-                                kakaoUserInfo.getNickname())));
+                .orElseGet(() -> {
+                    Member newMember = memberRepository.save(
+                            Member.createKakaoMember(
+                                    kakaoUserInfo.getProviderId(),
+                                    kakaoUserInfo.getEmail(),
+                                    kakaoUserInfo.getNickname()));
+                    memberRadarPreferenceRepository.save(
+                            MemberRadarPreference.createDefault(newMember));
+                    return newMember;
+                });
+    }
+
+    private void reactivateRadarPreference(Member member) {
+        memberRadarPreferenceRepository.findByMemberId(member.getId())
+                .ifPresentOrElse(
+                        pref -> pref.updateStatus(Status.ACTIVE),
+                        () -> memberRadarPreferenceRepository.save(
+                                MemberRadarPreference.createDefault(member))
+                );
     }
 
     // 신규 회원 판별 -> 컬럼으로 판별
