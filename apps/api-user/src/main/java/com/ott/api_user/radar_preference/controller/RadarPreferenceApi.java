@@ -1,8 +1,8 @@
 package com.ott.api_user.radar_preference.controller;
 
-import com.ott.api_user.media_metrics.dto.request.RadarPreferenceRequest;
-import com.ott.api_user.media_metrics.dto.response.RadarMediaResponse;
-import com.ott.api_user.media_metrics.dto.response.RadarPreferenceResponse;
+import com.ott.api_user.radar_preference.dto.request.RadarPreferenceRequest;
+import com.ott.api_user.radar_preference.dto.response.RadarMediaResponse;
+import com.ott.api_user.radar_preference.dto.response.RadarPreferenceResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;

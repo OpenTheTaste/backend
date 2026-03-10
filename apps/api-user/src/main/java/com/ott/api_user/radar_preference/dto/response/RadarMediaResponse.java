@@ -1,4 +1,4 @@
-package com.ott.api_user.media_metrics.dto.response;
+package com.ott.api_user.radar_preference.dto.response;
 
 import com.ott.domain.common.MediaType;
 import com.ott.domain.media.domain.Media;
@@ -14,19 +14,19 @@ import lombok.Getter;
 @Schema(description = "레이더 차트 추천 미디어 응답")
 public class RadarMediaResponse {
 
-    @Schema(description = "미디어 고유 ID", example = "100")
+    @Schema(type = "Long", description = "미디어 고유 ID", example = "100")
     private Long mediaId;
 
-    @Schema(description = "제목", example = "비밀의 숲")
+    @Schema(type = "String", description = "제목", example = "비밀의 숲")
     private String title;
 
-    @Schema(description = "포스터 이미지 URL", example = "https://s3.../poster.jpg")
+    @Schema(type = "String", description = "포스터 이미지 URL", example = "https://s3.../poster.jpg")
     private String posterUrl;
 
-    @Schema(description = "썸네일 이미지 URL", example = "https://cdn.ott.com/thumbnails/101.jpg")
+    @Schema(type = "String", description = "썸네일 이미지 URL", example = "https://cdn.ott.com/thumbnails/101.jpg")
     private String thumbnailUrl;
 
-    @Schema(description = "미디어 타입", example = "SERIES")
+    @Schema(type = "MediaType(String)", description = "미디어 타입", example = "SERIES")
     private MediaType mediaType;
 
     public static RadarMediaResponse from(Media media) {

@@ -1,4 +1,4 @@
-package com.ott.api_user.media_metrics.dto.request;
+package com.ott.api_user.radar_preference.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
