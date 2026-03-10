@@ -37,6 +37,9 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "A004", "접근 권한이 없습니다"),
     KAKAO_UNLINK_FAILED(HttpStatus.BAD_GATEWAY, "A005", "카카오 인증 서버에 접근할 수 없습니다"),
     CLOUDFRONT_SIGNED_COOKIE_ISSUE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "A006", "CloudFront signed cookie 발급에 실패했습니다."),
+    CLOUDFRONT_SIGNED_COOKIE_CONFIG_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "A007", "CloudFront signed cookie 설정이 올바르지 않습니다."),
+    CLOUDFRONT_PRIVATE_KEY_INVALID(HttpStatus.INTERNAL_SERVER_ERROR, "A008", "CloudFront private key 형식이 올바르지 않습니다."),
+    CLOUDFRONT_POLICY_SIGN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "A009", "CloudFront policy 서명에 실패했습니다."),
 
     // ========== User (U) - 사용자 ==========
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다"),

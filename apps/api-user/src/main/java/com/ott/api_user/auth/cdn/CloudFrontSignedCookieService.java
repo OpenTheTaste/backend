@@ -42,19 +42,37 @@ public class CloudFrontSignedCookieService {
 
     public void addSignedCookies(HttpServletResponse response) {
 
-        if (keyPairId == null || keyPairId.isBlank() || privateKeyBase64 == null || privateKeyBase64.isBlank()) {
-            throw new BusinessException(ErrorCode.CLOUDFRONT_SIGNED_COOKIE_ISSUE_FAILED);
+        if (resourceUrl == null || resourceUrl.isBlank()
+                || keyPairId == null || keyPairId.isBlank()
+                || privateKeyBase64 == null || privateKeyBase64.isBlank()
+                || ttlMillis <= 0) {
+            throw new BusinessException(ErrorCode.CLOUDFRONT_SIGNED_COOKIE_CONFIG_INVALID);
         }
 
         try {
             long ttlInSeconds = ttlMillis / 1000L;
             long expireEpoch = Instant.now().plusSeconds(ttlInSeconds).getEpochSecond();
             String policy = buildPolicy(resourceUrl, expireEpoch);
-            byte[] signatureBytes = sign(policy, loadPrivateKey(privateKeyBase64));
+
+            PrivateKey privateKey;
+            try {
+                privateKey = loadPrivateKey(privateKeyBase64);
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.CLOUDFRONT_PRIVATE_KEY_INVALID);
+            }
+
+            byte[] signatureBytes;
+            try {
+                signatureBytes = sign(policy, privateKey);
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.CLOUDFRONT_POLICY_SIGN_FAILED);
+            }
 
             cookieUtil.addCookie(response, POLICY_COOKIE, cloudFrontBase64(policy.getBytes(StandardCharsets.UTF_8)), ttlMillis);
             cookieUtil.addCookie(response, SIGNATURE_COOKIE, cloudFrontBase64(signatureBytes), ttlMillis);
             cookieUtil.addCookie(response, KEY_PAIR_ID_COOKIE, keyPairId, ttlMillis);
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.CLOUDFRONT_SIGNED_COOKIE_ISSUE_FAILED);
         }
