@@ -64,11 +64,6 @@ public class Member extends BaseEntity {
                 .build();
     }
 
-    public void updateKakaoProfile(String email, String nickname) {
-        this.email = email;
-        this.nickname = nickname;
-    }
-
     public void updateRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
     }
@@ -94,16 +89,11 @@ public class Member extends BaseEntity {
         this.onboardingCompleted = true;
     }
 
-    // 회원 탈퇴 - Soft Delete (refreshToken 초기화 + status DELETE)
+    // 회원 탈퇴 - Soft Delete (refreshToken 초기화 + status DELETE, providerid = null)
     public void withdraw() {
         this.refreshToken = null;
+        this.providerId = null;
         this.updateStatus(Status.DELETE);
-    }
-
-    // 탈퇴(DELETE) 상태인 경우에만 ACTIVE로 복구
-    public void reactivate() {
-        if (this.getStatus() == Status.DELETE) {
-            this.updateStatus(Status.ACTIVE);
-        }
+        this.onboardingCompleted = false;
     }
 }
