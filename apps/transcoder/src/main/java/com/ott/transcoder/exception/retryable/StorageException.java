@@ -7,4 +7,8 @@ public class StorageException extends RetryableException {
     public StorageException(TranscodeErrorCode errorCode, String message, Throwable cause) {
         super(errorCode, message, cause);
     }
+
+    public StorageException(TranscodeErrorCode errorCode, String message) {
+        super(errorCode, message);
+    }
 }
