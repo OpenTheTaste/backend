@@ -69,13 +69,14 @@ public enum ErrorCode {
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "B303", "파일 확장자가 올바르지 않습니다"),
 
     // ========== Business (B) - 비즈니스 (특수 도메인 규칙/태그/숏폼: 400번대) ==========
-    INVALID_TAG_CATEGORY(HttpStatus.BAD_REQUEST, "B401", "유효하지 않은 태그 카테고리입니다."),
-    SHORTFORM_ORIGIN_MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B402", "쇼츠의 원본 미디어를 찾을 수 없습니다."),
+    INVALID_TAG_CATEGORY(HttpStatus.BAD_REQUEST, "B401", "유효하지 않은 태그 카테고리입니다"),
+    SHORTFORM_ORIGIN_MEDIA_NOT_FOUND(HttpStatus.NOT_FOUND, "B402", "쇼츠의 원본 미디어를 찾을 수 없습니다"),
     INVALID_SHORTFORM_TARGET(HttpStatus.BAD_REQUEST, "B403", "seriesId와 contentsId 중 하나만 제공해야 합니다"),
     INVALID_SHORTFORM_CONTENTS_TARGET(HttpStatus.BAD_REQUEST, "B404", "시리즈에 속한 콘텐츠는 숏폼 원본으로 선택할 수 없습니다"),
     INVALID_REQUEST_FOR_SERIES_PLAYLIST(HttpStatus.BAD_REQUEST, "B405", "해당 콘텐츠는 시리즈 전용 API를 사용해주세요"),
     
     RADAR_PREFERENCE_NOT_FOUND(HttpStatus.NOT_FOUND, "B406", "레이더 차트 설정을 찾을 수 없습니다"),
+    RADAR_PREFERENCE_UNMODIFIABLE(HttpStatus.NOT_FOUND, "B407", "총합 100점을 모두 사용해야 레이더 차트 설정이 가능합니다"),
 
     // ========== Server (S) - 서버/시스템 ==========
     STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다");

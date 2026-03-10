@@ -38,6 +38,9 @@ public class RadarPreferenceService {
         MemberRadarPreference preference = memberRadarPreferenceRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RADAR_PREFERENCE_NOT_FOUND));
 
+        if (request.getPopularity() + request.getImmersion() + request.getMania() + request.getRecency() + request.getReWatch() != 100)
+            throw new BusinessException(ErrorCode.RADAR_PREFERENCE_UNMODIFIABLE);
+
         preference.updatePreference(
                 request.getPopularity(),
                 request.getImmersion(),
