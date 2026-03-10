@@ -1,75 +1,51 @@
 package com.ott.transcoder.pipeline.hls;
 
 import com.ott.domain.video_profile.domain.Resolution;
+import com.ott.transcoder.command.TranscodeCommand;
 import com.ott.transcoder.ffmpeg.TranscodeProfile;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.ott.transcoder.constant.IngestJobConstant.AudioConstant.AAC;
 import static com.ott.transcoder.constant.IngestJobConstant.VideoConstant.LIBX264;
 import static com.ott.transcoder.constant.IngestJobConstant.VideoConstant.PRESET_FAST;
 
 /**
- * ProbeResult를 분석하여 HLS 트랜스코딩 대상 해상도/비트레이트 결정
- * 업스케일 방지, 원본 비트레이트 상한 적용 등
+ * 단일 해상도에 대한 트랜스코딩 프로파일 결정
+ * 원본 비트레이트 상한 적용, 코덱/프리셋 결정 등
  */
 @Slf4j
 @Component
 public class TranscodePlanner {
 
-    /** 트랜스코딩 대상 해상도 */
-    private static final List<Resolution> CANDIDATE_RESOLUTION_LIST = List.of(
-            Resolution.P360, Resolution.P720, Resolution.P1080
-    );
-
     /**
-     * ProbeResult를 분석하여 트랜스코딩할 프로파일 목록 생성
+     * 트랜스코드 커맨드 기반 트랜스코딩 프로파일 생성
      *
+     * @param command     트랜스코드 커맨드 (해상도 포함)
      * @param probeResult ffprobe 결과
-     * @return 트랜스코딩 대상 프로파일 목록 (업스케일 해상도 제외)
+     * @return 해당 해상도의 트랜스코딩 프로파일 (비트레이트, 코덱, 프리셋 포함)
      */
-    public List<TranscodeProfile> plan(ProbeResult probeResult) {
-        List<TranscodeProfile> profileList = new ArrayList<>();
+    public TranscodeProfile plan(TranscodeCommand command, ProbeResult probeResult) {
+        Resolution resolution = command.getResolution();
+        String videoBitrate = decideVideoBitrate(probeResult, resolution);
+        String audioBitrate = resolution.getAudioBitrate();
+        String audioCodec = decideAudioCodec(probeResult);
 
-        for (Resolution resolution : CANDIDATE_RESOLUTION_LIST) {
-            int targetHeight = resolution.getHeight();
+        TranscodeProfile profile = new TranscodeProfile(
+                resolution,
+                resolution.getHeight(),
+                videoBitrate,
+                audioBitrate,
+                LIBX264,
+                audioCodec,
+                PRESET_FAST
+        );
 
-            // 업스케일 방지
-            if (probeResult.isUpscaleFor(targetHeight)) {
-                continue;
-            }
+        log.info("트랜스코딩 프로파일 결정 - resolution: {}, videoBitrate: {}, audioBitrate: {}",
+                resolution.getKey(), videoBitrate, audioBitrate);
 
-            String videoBitrate = decideVideoBitrate(probeResult, resolution);
-            String audioBitrate = resolution.getAudioBitrate();
-            String audioCodec = decideAudioCodec(probeResult);
-
-            TranscodeProfile profile = new TranscodeProfile(
-                    resolution,
-                    targetHeight,
-                    videoBitrate,
-                    audioBitrate,
-                    LIBX264,
-                    audioCodec,
-                    PRESET_FAST
-            );
-
-            profileList.add(profile);
-        }
-
-        if (profileList.isEmpty()) {
-            // 원본이 360p 미만이어도 최소 1개는 생성 (원본 해상도로)
-            log.warn("모든 해상도가 업스케일 — 최소 프로파일 생성 (360p 기준, 원본 높이: {})", probeResult.height());
-            profileList.add(TranscodeProfile.defaultFor(Resolution.P360));
-        }
-
-        log.info("트랜스코딩 계획 수립 완료 - 대상 해상도: {}",
-                profileList.stream().map(p -> p.resolution().getKey()).toList());
-
-        return profileList;
+        return profile;
     }
 
     /**

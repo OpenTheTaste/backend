@@ -3,6 +3,7 @@ package com.ott.transcoder.pipeline.hls;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.command.CommandType;
 import com.ott.transcoder.command.TranscodeCommand;
+import com.ott.transcoder.job.JobContext;
 import com.ott.transcoder.pipeline.CommandPipeline;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class TranscodeCommandPipeline implements CommandPipeline<TranscodeComman
     }
 
     @Override
-    public void execute(TranscodeCommand command) {
+    public void execute(TranscodeCommand command, JobContext jobContext) {
         // TODO:
     }
 }
