@@ -1,6 +1,6 @@
 package com.ott.transcoder.queue.rabbit;
 
-import com.ott.transcoder.JobOrchestrator;
+import com.ott.transcoder.job.JobOrchestrator;
 import com.ott.transcoder.config.RabbitConfig;
 import com.ott.transcoder.queue.MessageListener;
 import com.ott.transcoder.queue.TranscodeMessage;

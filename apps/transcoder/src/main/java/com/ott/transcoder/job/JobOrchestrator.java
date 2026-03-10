@@ -1,13 +1,17 @@
-package com.ott.transcoder;
+package com.ott.transcoder.job;
 
+import com.ott.domain.video_profile.domain.Resolution;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.command.CommandExtractor;
+import com.ott.transcoder.command.CommandType;
+import com.ott.transcoder.command.TranscodeCommand;
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
 import com.ott.transcoder.inspection.DiskSpaceGuard;
 import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import com.ott.transcoder.pipeline.CommandPipelineExecutor;
+import com.ott.transcoder.pipeline.hls.MasterPlaylistGenerator;
 import com.ott.transcoder.queue.TranscodeMessage;
 import com.ott.transcoder.storage.VideoStorage;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +43,7 @@ public class JobOrchestrator {
 
     private final CommandExtractor commandExtractor;
     private final CommandPipelineExecutor commandPipelineExecutor;
+    private final MasterPlaylistGenerator masterPlaylistGenerator;
 
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
@@ -50,7 +55,7 @@ public class JobOrchestrator {
     public void handle(TranscodeMessage message) {
         Long mediaId = message.mediaId();
         Long ingestJobId = message.ingestJobId();
-        Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId); //  + SUFFIX_WORK_DIR + ingestJob.id
+        Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
 
         try {
             // 1. 디스크 공간 확인
@@ -68,14 +73,27 @@ public class JobOrchestrator {
             // 5. 커맨드 추출
             List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
 
-            // 6. 커맨드별 파이프라인 실행
+            // 6. JobContext 생성
+            JobContext jobContext = new JobContext(mediaId, ingestJobId, workDir, inputFile, probeResult);
+
+            // 7. 커맨드별 파이프라인 실행 (MAIN)
             for (Command command : commandList)
-                commandPipelineExecutor.execute(command);
+                commandPipelineExecutor.execute(command, jobContext);
 
-            // 6. 파이프라인 실행
-//            pipeline.execute(mediaId, inputFile, workDir, probeResult);
+            // === POST ===
 
-            log.info("모든 작업 성공 - mediaId: {}", mediaId);
+            // 8. 마스터 플레이리스트 생성
+            List<Resolution> resolutionList = commandList.stream()
+                    .filter(c -> c.getType() == CommandType.TRANSCODE)
+                    .map(c -> ((TranscodeCommand) c).getResolution())
+                    .toList();
+            masterPlaylistGenerator.generate(workDir, resolutionList);
+
+            // 9. 결과물 업로드
+            String uploadedPath = videoStorage.upload(workDir, "media/" + mediaId + "/hls");
+
+            log.info("모든 작업 성공 - mediaId: {}, ingestJobId: {}, uploadedPath: {}",
+                    mediaId, ingestJobId, uploadedPath);
 
         } finally {
             // 예외 발생 여부와 상관없이 로컬 작업 디렉토리는 반드시 정리합니다.
