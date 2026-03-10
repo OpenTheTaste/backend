@@ -1,8 +1,8 @@
 package com.ott.api_user.radar_preference.service;
 
-import com.ott.api_user.media_metrics.dto.request.RadarPreferenceRequest;
-import com.ott.api_user.media_metrics.dto.response.RadarMediaResponse;
-import com.ott.api_user.media_metrics.dto.response.RadarPreferenceResponse;
+import com.ott.api_user.radar_preference.dto.request.RadarPreferenceRequest;
+import com.ott.api_user.radar_preference.dto.response.RadarMediaResponse;
+import com.ott.api_user.radar_preference.dto.response.RadarPreferenceResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.media.domain.Media;
@@ -15,7 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ott.api_user.radar_preference.constant.RadarPreferenceConstant.*;
+import static com.ott.api_user.radar_preference.constant.RadarPreferenceConstant.DEFAULT_WEIGHT;
+import static com.ott.api_user.radar_preference.constant.RadarPreferenceConstant.RECOMMEND_LIMIT;
 
 @Service
 @RequiredArgsConstructor
@@ -57,11 +58,7 @@ public class RadarPreferenceService {
         int reWatch = memberRadarPreference.getReWatch();
 
         if (needDefaultWeight(popularity, immersion, mania, recency, reWatch)) {
-            popularity = DEFAULT_WEIGHT;
-            immersion = DEFAULT_WEIGHT;
-            mania = DEFAULT_WEIGHT;
-            recency = DEFAULT_WEIGHT;
-            reWatch = DEFAULT_WEIGHT;
+            return List.of();
         }
 
         List<Media> mediaList = mediaMetricsRepository.findTopByWeightedScore(
