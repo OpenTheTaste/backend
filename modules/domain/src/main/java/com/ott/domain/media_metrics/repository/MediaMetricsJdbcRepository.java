@@ -27,6 +27,7 @@ public class MediaMetricsJdbcRepository {
                        ROUND(PERCENT_RANK() OVER (ORDER BY bookmark_count) * 100, 2) AS score
                 FROM media
                 WHERE status = 'ACTIVE'
+                AND public_status = 'PUBLIC'
                 """;
         return jdbcTemplate.query(sql, SCORE_MAPPER);
     }
@@ -119,6 +120,7 @@ public class MediaMetricsJdbcRepository {
                        ROUND(PERCENT_RANK() OVER (ORDER BY created_date) * 100, 2) AS score
                 FROM media
                 WHERE status = 'ACTIVE'
+                AND public_status = 'PUBLIC'
                 """;
         return jdbcTemplate.query(sql, SCORE_MAPPER);
     }

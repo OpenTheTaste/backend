@@ -47,7 +47,7 @@ public class RadarPreferenceService {
         if (total != 100) {
             throw new BusinessException(ErrorCode.RADAR_PREFERENCE_UNMODIFIABLE);
         }
-        
+
         preference.updatePreference(
                 request.getPopularity(),
                 request.getImmersion(),
