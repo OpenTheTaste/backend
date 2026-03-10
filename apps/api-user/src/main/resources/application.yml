@@ -72,3 +72,7 @@ jwt:
 springdoc:
   api-docs:
     version: OPENAPI_3_0
+ai:
+  base-url: ${AI_BASE_URL:http://machine:8000}
+  timeout-ms: 2000
+  

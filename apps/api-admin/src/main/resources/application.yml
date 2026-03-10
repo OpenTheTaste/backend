@@ -48,4 +48,8 @@ springdoc:
     path: /back-office/v3/api-docs
 
   swagger-ui:
-    path: /back-office/swagger-ui/index.html
+    path: /back-office/swagger-ui/index.htmlai
+
+ai:
+  base-url: ${AI_BASE_URL:http://machine:8000}
+  timeout-ms: 2000
