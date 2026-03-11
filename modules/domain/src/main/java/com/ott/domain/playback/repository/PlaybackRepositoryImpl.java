@@ -20,12 +20,16 @@ public class PlaybackRepositoryImpl implements PlaybackRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
+    // 시리즈별 가장 최근 시청한 에피소드의 Playback 조회
+    // modifiedDate(마지막 시청 시점) 기준, 동률 시 id가 큰 쪽 선택
     @Override
     public List<Playback> findLatestByMemberAndSeriesMediaIds(Long memberId, List<Long> seriesMediaIdList) {
         QMedia seriesMedia = new QMedia("seriesMedia");
 
-        QPlayback subPlayback = new QPlayback("subPlayback");
+        QPlayback sub = new QPlayback("sub");
+        QPlayback sub2 = new QPlayback("sub2");
         QContents subContents = new QContents("subContents");
+        QContents subContents2 = new QContents("subContents2");
 
         return queryFactory
                 .selectFrom(playback)
@@ -38,13 +42,24 @@ public class PlaybackRepositoryImpl implements PlaybackRepositoryCustom {
                         seriesMedia.id.in(seriesMediaIdList),
                         playback.id.eq(
                                 JPAExpressions
-                                        .select(subPlayback.id.max())
-                                        .from(subPlayback)
-                                        .join(subPlayback.contents, subContents)
+                                        .select(sub.id.max())
+                                        .from(sub)
+                                        .join(sub.contents, subContents)
                                         .where(
-                                                subPlayback.member.id.eq(memberId),
-                                                subPlayback.status.eq(ACTIVE),
-                                                subContents.series.id.eq(series.id)
+                                                sub.member.id.eq(memberId),
+                                                sub.status.eq(ACTIVE),
+                                                subContents.series.id.eq(series.id),
+                                                sub.modifiedDate.eq(
+                                                        JPAExpressions
+                                                                .select(sub2.modifiedDate.max())
+                                                                .from(sub2)
+                                                                .join(sub2.contents, subContents2)
+                                                                .where(
+                                                                        sub2.member.id.eq(memberId),
+                                                                        sub2.status.eq(ACTIVE),
+                                                                        subContents2.series.id.eq(series.id)
+                                                                )
+                                                )
                                         )
                         )
                 )
