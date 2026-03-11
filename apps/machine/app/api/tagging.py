@@ -10,7 +10,7 @@ class TaggingRequest(BaseModel):
 
 
 class TaggingResponse(BaseModel):
-    tags: list[str]
+    tag_codes: list[str]
     scores: dict[str, float] | None = None
 
 
@@ -19,5 +19,5 @@ router = APIRouter()
 
 @router.post("", response_model=TaggingResponse)
 def tag_text(payload: TaggingRequest) -> TaggingResponse:
-    tags, scores = tagging_service.generate_tags(payload.text, settings.emotion_tag_pool)
-    return TaggingResponse(tags=tags, scores=scores)
+    tag_codes, scores = tagging_service.generate_tags(payload.text, settings.emotion_tag_pool)
+    return TaggingResponse(tag_codes=tag_codes, scores=scores)

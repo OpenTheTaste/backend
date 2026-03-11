@@ -3,7 +3,7 @@ package com.ott.api_admin.ai.client;
 import com.ott.api_admin.ai.dto.TaggingRequest;
 import com.ott.api_admin.ai.dto.TaggingResponse;
 
-import io.jsonwebtoken.lang.Collections;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

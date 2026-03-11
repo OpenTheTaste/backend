@@ -4,19 +4,19 @@ from pydantic import BaseModel, Field
 from app.services import recommend as recommend_service
 
 
-class MoodRefreshRequest(BaseModel):
-    mood: str = Field(..., min_length=1, max_length=100)
-    limit: int = Field(default=5, ge=1, le=20)
+class MoodRefreshTargetRequest(BaseModel):
+    member_id: int = Field(..., ge=1)
+    recent_negative_tags: list[str] = Field(..., min_items=1)
 
 
-class MoodRefreshResponse(BaseModel):
-    items: list[str]
+class MoodRefreshTargetResponse(BaseModel):
+    target_tag_codes: list[str]
 
 
 router = APIRouter()
 
 
-@router.post("/mood-refresh", response_model=MoodRefreshResponse)
-def mood_refresh(payload: MoodRefreshRequest) -> MoodRefreshResponse:
-    items = recommend_service.rank_refresh(payload.mood, payload.limit)
-    return MoodRefreshResponse(items=items)
+@router.post("/mood-refresh/target", response_model=MoodRefreshTargetResponse)
+def target_tags(payload: MoodRefreshTargetRequest) -> MoodRefreshTargetResponse:
+    target_tag_codes = recommend_service.predict_target_tags(payload.recent_negative_tags)
+    return MoodRefreshTargetResponse(target_tag_codes=target_tag_codes)

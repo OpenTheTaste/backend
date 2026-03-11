@@ -1,19 +1,20 @@
 from collections import Counter
-from typing import Iterable, Sequence, Tuple
+from typing import Sequence, Tuple
 
 
 def generate_tags(text: str, tag_pool: Sequence[str] | None = None) -> Tuple[list[str], dict[str, float]]:
     """Naive keyword-based tagger; replace with ML model as needed."""
     normalized_words = [w.strip(".,!?;:").lower() for w in text.split() if w.strip()]
-    pool = [t.lower() for t in tag_pool] if tag_pool else ["happy", "sad", "calm", "angry"]
+    pool = tag_pool or ["happy", "sad", "calm", "angry"]
+    pool_map = {tag.lower(): tag for tag in pool}
 
-    counts = Counter(word for word in normalized_words if word in pool)
+    counts = Counter(word for word in normalized_words if word in pool_map)
     if not counts:
-        top = pool[:2]
-        scores = {tag: 0.0 for tag in top}
-        return top, scores
+        fallback = pool[:2]
+        scores = {tag: 0.0 for tag in fallback}
+        return fallback, scores
 
-    top = [tag for tag, _ in counts.most_common(3)]
+    top = [pool_map[tag] for tag, _ in counts.most_common(3)]
     total = len(normalized_words) or 1
-    scores = {tag: round(freq / total, 4) for tag, freq in counts.items()}
+    scores = {pool_map[tag]: round(freq / total, 4) for tag, freq in counts.items()}
     return top, scores
