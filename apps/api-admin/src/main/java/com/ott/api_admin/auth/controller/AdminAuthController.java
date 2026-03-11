@@ -1,5 +1,6 @@
 package com.ott.api_admin.auth.controller;
 
+import com.ott.api_admin.auth.cdn.CloudFrontSignedCookieService;
 import com.ott.api_admin.auth.dto.request.AdminLoginRequest;
 import com.ott.api_admin.auth.dto.response.AdminLoginResponse;
 import com.ott.api_admin.auth.dto.response.AdminTokenResponse;
@@ -29,6 +30,7 @@ public class AdminAuthController implements AdminAuthApi {
 
     private final AdminAuthService adminAuthService;
     private final CookieUtil cookie;
+    private final CloudFrontSignedCookieService cloudFrontSignedCookieService;
 
     @Value("${jwt.access-token-expiry}")
     private int accessTokenExpiry;
@@ -47,6 +49,7 @@ public class AdminAuthController implements AdminAuthApi {
         // 둘 다 쿠키로
         cookie.addCookie(response, "accessToken", loginResponse.getAccessToken(), accessTokenExpiry);
         cookie.addCookie(response, "refreshToken", loginResponse.getRefreshToken(), refreshTokenExpiry);
+        cloudFrontSignedCookieService.addSignedCookies(response);
 
         // Body에는 memberId, role만 (토큰은 @JsonIgnore)
         return SuccessResponse.of(loginResponse).asHttp(HttpStatus.OK);
@@ -67,6 +70,7 @@ public class AdminAuthController implements AdminAuthApi {
 
         cookie.addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
         cookie.addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
+        cloudFrontSignedCookieService.addSignedCookies(response);
 
         return ResponseEntity.noContent().build();
     }
@@ -82,12 +86,15 @@ public class AdminAuthController implements AdminAuthApi {
 
         cookie.deleteCookie(response, "accessToken");
         cookie.deleteCookie(response, "refreshToken");
+        cloudFrontSignedCookieService.clearSignedCookies(response);
 
         return ResponseEntity.noContent().build();
     }
 
     private String extractCookie(HttpServletRequest request, String name) {
-        if (request.getCookies() == null) return null;
+        if (request.getCookies() == null) {
+            return null;
+        }
         for (Cookie cookie : request.getCookies()) {
             if (name.equals(cookie.getName())) {
                 return cookie.getValue();
