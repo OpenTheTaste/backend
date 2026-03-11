@@ -7,15 +7,23 @@ import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
+import com.ott.domain.common.MediaType;
+import com.ott.domain.contents.domain.Contents;
+import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_metrics.repository.MediaMetricsRepository;
 import com.ott.domain.member_radar_preference.domain.MemberRadarPreference;
 import com.ott.domain.member_radar_preference.repository.MemberRadarPreferenceRepository;
+import com.ott.domain.playback.domain.Playback;
+import com.ott.domain.playback.repository.PlaybackRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.ott.api_user.radar_preference.constant.RadarPreferenceConstant.RECOMMEND_LIMIT;
 
@@ -26,6 +34,8 @@ public class RadarPreferenceService {
 
     private final MediaMetricsRepository mediaMetricsRepository;
     private final MemberRadarPreferenceRepository memberRadarPreferenceRepository;
+    private final ContentsRepository contentsRepository;
+    private final PlaybackRepository playbackRepository;
 
     public RadarPreferenceResponse getPreference(Long memberId) {
         MemberRadarPreference preference = memberRadarPreferenceRepository.findByMemberId(memberId)
@@ -76,8 +86,60 @@ public class RadarPreferenceService {
                 popularity, immersion, mania, recency, reWatch, excludeMediaId, RECOMMEND_LIMIT
         );
 
+        // CONTENTS / SERIES mediaId 분류
+        List<Long> contentsMediaIdList = mediaList.stream()
+                .filter(m -> m.getMediaType() == MediaType.CONTENTS)
+                .map(Media::getId)
+                .toList();
+
+        List<Long> seriesMediaIdList = mediaList.stream()
+                .filter(m -> m.getMediaType() == MediaType.SERIES)
+                .map(Media::getId)
+                .toList();
+
+        // CONTENTS — duration, positionSec
+        Map<Long, Integer> durationMap = contentsMediaIdList.isEmpty() ? Map.of() :
+                contentsRepository.findAllByMediaIdIn(contentsMediaIdList).stream()
+                        .collect(Collectors.toMap(
+                                c -> c.getMedia().getId(),
+                                c -> c.getDuration() != null ? c.getDuration() : 0,
+                                (a, b) -> a));
+
+        Map<Long, Integer> positionMap = contentsMediaIdList.isEmpty() ? Map.of() :
+                playbackRepository.findAllByMemberIdAndMediaIds(memberId, contentsMediaIdList).stream()
+                        .collect(Collectors.toMap(
+                                p -> p.getContents().getMedia().getId(),
+                                p -> p.getPositionSec() != null ? p.getPositionSec() : 0,
+                                (a, b) -> a));
+
+        // SERIES — 마지막 화 duration, 최근 시청 에피소드 positionSec
+        Map<Long, Integer> seriesDurationMap = seriesMediaIdList.isEmpty() ? Map.of() :
+                contentsRepository.findLastEpisodeBySeriesMediaIds(seriesMediaIdList).stream()
+                        .collect(Collectors.toMap(
+                                c -> c.getSeries().getMedia().getId(),
+                                c -> c.getDuration() != null ? c.getDuration() : 0,
+                                (a, b) -> a));
+
+        Map<Long, Integer> seriesPositionMap = seriesMediaIdList.isEmpty() ? Map.of() :
+                playbackRepository.findLatestByMemberAndSeriesMediaIds(memberId, seriesMediaIdList).stream()
+                        .collect(Collectors.toMap(
+                                p -> p.getContents().getSeries().getMedia().getId(),
+                                p -> p.getPositionSec() != null ? p.getPositionSec() : 0,
+                                (a, b) -> a));
+
         List<RadarMediaResponse> contentList = mediaList.stream()
-                .map(media -> RadarMediaResponse.from(media, 0, 0))
+                .map(media -> {
+                    int duration;
+                    int positionSec;
+                    if (media.getMediaType() == MediaType.SERIES) {
+                        duration = seriesDurationMap.getOrDefault(media.getId(), 0);
+                        positionSec = seriesPositionMap.getOrDefault(media.getId(), 0);
+                    } else {
+                        duration = durationMap.getOrDefault(media.getId(), 0);
+                        positionSec = positionMap.getOrDefault(media.getId(), 0);
+                    }
+                    return RadarMediaResponse.from(media, duration, positionSec);
+                })
                 .toList();
 
         PageInfo pageInfo = PageInfo.toPageInfo(0, 1, contentList.size());

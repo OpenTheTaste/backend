@@ -3,8 +3,10 @@ package com.ott.domain.contents.repository;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
+import com.ott.domain.contents.domain.QContents;
 import com.ott.domain.media.domain.QMedia;
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +44,27 @@ public class ContentsRepositoryImpl implements ContentsRepositoryCustom {
         return queryFactory
                 .selectFrom(contents)
                 .where(contents.media.id.in(mediaIdList))
+                .fetch();
+    }
+
+    @Override
+    public List<Contents> findLastEpisodeBySeriesMediaIds(List<Long> seriesMediaIdList) {
+        QMedia seriesMedia = new QMedia("seriesMedia");
+        QContents subContents = new QContents("subContents");
+
+        return queryFactory
+                .selectFrom(contents)
+                .join(contents.series, series).fetchJoin()
+                .join(series.media, seriesMedia).fetchJoin()
+                .where(
+                        seriesMedia.id.in(seriesMediaIdList),
+                        contents.createdDate.eq(
+                                JPAExpressions
+                                        .select(subContents.createdDate.max())
+                                        .from(subContents)
+                                        .where(subContents.series.id.eq(series.id))
+                        )
+                )
                 .fetch();
     }
 
