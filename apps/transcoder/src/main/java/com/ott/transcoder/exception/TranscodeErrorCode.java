@@ -31,7 +31,8 @@ public enum TranscodeErrorCode {
     FFMPEG_FAILED("T103", "트랜스코딩에 실패했습니다"),
     FFMPEG_TIMEOUT("T104", "트랜스코딩 시간이 초과되었습니다"),
     STORAGE_FAILED("T105", "스토리지 작업에 실패했습니다"),
-    DISK_SPACE_INSUFFICIENT("T106", "디스크 공간이 부족합니다")
+    DISK_SPACE_INSUFFICIENT("T106", "디스크 공간이 부족합니다"),
+    FILE_SIZE_ZEOR("T107", "파일 크기를 알 수 없습니다")
 
     ;
 
