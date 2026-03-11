@@ -1,9 +1,13 @@
 package com.ott.transcoder.inspection;
 
+import com.ott.transcoder.exception.TranscodeErrorCode;
+import com.ott.transcoder.exception.retryable.StorageException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -17,7 +21,19 @@ public class DiskSpaceGuard {
     @Value("${transcoder.validation.disk-space-multiplier:5}")
     private double multiplier;
 
-    public void check(Path originPath) {
+    public void check(Path workDir, long fileSize) {
+        if (fileSize <= 0) {
+            throw new StorageException(TranscodeErrorCode.FILE_SIZE_ZERO);
+        }
 
+        long requiredSpace = (long)(fileSize * multiplier);
+        long usableSpace = workDir.toFile().getUsableSpace();
+
+        if (usableSpace < requiredSpace) {
+            throw new StorageException(
+                    TranscodeErrorCode.DISK_SPACE_INSUFFICIENT,
+                    String.format("디스크 공간 부족 - 필요: %dMB, 가용: %dMB",
+                            requiredSpace / 1_000_000, usableSpace / 1_000_000));
+        }
     }
 }

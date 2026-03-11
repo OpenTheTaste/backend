@@ -8,13 +8,18 @@ public class TranscodeException extends RuntimeException {
 
     private final TranscodeErrorCode errorCode;
 
+    public TranscodeException(TranscodeErrorCode errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+    }
+
     public TranscodeException(TranscodeErrorCode errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
     }
 
-    public TranscodeException(TranscodeErrorCode errorCode, String message, Throwable cause) {
-        super(message, cause);
+    public TranscodeException(TranscodeErrorCode errorCode) {
+        super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
 }

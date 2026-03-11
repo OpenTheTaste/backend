@@ -47,4 +47,16 @@ public final class IngestJobConstant {
 
         public static final String AAC = "aac";
     }
+
+    public static final class S3VideoStorageConstant {
+        public S3VideoStorageConstant() {
+        }
+
+        public static final String M3U8 = ".m3u8";
+        public static final String MPEGURL = "application/vnd.apple.mpegurl";
+        public static final String TS = ".ts";
+        public static final String MP2T = "video/mp2t";
+        public static final String OCTET_STREAM = "application/octet-stream";
+
+    }
 }
