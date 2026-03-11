@@ -18,12 +18,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-/**
- * AWS S3 기반 VideoStorage 구현체
- *
- * - download: S3에서 workDir로 파일 다운로드
- * - upload: workDir 내 모든 파일을 S3에 업로드
- */
+import static com.ott.transcoder.constant.IngestJobConstant.S3VideoStorageConstant.*;
+
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "storage.provider", havingValue = "s3")
@@ -60,7 +56,7 @@ public class S3VideoStorage implements VideoStorage {
                     "S3 다운로드 실패 - bucket: " + bucket + ", key: " + sourceKey, e);
         }
 
-        log.info("S3 다운로드 완료 - s3://{}/{} → {}", bucket, sourceKey, target);
+        log.info("S3 다운로드 완료 - s3://{}/{} -> {}", bucket, sourceKey, target);
         return target;
     }
 
@@ -72,16 +68,18 @@ public class S3VideoStorage implements VideoStorage {
             for (Path file : fileList) {
                 String relativePath = localDir.relativize(file).toString().replace("\\", "/");
                 String s3Key = destinationPrefix + "/" + relativePath;
+                String contentType = resolveContentType(file);
 
                 s3Client.putObject(
                         PutObjectRequest.builder()
                                 .bucket(bucket)
                                 .key(s3Key)
+                                .contentType(contentType)
                                 .build(),
                         RequestBody.fromFile(file)
                 );
 
-                log.debug("S3 업로드 - {}", s3Key);
+                log.debug("S3 업로드 - {}, contentType: {}", s3Key, contentType);
             }
         } catch (IOException e) {
             throw new StorageException(TranscodeErrorCode.STORAGE_FAILED,
@@ -91,7 +89,17 @@ public class S3VideoStorage implements VideoStorage {
                     "S3 업로드 실패 - bucket: " + bucket + ", prefix: " + destinationPrefix, e);
         }
 
-        log.info("S3 업로드 완료 - {} → s3://{}/{}", localDir, bucket, destinationPrefix);
+        log.info("S3 업로드 완료 - {} -> s3://{}/{}", localDir, bucket, destinationPrefix);
         return destinationPrefix;
+    }
+
+    private String resolveContentType(Path file) {
+        String fileName = file.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(M3U8)) {
+            return MPEGURL;
+        } else if (fileName.endsWith(TS)) {
+            return MP2T;
+        }
+        return OCTET_STREAM;
     }
 }
