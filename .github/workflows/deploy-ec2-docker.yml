@@ -93,6 +93,17 @@ jobs:
 
           IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
 
+          MONITORING_PRIVATE_IP=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --filters "Name=tag:Name,Values=${PROJECT_NAME}-monitoring-ec2" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].PrivateIpAddress" \
+            --output text)
+
+          if [ -z "$MONITORING_PRIVATE_IP" ] || [ "$MONITORING_PRIVATE_IP" = "None" ]; then
+            echo "No running monitoring instance found for tag: ${PROJECT_NAME}-monitoring-ec2" >&2
+            exit 1
+          fi
+
           deploy_service() {
             local target_tag="$1"
             local image_uri="$2"
@@ -100,6 +111,7 @@ jobs:
             local env_file="$4"
             local port="$5"
             local service_env_param="$6"
+            local promtail_role="$7"
 
             local instance_id
             instance_id=$(aws ec2 describe-instances \
@@ -120,31 +132,66 @@ jobs:
               run_cmd="sudo docker run -d --name ${container_name} --restart unless-stopped --env-file ${env_file} ${image_uri}"
             fi
 
+            local promtail_config_b64
+            promtail_config_b64=$(printf '%s\n' \
+              'server:' \
+              '  http_listen_port: 9080' \
+              '  grpc_listen_port: 0' \
+              '' \
+              'positions:' \
+              '  filename: /tmp/positions.yaml' \
+              '' \
+              'clients:' \
+              "  - url: http://${MONITORING_PRIVATE_IP}:3100/loki/api/v1/push" \
+              '' \
+              'scrape_configs:' \
+              '  - job_name: docker' \
+              '    static_configs:' \
+              '      - targets: [localhost]' \
+              '        labels:' \
+              '          job: docker' \
+              "          role: ${promtail_role}" \
+              '          __path__: /var/lib/docker/containers/*/*-json.log' \
+              '    pipeline_stages:' \
+              '      - docker: {}' \
+              | base64 | tr -d '\n')
+
+            local params_file
+            params_file=$(mktemp)
+            commands=(
+              "set -e"
+              "sudo mkdir -p /etc/oplust"
+              "DB_HOST=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_RDS_ENDPOINT_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
+              "DB_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_USERNAME_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
+              "DB_PASS=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_PASSWORD_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
+              "SERVICE_ENV=\$(aws ssm get-parameter --region $AWS_REGION --name '${service_env_param}' --with-decryption --query 'Parameter.Value' --output text)"
+              "echo \"SPRING_DATASOURCE_URL=jdbc:mysql://\$DB_HOST:3306/${DB_NAME}\" | sudo tee ${env_file} >/dev/null"
+              "echo \"SPRING_DATASOURCE_USERNAME=\$DB_USER\" | sudo tee -a ${env_file} >/dev/null"
+              "echo \"SPRING_DATASOURCE_PASSWORD=\$DB_PASS\" | sudo tee -a ${env_file} >/dev/null"
+              "printf '%s\n' \"\$SERVICE_ENV\" | sudo tee -a ${env_file} >/dev/null"
+              "sudo chmod 600 ${env_file}"
+              "aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY"
+              "sudo docker pull ${image_uri}"
+              "sudo docker rm -f ${container_name} || true"
+              "${run_cmd}"
+              "sudo mkdir -p /opt/oplust-promtail /opt/oplust-promtail/positions"
+              "echo '${promtail_config_b64}' | base64 -d | sudo tee /opt/oplust-promtail/promtail.yml >/dev/null"
+              "sudo docker rm -f promtail || true"
+              "sudo docker run -d --name promtail --restart unless-stopped -v /opt/oplust-promtail/promtail.yml:/etc/promtail/config.yml:ro -v /opt/oplust-promtail/positions:/tmp -v /var/lib/docker/containers:/var/lib/docker/containers:ro grafana/promtail:2.9.8 -config.file=/etc/promtail/config.yml"
+            )
+            printf '%s\n' "${commands[@]}" | jq -R . | jq -s '{commands: .}' > "$params_file"
+
             local cmd_id
             cmd_id=$(aws ssm send-command \
               --region "$AWS_REGION" \
               --instance-ids "$instance_id" \
               --document-name "AWS-RunShellScript" \
               --comment "Deploy ${container_name}:${IMAGE_TAG}" \
-              --parameters commands="[
-                \"set -e\",
-                \"sudo mkdir -p /etc/oplust\",
-                \"DB_HOST=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_RDS_ENDPOINT_PARAM' --with-decryption --query 'Parameter.Value' --output text)\",
-                \"DB_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_USERNAME_PARAM' --with-decryption --query 'Parameter.Value' --output text)\",
-                \"DB_PASS=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_PASSWORD_PARAM' --with-decryption --query 'Parameter.Value' --output text)\",
-                \"SERVICE_ENV=\$(aws ssm get-parameter --region $AWS_REGION --name '${service_env_param}' --with-decryption --query 'Parameter.Value' --output text)\",
-                \"echo \\\"SPRING_DATASOURCE_URL=jdbc:mysql://\$DB_HOST:3306/${DB_NAME}\\\" | sudo tee ${env_file} >/dev/null\",
-                \"echo \\\"SPRING_DATASOURCE_USERNAME=\$DB_USER\\\" | sudo tee -a ${env_file} >/dev/null\",
-                \"echo \\\"SPRING_DATASOURCE_PASSWORD=\$DB_PASS\\\" | sudo tee -a ${env_file} >/dev/null\",
-                \"printf '%s\\n' \\\"\$SERVICE_ENV\\\" | sudo tee -a ${env_file} >/dev/null\",
-                \"sudo chmod 600 ${env_file}\",
-                \"aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY\",
-                \"sudo docker pull ${image_uri}\",
-                \"sudo docker rm -f ${container_name} || true\",
-                \"${run_cmd}\"
-              ]" \
+              --parameters "file://${params_file}" \
               --query 'Command.CommandId' \
               --output text)
+
+            rm -f "$params_file"
 
             echo "[$container_name] command id: $cmd_id (instance: $instance_id)"
 
@@ -182,7 +229,6 @@ jobs:
             exit 1
           }
 
-          deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/api-user/env"
-          deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/api-admin/env"
-          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "8082" "/oplust/transcoder/env"
-
+          deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/api-user/env" "user-api"
+          deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/api-admin/env" "admin-api"
+          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "8082" "/oplust/transcoder/env" "transcoder"
