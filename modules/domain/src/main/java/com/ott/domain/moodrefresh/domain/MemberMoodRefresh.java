@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "member_mood_refresh")
-public class MemberMoodRefresh extends BaseEntity { // ✨ 핵심: BaseEntity 상속!
+public class MemberMoodRefresh extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

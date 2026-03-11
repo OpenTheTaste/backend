@@ -56,7 +56,6 @@ cloudfront:
     key-pair-id: ${CF_SIGNED_COOKIE_KEY_PAIR_ID}
     private-key-base64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64}
     ttl-seconds: 2400000
-    path: /back-office/swagger-ui/index.htmlai
 
 
 ai:

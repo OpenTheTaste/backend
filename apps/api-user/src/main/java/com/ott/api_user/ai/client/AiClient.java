@@ -35,8 +35,14 @@ public class AiClient {
                 .timeout(Duration.ofSeconds(5))
                 .block(); // 비동기 작업 내에서 안전하게 블로킹 처리
 
+            if (response == null || response.getOutputTags() == null) {
+                log.warn("[User AI] 타겟 태그 응답이 없거나 outputTags가 null입니다. 빈 리스트를 반환합니다. inputTags={}", inputTags);
+                return Collections.emptyList();
+            }
+
             log.info("[User AI] 타겟 태그 응답 완료: {}", response.getOutputTags());
             return response.getOutputTags();
+            
         }catch(Exception e){
             log.error("[User AI] 타겟 태그 요청 실패 (inputTags={}): {}", inputTags, e.getMessage());
             // 관리자 로직이 에러로 멈추지 않도록 빈 리스트를 반환합니다. (안전장치)

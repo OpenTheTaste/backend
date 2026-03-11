@@ -35,9 +35,15 @@ public class AiClient {
                 .bodyToMono(TaggingResponse.class)
                 .timeout(Duration.ofSeconds(5))
                 .block(); // 비동기 작업 내에서 안전하게 블로킹 처리
+            
+            if (response == null || response.getMoodTags() == null) {
+                log.warn("[Admin AI] 태깅 응답이 없거나 moodTags가 null입니다. 빈 리스트를 반환합니다. mediaId={}", mediaId);
+                return Collections.emptyList();
+            }
 
-        log.info("[Admin AI] 태깅 응답 완료: {}", response.getMoodTags());
-        return response.getMoodTags(); 
+            log.info("[Admin AI] 태깅 응답 완료: {}", response.getMoodTags());
+            return response.getMoodTags(); 
+
         }catch(Exception e){
             // 타임아웃 발생 or AI 서버 죽었을 때
             log.error("[Admin AI] 태깅 요청 실패 (mediaId={}): {}", mediaId, e.getMessage());

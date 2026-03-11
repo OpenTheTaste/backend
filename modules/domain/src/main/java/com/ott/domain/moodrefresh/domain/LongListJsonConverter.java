@@ -16,6 +16,11 @@ public class LongListJsonConverter implements AttributeConverter<List<Long>, Str
     // 1. Java List -> DB JSON String 저장할 때
     @Override
     public String convertToDatabaseColumn(List<Long> attribute) {
+        // null 입력 시 DB에도 실제 null로 저장되도록 처리
+        if (attribute == null) {
+            return null;
+        }
+
         try {
             return mapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
