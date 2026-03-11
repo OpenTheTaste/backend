@@ -23,7 +23,7 @@ public class DiskSpaceGuard {
 
     public void check(Path workDir, long fileSize) {
         if (fileSize <= 0) {
-            throw new StorageException(TranscodeErrorCode.FILE_SIZE_ZEOR);
+            throw new StorageException(TranscodeErrorCode.FILE_SIZE_ZERO);
         }
 
         long requiredSpace = (long)(fileSize * multiplier);
