@@ -23,7 +23,7 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @Component
-//@ConditionalOnProperty(name = "storage.provider", havingValue = "local")
+@ConditionalOnProperty(name = "storage.provider", havingValue = "local")
 public class LocalVideoStorage implements VideoStorage {
 
     @Value("${storage.local.output-dir:#{systemProperties['java.io.tmpdir'] + '/ott-storage'}}")

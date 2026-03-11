@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 public class TranscodeCommand implements Command {
 
-    Resolution resolution;
+    private final Resolution resolution;
 
     @Override
     public CommandType getType() {
