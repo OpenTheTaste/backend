@@ -1,17 +1,18 @@
 package com.ott.api_user.auth.oauth2.handler;
 
+import com.ott.api_user.auth.cdn.CloudFrontSignedCookieService;
 import com.ott.api_user.auth.service.KakaoAuthService;
-import com.ott.common.security.util.CookieUtil;
 import com.ott.common.security.jwt.JwtTokenProvider;
+import com.ott.common.security.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,6 +32,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtTokenProvider jwtTokenProvider;
     private final KakaoAuthService kakaoAuthService;
     private final CookieUtil cookieUtil;
+    private final CloudFrontSignedCookieService cloudFrontSignedCookieService;
 
     @Value("${app.frontend-url}")
     private String frontedUrl;
@@ -71,7 +73,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         // 쿠키로 저장
         cookieUtil.addCookie(response, "accessToken", accessToken, accessTokenExpiry);
         cookieUtil.addCookie(response, "refreshToken", refreshToken, refreshTokenExpiry);
-
+        cloudFrontSignedCookieService.addSignedCookies(response);
 
         // 리다이렉트에는 isNewMember에 따라서 경로 변경
         String targetUrl = isNewMember
@@ -79,7 +81,5 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                 : frontedUrl + "/";
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
-
     }
-
 }

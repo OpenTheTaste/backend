@@ -34,10 +34,6 @@ public class KakaoAuthService {
         return memberRepository
                 .findByProviderAndProviderId(Provider.KAKAO, kakaoUserInfo.getProviderId())
                 .map(existingMember -> {
-                    existingMember.reactivate();
-//                    existingMember.updateKakaoProfile(
-//                          kakaoUserInfo.getEmail(),
-//                          kakaoUserInfo.getNickname());
                     reactivateRadarPreference(existingMember);
                     return existingMember;
                 })

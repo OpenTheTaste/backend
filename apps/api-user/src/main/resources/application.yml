@@ -73,6 +73,12 @@ springdoc:
   api-docs:
     version: OPENAPI_3_0
 
+cloudfront:
+  signed-cookie:
+    resource-url: https://cdn.openthetaste.cloud/*
+    key-pair-id: ${CF_SIGNED_COOKIE_KEY_PAIR_ID:}
+    private-key-base64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64:}
+    ttl-seconds: 2400000
 
 ai:
   base-url: ${AI_BASE_URL:http://localhost:8000}

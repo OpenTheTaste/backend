@@ -1,6 +1,6 @@
 package com.ott.api_user.auth.controller;
 
-
+import com.ott.api_user.auth.cdn.CloudFrontSignedCookieService;
 import com.ott.api_user.auth.dto.TokenResponse;
 import com.ott.api_user.auth.service.AuthService;
 import com.ott.common.security.util.CookieUtil;
@@ -13,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
@@ -22,6 +24,7 @@ public class AuthController implements AuthApi {
 
     private final AuthService authService;
     private final CookieUtil cookieUtil;
+    private final CloudFrontSignedCookieService cloudFrontSignedCookieService;
 
     @Value("${jwt.access-token-expiry}")
     private int accessTokenExpiry;
@@ -46,6 +49,7 @@ public class AuthController implements AuthApi {
         // 쿠키에 저장
         cookieUtil.addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
         cookieUtil.addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
+        cloudFrontSignedCookieService.addSignedCookies(response);
 
         return ResponseEntity.noContent().build();
     }
@@ -65,6 +69,7 @@ public class AuthController implements AuthApi {
 
         cookieUtil.deleteCookie(response, "accessToken");
         cookieUtil.deleteCookie(response, "refreshToken");
+        cloudFrontSignedCookieService.clearSignedCookies(response);
 
         return ResponseEntity.noContent().build();
     }
