@@ -5,6 +5,8 @@ import com.ott.api_user.radar_preference.dto.response.RadarMediaResponse;
 import com.ott.api_user.radar_preference.dto.response.RadarPreferenceResponse;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.common.web.response.PageInfo;
+import com.ott.common.web.response.PageResponse;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_metrics.repository.MediaMetricsRepository;
 import com.ott.domain.member_radar_preference.domain.MemberRadarPreference;
@@ -15,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.ott.api_user.radar_preference.constant.RadarPreferenceConstant.DEFAULT_WEIGHT;
 import static com.ott.api_user.radar_preference.constant.RadarPreferenceConstant.RECOMMEND_LIMIT;
 
 @Service
@@ -57,7 +58,7 @@ public class RadarPreferenceService {
         );
     }
 
-    public List<RadarMediaResponse> getRecommendations(Long memberId) {
+    public PageResponse<RadarMediaResponse> getRecommendations(Long memberId, Long excludeMediaId) {
         MemberRadarPreference memberRadarPreference = memberRadarPreferenceRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RADAR_PREFERENCE_NOT_FOUND));
 
@@ -68,16 +69,19 @@ public class RadarPreferenceService {
         int reWatch = memberRadarPreference.getReWatch();
 
         if (needDefaultWeight(popularity, immersion, mania, recency, reWatch)) {
-            return List.of();
+            return PageResponse.toPageResponse(PageInfo.toPageInfo(0, 0, 0), List.of());
         }
 
         List<Media> mediaList = mediaMetricsRepository.findTopByWeightedScore(
-                popularity, immersion, mania, recency, reWatch, RECOMMEND_LIMIT
+                popularity, immersion, mania, recency, reWatch, excludeMediaId, RECOMMEND_LIMIT
         );
 
-        return mediaList.stream()
-                .map(RadarMediaResponse::from)
+        List<RadarMediaResponse> contentList = mediaList.stream()
+                .map(media -> RadarMediaResponse.from(media, 0, 0))
                 .toList();
+
+        PageInfo pageInfo = PageInfo.toPageInfo(0, 1, contentList.size());
+        return PageResponse.toPageResponse(pageInfo, contentList);
     }
 
     boolean needDefaultWeight(int popularity, int immersion, int mania, int recency, int reWatch) {
