@@ -27,7 +27,15 @@ public class BackOfficeShortFormMapper {
         );
     }
 
-    public ShortFormDetailResponse toShortFormDetailResponse(ShortForm shortForm, Media media, String uploaderNickname, String originMediaTitle, List<MediaTag> mediaTagList) {
+    public ShortFormDetailResponse toShortFormDetailResponse(
+            ShortForm shortForm,
+            Media media,
+            String uploaderNickname,
+            String originMediaTitle,
+            Long originId,
+            MediaType originType,
+            List<MediaTag> mediaTagList
+    ) {
         String categoryName = extractCategoryName(mediaTagList);
         List<String> tagNameList = extractTagNameList(mediaTagList);
 
@@ -37,6 +45,8 @@ public class BackOfficeShortFormMapper {
                 media.getTitle(),
                 media.getDescription(),
                 originMediaTitle,
+                originId,
+                originType,
                 uploaderNickname,
                 shortForm.getDuration(),
                 shortForm.getVideoSize(),
