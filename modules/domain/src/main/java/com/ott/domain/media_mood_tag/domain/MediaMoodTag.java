@@ -3,6 +3,7 @@ package com.ott.domain.media_mood_tag.domain;
 import com.ott.domain.common.BaseEntity;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.mood_tag.domain.MoodTag;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -36,4 +37,7 @@ public class MediaMoodTag extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "mood_tag_id", nullable = false)
     private MoodTag moodTag;
+
+    @Column(name = "priority", nullable = false)
+    private Integer priority;
 }
