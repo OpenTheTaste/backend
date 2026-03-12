@@ -16,4 +16,6 @@ public interface ContentsRepositoryCustom {
     Optional<Contents> findWithMediaAndUploaderByMediaId(Long mediaId);
 
     List<Contents> findAllByMediaIdIn(List<Long> mediaIdList);
+
+    List<Contents> findLastEpisodeBySeriesMediaIds(List<Long> seriesMediaIdList);
 }
