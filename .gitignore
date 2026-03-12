@@ -48,5 +48,6 @@ modules/infra/src/main/resources/db/seed/
 private_docs/
 AGENTS.md
 CLAUDE.md
+GEMINI.md
 
 **/application-local.yml
