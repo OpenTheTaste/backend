@@ -1,5 +1,6 @@
 package com.ott.api_admin.shortform.dto.response;
 
+import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -23,6 +24,12 @@ public record ShortFormDetailResponse(
 
         @Schema(type = "String", description = "원본 콘텐츠 제목 (시리즈 혹은 콘텐츠(단편 등))", example = "더글로리 시즌1, 태극기 휘날리며")
         String originContentsTitle,
+
+        @Schema(type = "Long", description = "원본 영상 ID", example = "2")
+        Long originId,
+
+        @Schema(type = "String", description = "원본 영상 타입(시리즈, 콘텐츠)", example = "SERIES")
+        MediaType originType,
 
         @Schema(type = "String", description = "업로더 닉네임", example = "관리자")
         String uploaderNickname,
