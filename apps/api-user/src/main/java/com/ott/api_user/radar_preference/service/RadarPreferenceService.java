@@ -13,6 +13,7 @@ import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_metrics.repository.MediaMetricsRepository;
 import com.ott.domain.member_radar_preference.domain.MemberRadarPreference;
 import com.ott.domain.member_radar_preference.repository.MemberRadarPreferenceRepository;
+import com.ott.domain.playback.domain.Playback;
 import com.ott.domain.playback.repository.PlaybackRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -109,20 +110,21 @@ public class RadarPreferenceService {
                                 p -> p.getPositionSec() != null ? p.getPositionSec() : 0,
                                 (a, b) -> a));
 
-        // SERIES — 마지막 화 duration, 최근 시청 에피소드 positionSec
-        Map<Long, Integer> seriesDurationMap = seriesMediaIdList.isEmpty() ? Map.of() :
-                contentsRepository.findLastEpisodeBySeriesMediaIds(seriesMediaIdList).stream()
-                        .collect(Collectors.toMap(
-                                c -> c.getSeries().getMedia().getId(),
-                                c -> c.getDuration() != null ? c.getDuration() : 0,
-                                (a, b) -> a));
+        // SERIES — 최근 시청 에피소드의 duration, positionSec
+        List<Playback> latestPlaybackList = seriesMediaIdList.isEmpty() ? List.of() :
+                playbackRepository.findLatestByMemberAndSeriesMediaIds(memberId, seriesMediaIdList);
 
-        Map<Long, Integer> seriesPositionMap = seriesMediaIdList.isEmpty() ? Map.of() :
-                playbackRepository.findLatestByMemberAndSeriesMediaIds(memberId, seriesMediaIdList).stream()
-                        .collect(Collectors.toMap(
-                                p -> p.getContents().getSeries().getMedia().getId(),
-                                p -> p.getPositionSec() != null ? p.getPositionSec() : 0,
-                                (a, b) -> a));
+        Map<Long, Integer> seriesDurationMap = latestPlaybackList.stream()
+                .collect(Collectors.toMap(
+                        p -> p.getContents().getSeries().getMedia().getId(),
+                        p -> p.getContents().getDuration() != null ? p.getContents().getDuration() : 0,
+                        (a, b) -> a));
+
+        Map<Long, Integer> seriesPositionMap = latestPlaybackList.stream()
+                .collect(Collectors.toMap(
+                        p -> p.getContents().getSeries().getMedia().getId(),
+                        p -> p.getPositionSec() != null ? p.getPositionSec() : 0,
+                        (a, b) -> a));
 
         List<RadarMediaResponse> contentList = mediaList.stream()
                 .map(media -> {
