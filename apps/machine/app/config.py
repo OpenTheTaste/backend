@@ -9,7 +9,9 @@ class Settings(BaseSettings):
         default_factory=list,
         env="AI_CORS_ALLOW_ORIGINS"
     )
-    model_path: Optional[str] = None
+    
+    model_path: Optional[str] = Field(default=None, validation_alias="AI_MODEL_PATH")
+    mood_model_path: Optional[str] = Field(default=None, validation_alias="AI_MOOD_MODEL_PATH")
 
     model_config = SettingsConfigDict(
         env_prefix="AI_",
