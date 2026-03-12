@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface MediaMetricsRepositoryCustom {
 
-    List<Media> findTopByWeightedScore(int popularity, int immersion, int mania, int recency, int reWatch, int limit);
+    List<Media> findTopByWeightedScore(int popularity, int immersion, int mania, int recency, int reWatch, Long excludeMediaId, int limit);
 }

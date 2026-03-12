@@ -4,6 +4,7 @@ import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.Media;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -23,7 +24,7 @@ public class MediaMetricsRepositoryImpl implements MediaMetricsRepositoryCustom 
 
     @Override
     public List<Media> findTopByWeightedScore(
-            int popularity, int immersion, int mania, int recency, int reWatch, int limit
+            int popularity, int immersion, int mania, int recency, int reWatch, Long excludeMediaId, int limit
     ) {
         NumberExpression<BigDecimal> weightedScore =
                 mediaMetrics.popularity.multiply(popularity)
@@ -45,10 +46,15 @@ public class MediaMetricsRepositoryImpl implements MediaMetricsRepositoryCustom 
                                                 .from(contents)
                                                 .where(contents.media.id.eq(media.id)
                                                         .and(contents.series.isNotNull()))
-                                                .notExists()))
+                                                .notExists())),
+                        excludeMediaIdEq(excludeMediaId)
                 )
                 .orderBy(weightedScore.desc())
                 .limit(limit)
                 .fetch();
+    }
+
+    private BooleanExpression excludeMediaIdEq(Long excludeMediaId) {
+        return excludeMediaId != null ? media.id.ne(excludeMediaId) : null;
     }
 }

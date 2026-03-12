@@ -29,13 +29,21 @@ public class RadarMediaResponse {
     @Schema(type = "MediaType(String)", description = "미디어 타입", example = "SERIES")
     private MediaType mediaType;
 
-    public static RadarMediaResponse from(Media media) {
+    @Schema(type = "Integer", description = "총 재생 시간 (초)", example = "3600")
+    private Integer duration;
+
+    @Schema(type = "Integer", description = "현재 시청 지점 (초)", example = "1200")
+    private Integer positionSec;
+
+    public static RadarMediaResponse from(Media media, Integer duration, Integer positionSec) {
         return RadarMediaResponse.builder()
                 .mediaId(media.getId())
                 .title(media.getTitle())
                 .posterUrl(media.getPosterUrl())
                 .thumbnailUrl(media.getThumbnailUrl())
                 .mediaType(media.getMediaType())
+                .duration(duration)
+                .positionSec(positionSec)
                 .build();
     }
 }

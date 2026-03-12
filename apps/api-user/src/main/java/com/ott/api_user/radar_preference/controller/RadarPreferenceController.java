@@ -4,14 +4,13 @@ import com.ott.api_user.radar_preference.dto.request.RadarPreferenceRequest;
 import com.ott.api_user.radar_preference.dto.response.RadarMediaResponse;
 import com.ott.api_user.radar_preference.dto.response.RadarPreferenceResponse;
 import com.ott.api_user.radar_preference.service.RadarPreferenceService;
+import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/radar")
@@ -42,11 +41,12 @@ public class RadarPreferenceController implements RadarPreferenceApi {
 
     @Override
     @GetMapping("/recommend")
-    public ResponseEntity<SuccessResponse<List<RadarMediaResponse>>> getRecommendationList(
+    public ResponseEntity<SuccessResponse<PageResponse<RadarMediaResponse>>> getRecommendationList(
+            @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @AuthenticationPrincipal Long memberId
     ) {
         return ResponseEntity.ok(
-                SuccessResponse.of(radarPreferenceService.getRecommendations(memberId))
+                SuccessResponse.of(radarPreferenceService.getRecommendations(memberId, excludeMediaId))
         );
     }
 }

@@ -4,6 +4,7 @@ import com.ott.api_user.radar_preference.dto.request.RadarPreferenceRequest;
 import com.ott.api_user.radar_preference.dto.response.RadarMediaResponse;
 import com.ott.api_user.radar_preference.dto.response.RadarPreferenceResponse;
 import com.ott.common.web.exception.ErrorResponse;
+import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,11 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Radar", description = "레이더 차트 API")
 public interface RadarPreferenceApi {
@@ -56,15 +53,19 @@ public interface RadarPreferenceApi {
 
     @Operation(summary = "레이더 차트 추천 리스트 조회", description = "사용자의 슬라이더 설정 기반으로 가중합 추천 미디어 상위 20개를 조회합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "레이더 차트 추천 리스트 조회 성공",
+            @ApiResponse(responseCode = "0", description = "레이더 차트 추천 리스트 DTO 응답 구조",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = RadarMediaResponse.class))),
+            @ApiResponse(responseCode = "200", description = "레이더 차트 추천 리스트 조회 성공",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = PageResponse.class))),
             @ApiResponse(responseCode = "404", description = "레이더 차트 설정을 찾을 수 없음",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/recommend")
-    ResponseEntity<SuccessResponse<List<RadarMediaResponse>>> getRecommendationList(
+    ResponseEntity<SuccessResponse<PageResponse<RadarMediaResponse>>> getRecommendationList(
+            @Parameter(description = "현재 영상 ID") @RequestParam(value = "excludeMediaId", required = false) Long excludeMediaId,
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
     );
 }
