@@ -12,7 +12,7 @@ import com.ott.domain.common.Status;
 import com.ott.domain.playback.domain.Playback;
 import org.springframework.data.jpa.repository.Modifying;
 
-public interface PlaybackRepository extends JpaRepository<Playback, Long> {
+public interface PlaybackRepository extends JpaRepository<Playback, Long>, PlaybackRepositoryCustom {
 
         // 회원 탈퇴
         @Modifying(clearAutomatically = true)
@@ -35,9 +35,10 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long> {
 
         //현재 플레이리스트의 모든 미디어에 대한 일괄 조회
         @Query("""
-                SELECT p FROM Playback p 
-                WHERE p.member.id = :memberId 
+                SELECT p FROM Playback p
+                WHERE p.member.id = :memberId
                 AND p.contents.media.id IN :mediaIdList
+                AND p.status = 'ACTIVE'
                 ORDER BY p.modifiedDate DESC
                 """)
         List<Playback> findAllByMemberIdAndMediaIds(
@@ -47,12 +48,13 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long> {
         
         // 단건 조회(컨텐츠 or 에피별) 에 대해 시청기록 조회
         @Query("""
-                SELECT p FROM Playback p 
-                WHERE p.member.id = :memberId 
+                SELECT p FROM Playback p
+                WHERE p.member.id = :memberId
                 AND p.contents.media.id = :mediaId
+                AND p.status = 'ACTIVE'
                 """)
         Optional<Playback> findByMemberIdAndMediaId(
-                @Param("memberId") Long memberId, 
+                @Param("memberId") Long memberId,
                 @Param("mediaId") Long mediaId);
         
         
