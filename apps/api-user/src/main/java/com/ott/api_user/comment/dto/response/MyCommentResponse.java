@@ -18,6 +18,9 @@ public class MyCommentResponse {
     @Schema(type = "Long", example = "45", description = "미디어 ID")
     private Long mediaId;
 
+    @Schema(type = "Long", description = "해당 미디어의 시리즈ID (본체 미디어 ID) (단편이면 null)", example = "21")
+    private Long seriesMediaId;
+
     @Schema(type = "String", description = "미디어 타입 (CONTENTS, SERIES)", example = "CONTENTS")
     private MediaType mediaType;
 
@@ -40,8 +43,16 @@ public class MyCommentResponse {
     private LocalDateTime createdDate;
 
     public static MyCommentResponse from(Comment comment) {
+
+        Long seriesMediaId = null;
+        if (comment.getContents().getSeries() != null) {
+            seriesMediaId = comment.getContents().getSeries().getMedia().getId();
+        }
+
+
         return MyCommentResponse.builder()
                 .mediaId(comment.getContents().getMedia().getId())
+                .seriesMediaId(seriesMediaId)
                 .mediaType(comment.getContents().getMedia().getMediaType())
                 .commentId(comment.getId())
                 .content(comment.getContent())
