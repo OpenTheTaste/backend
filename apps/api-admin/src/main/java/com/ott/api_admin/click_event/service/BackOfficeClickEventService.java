@@ -24,7 +24,6 @@ public class BackOfficeClickEventService {
 
         double thisMonthRate = calculateConversionRate(now.getYear(), now.getMonthValue());
         double lastMonthRate = calculateConversionRate(lastMonth.getYear(), lastMonth.getMonthValue());
-        System.out.println("이번달 비율: " + thisMonthRate + " 이전달 비율: " + lastMonthRate);
         return backOfficeClickEventMapper.toShortFormConversionResponse(thisMonthRate, lastMonthRate);
     }
 
