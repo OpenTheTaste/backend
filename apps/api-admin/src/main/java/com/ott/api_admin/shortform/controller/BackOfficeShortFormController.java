@@ -5,8 +5,11 @@ import com.ott.api_admin.shortform.dto.response.ShortFormDetailResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormListResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormUpdateResponse;
 import com.ott.api_admin.shortform.dto.response.ShortFormUploadResponse;
+import com.ott.api_admin.upload.dto.request.MultipartUploadCompleteRequest;
+import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.api_admin.shortform.dto.request.ShortFormUpdateRequest;
 import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
+import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.api_admin.shortform.service.BackOfficeShortFormService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -86,5 +89,46 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
             Authentication authentication
     ) {
         return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.updateShortFormUpload(shortformId, request, authentication)));
+    }
+
+    @PostMapping("/{shortformId}/upload/complete")
+    public ResponseEntity<SuccessResponse<Void>> completeShortFormUpload(
+            @PathVariable("shortformId") Long shortformId,
+            @Valid @RequestBody MultipartUploadCompleteRequest request,
+            Authentication authentication
+    ) {
+        backOfficeShortFormService.completeShortFormOriginUpload(
+                shortformId,
+                request.objectKey(),
+                request.uploadId(),
+                request.parts().stream()
+                        .map(part -> new UploadHelper.MultipartPartETag(part.partNumber(), part.eTag()))
+                        .toList(),
+                authentication
+        );
+        return ResponseEntity.ok(SuccessResponse.of(null));
+    }
+
+    @GetMapping("/{shortformId}/upload/parts")
+    public ResponseEntity<SuccessResponse<PageResponse<MultipartUploadPartUrlResponse>>> getShortFormUploadPartUrls(
+            @PathVariable("shortformId") Long shortformId,
+            @RequestParam("objectKey") String objectKey,
+            @RequestParam("uploadId") String uploadId,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "100") Integer size,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(
+                        backOfficeShortFormService.getShortFormOriginUploadPartUrls(
+                                shortformId,
+                                objectKey,
+                                uploadId,
+                                page,
+                                size,
+                                authentication
+                        )
+                )
+        );
     }
 }
