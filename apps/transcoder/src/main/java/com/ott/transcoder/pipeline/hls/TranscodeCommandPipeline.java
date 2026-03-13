@@ -1,7 +1,7 @@
 package com.ott.transcoder.pipeline.hls;
 
 import com.ott.transcoder.command.Command;
-import com.ott.transcoder.command.CommandType;
+import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.transcoder.command.TranscodeCommand;
 import com.ott.transcoder.ffmpeg.TranscodeProfile;
 import com.ott.transcoder.ffmpeg.execution.FfmpegExecutor;

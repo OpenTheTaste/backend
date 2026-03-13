@@ -1,5 +1,6 @@
 package com.ott.transcoder.command;
 
+import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.domain.video_profile.domain.Resolution;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
