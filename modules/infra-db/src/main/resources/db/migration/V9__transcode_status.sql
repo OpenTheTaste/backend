@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS ingest_command
     ingest_job_id  BIGINT                               NOT NULL,
     command_type   ENUM ('TRANSCODE','THUMBNAIL')       NOT NULL,
     command_key    VARCHAR(50)                          NOT NULL,
-    command_status ENUM ('PENDING','COMPLETED')         NOT NULL,
     output_url     TEXT                                 NULL,
+    command_status ENUM ('PENDING','COMPLETED')         NOT NULL,
 
     created_date   DATETIME                             NOT NULL,
     modified_date  DATETIME                             NOT NULL,
