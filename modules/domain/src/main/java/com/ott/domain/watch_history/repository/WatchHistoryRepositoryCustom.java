@@ -3,11 +3,15 @@ package com.ott.domain.watch_history.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.ott.domain.watch_history.domain.WatchHistory;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface WatchHistoryRepositoryCustom {
+
+    List<WatchHistory> findRecentUnusedHistoriesWithin(Long memberId, LocalDateTime cutoff, int limit);
 
     List<TagViewCountProjection> countByTagAndCategoryIdAndWatchedBetween(Long categoryId, LocalDateTime startDate, LocalDateTime endDate);
 
@@ -23,4 +27,4 @@ public interface WatchHistoryRepositoryCustom {
     // 가장 최근에 시청한 에피소드의 media_id 반환
     Optional<Long> findLatestContentMediaIdByMemberIdAndSeriesId(Long memberId, Long seriesId);
 
-}
+} 

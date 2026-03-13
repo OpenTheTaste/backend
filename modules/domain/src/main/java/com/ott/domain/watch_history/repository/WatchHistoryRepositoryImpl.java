@@ -1,6 +1,7 @@
 package com.ott.domain.watch_history.repository;
 
 import com.ott.domain.common.Status;
+import com.ott.domain.watch_history.domain.WatchHistory;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -44,6 +45,7 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .groupBy(tag.id, tag.name)
                 .fetch();
     }
+
 
     // 특정 회원의 1달 시청이력 기반 태그 집계
     @Override
@@ -142,7 +144,7 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-
+    
     @Override
     public Optional<Long> findLatestContentMediaIdByMemberIdAndSeriesId(Long memberId, Long seriesId){
         Long resultMediaId = queryFactory
@@ -157,5 +159,21 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .orderBy(watchHistory.lastWatchedAt.desc())
                 .fetchFirst();
         return Optional.ofNullable(resultMediaId);
+    }
+    
+    @Override
+    public List<WatchHistory> findRecentUnusedHistoriesWithin(Long memberId, LocalDateTime cutoff, int limit) {
+        return queryFactory
+                .selectFrom(watchHistory)
+                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .where(
+                        watchHistory.member.id.eq(memberId),
+                        watchHistory.status.eq(ACTIVE),
+                        watchHistory.isUsedForMl.eq(false),
+                        watchHistory.lastWatchedAt.goe(cutoff)
+                )
+                .orderBy(watchHistory.lastWatchedAt.desc())
+                .limit(limit)
+                .fetch();
     }
 }
