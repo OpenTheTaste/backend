@@ -1,9 +1,11 @@
 package com.ott.transcoder.job;
 
+import com.ott.domain.ingest_command.domain.CommandType;
+import com.ott.domain.ingest_job.domain.IngestJob;
+import com.ott.domain.ingest_job.repository.IngestJobRepository;
 import com.ott.domain.video_profile.domain.Resolution;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.command.CommandExtractor;
-import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.transcoder.command.TranscodeCommand;
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
@@ -45,6 +47,9 @@ public class JobOrchestrator {
     private final CommandPipelineExecutor commandPipelineExecutor;
     private final MasterPlaylistGenerator masterPlaylistGenerator;
 
+    private final IngestJobStatusManager statusManager;
+    private final IngestJobRepository ingestJobRepository;
+
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
 
@@ -58,32 +63,46 @@ public class JobOrchestrator {
         Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
 
         try {
+            // CP-3: 작업 시작
+            statusManager.startProcessing(ingestJobId);
+
             // 1. 작업 디렉토리 생성 (공간 체크를 위해 디렉토리가 존재해야 함)
             createWorkDir(workDir);
 
-            // 2. 디스크 공간 확인 (메시지의 fileSize 기반)
+            // 2. 디스크 공간 확인
             diskSpaceGuard.check(workDir, message.fileSize() != null ? message.fileSize() : 0L);
 
             Path outputDir = workDir.resolve("output");
             createWorkDir(outputDir);
 
-            // 3. 원본 다운로드 (RetryableException 발생 가능)
+            // 3. 원본 다운로드
             Path inputFile = videoStorage.download(message.originUrl(), workDir);
 
-            // 4. 미디어 검사 (Fatal/RetryableException 발생 가능)
+            // 4. 미디어 검사
             ProbeResult probeResult = inspector.inspect(inputFile);
 
             // 5. 커맨드 추출
             List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
 
+            // CP-4: IngestCommand 생성
+            IngestJob ingestJob = ingestJobRepository.findById(ingestJobId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "IngestJob을 찾을 수 없습니다 - ingestJobId: " + ingestJobId));
+            statusManager.createCommands(ingestJob, commandList);
+
             // 6. JobContext 생성
             JobContext jobContext = new JobContext(mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult);
 
-            // 7. 커맨드별 파이프라인 실행 (MAIN)
-            for (Command command : commandList)
+            // 7. 커맨드별 파이프라인 실행 + 상태 반영
+            for (Command command : commandList) {
                 commandPipelineExecutor.execute(command, jobContext);
 
-            // === POST ===
+                // CP-5: 개별 커맨드 성공
+                statusManager.completeCommand(ingestJobId, command);
+            }
+
+            // CP-6: 전체 완료 확인
+            statusManager.checkAllCompleted(ingestJobId);
 
             // 8. 마스터 플레이리스트 생성
             List<Resolution> resolutionList = commandList.stream()
@@ -99,7 +118,7 @@ public class JobOrchestrator {
                     mediaId, ingestJobId, uploadedPath);
 
         } finally {
-            // 예외 발생 여부와 상관없이 로컬 작업 디렉토리는 반드시 정리합니다.
+            // 예외 발생 여부와 상관없이 로컬 작업 디렉토리는 반드시 정리
             cleanUp(workDir);
         }
     }
