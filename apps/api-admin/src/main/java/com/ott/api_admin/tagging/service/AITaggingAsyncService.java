@@ -33,9 +33,28 @@ public class AITaggingAsyncService {
     private final MoodTagRepository moodTagRepository;
     private final MediaMoodTagRepository mediaMoodTagRepository;
 
-    // 비동기 실행으로 관리자의 업로드 응답 속도에 영향을 주지 않도록 함
+
+    /**
+     * TransactionPhase : 원본 트랜잭션의 어느 시점에 해당 이벤트를 실행시킬 것인가를 결정
+     * 이벤트를 발행한 쪽의 트랜잭션 상태에 따라 해당 리스너가 달린 함수의 호출 시점이 결정됨
+     * AFTER_COMMIT - 원본 트랜잭션이 커밋된 이후 해당 함수 실행
+     * BEFORE_COMMIT - 커밋 직전에 실행되어, 원본 트랜잭션 안에서 같이 묶이고 싶을 때 사용
+     * AFTER_ROLLBACK - 원본 트랜잭션이 롤백된 이후 실행
+     * AFTER_COMPLETION - 커밋이든 롤백이는 원본 트랜잭션이 끝나면 실행 -> finally 느낌임
+     *
+     * ==========================================
+     * Propagation : 트랜잭션을 어떻게 만들거나 참여할 것인가를 결정
+     * 트랜잭션 전파 레벨이라고 부르며, 메소드 A가 메소드 B를 호출할 경우, B가 A의 트랜잭션에 참여할지, 새로 만들지 등을 결정
+     * REQUIRED(Default) - 기존 트랜잭션이 있으면 참여하고, 없으면 새로 만들어라
+     * REQUIRED_NEW - 기존 트랜잭션이 있으며녀 멈추고, 새로운 트랜잭션을 만들어서 먼저 커밋/롤백 시켜라
+     * SUPPORTS - 기존 트랜잭션이 있으면 참여하고, 없으면 트랜잭션 없이 실행해라 -> 읽이 전용 조회일 경우 사용함
+     * NOT_SUPPORTED - 트랜잭션 없이 실행하지만, 기존 트랜잭션이 있으면 기존 트랜잭션을 멈추고 수행
+     * MANDATORY - 기존 트랜잭션이 없으면 예외처리
+     * NEVER - 기존 트랜잭션이 있으면 예외처리
+     * NESTED - 잘 안씀
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Async
+    @Async // 별도 백그라운드 스레드로 진행
     @Transactional
     public void handleAiTagging(AiTaggingRequestedEvent event) {
 
