@@ -6,6 +6,9 @@ import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
+import com.ott.api_admin.upload.dto.request.MultipartUploadCompleteRequest;
+import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
+import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.api_admin.content.service.BackOfficeContentsService;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -69,5 +72,34 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
             @Valid @RequestBody ContentsUpdateRequest request
     ) {
         return ResponseEntity.ok(SuccessResponse.of(backOfficeContentsService.updateContentsUpload(contentsId, request)));
+    }
+
+    @PostMapping("/{contentsId}/upload/complete")
+    public ResponseEntity<SuccessResponse<Void>> completeContentsUpload(
+            @PathVariable("contentsId") Long contentsId,
+            @Valid @RequestBody MultipartUploadCompleteRequest request
+    ) {
+        backOfficeContentsService.completeContentsOriginUpload(
+                contentsId,
+                request.objectKey(),
+                request.uploadId(),
+                request.parts().stream()
+                        .map(part -> new UploadHelper.MultipartPartETag(part.partNumber(), part.eTag()))
+                        .toList()
+        );
+        return ResponseEntity.ok(SuccessResponse.of(null));
+    }
+
+    @GetMapping("/{contentsId}/upload/parts")
+    public ResponseEntity<SuccessResponse<PageResponse<MultipartUploadPartUrlResponse>>> getContentsUploadPartUrls(
+            @PathVariable("contentsId") Long contentsId,
+            @RequestParam("objectKey") String objectKey,
+            @RequestParam("uploadId") String uploadId,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "100") Integer size
+    ) {
+        return ResponseEntity.ok(
+                SuccessResponse.of(backOfficeContentsService.getContentsOriginUploadPartUrls(contentsId, objectKey, uploadId, page, size))
+        );
     }
 }

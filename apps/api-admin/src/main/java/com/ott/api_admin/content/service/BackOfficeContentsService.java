@@ -6,6 +6,7 @@ import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
+import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.api_admin.content.mapper.BackOfficeContentsMapper;
 import com.ott.api_admin.upload.support.MediaTagLinker;
 import com.ott.api_admin.upload.support.UploadHelper;
@@ -134,7 +135,12 @@ public class BackOfficeContentsService {
 
         Long contentsId = contents.getId();
         UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
-                "contents", contentsId, request.posterFileName(), request.thumbnailFileName(), request.originFileName()
+                "contents",
+                contentsId,
+                request.posterFileName(),
+                request.thumbnailFileName(),
+                request.originFileName(),
+                request.videoSize()
         );
 
         media.updateImageKeys(
@@ -156,8 +162,57 @@ public class BackOfficeContentsService {
                 mediaCreateUploadResult.masterPlaylistObjectKey(),
                 mediaCreateUploadResult.posterUploadUrl(),
                 mediaCreateUploadResult.thumbnailUploadUrl(),
-                mediaCreateUploadResult.originUploadUrl()
+                mediaCreateUploadResult.originUploadId(),
+                mediaCreateUploadResult.originTotalPartCount(),
+                mediaCreateUploadResult.originPartSizeBytes()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public void completeContentsOriginUpload(Long contentsId, String objectKey, String uploadId, List<UploadHelper.MultipartPartETag> parts) {
+        Contents contents = contentsRepository.findById(contentsId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
+
+        uploadHelper.checkObjectKeyMatchesOriginUrl(
+                objectKey,
+                contents.getOriginUrl(),
+                ErrorCode.CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH
+        );
+
+        uploadHelper.completeMultipartUpload(objectKey, uploadId, parts);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<MultipartUploadPartUrlResponse> getContentsOriginUploadPartUrls(
+            Long contentsId,
+            String objectKey,
+            String uploadId,
+            Integer page,
+            Integer size
+    ) {
+        Contents contents = contentsRepository.findById(contentsId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
+
+        uploadHelper.checkObjectKeyMatchesOriginUrl(
+                objectKey,
+                contents.getOriginUrl(),
+                ErrorCode.CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH
+        );
+
+        int totalPartCount = uploadHelper.calculateMultipartPartCount(contents.getVideoSize());
+        PageResponse<UploadHelper.MultipartUploadPartUrl> partUrlPage = uploadHelper.getMultipartUploadPartUrlsPage(
+                objectKey,
+                uploadId,
+                totalPartCount,
+                page,
+                size
+        );
+
+        List<MultipartUploadPartUrlResponse> dataList = partUrlPage.getDataList().stream()
+                .map(part -> new MultipartUploadPartUrlResponse(part.partNumber(), part.uploadUrl()))
+                .toList();
+
+        return PageResponse.toPageResponse(partUrlPage.getPageInfo(), dataList);
     }
 
     @Transactional
