@@ -74,6 +74,7 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
         return ResponseEntity.ok(SuccessResponse.of(backOfficeContentsService.updateContentsUpload(contentsId, request)));
     }
 
+    @Override
     @PostMapping("/{contentsId}/upload/complete")
     public ResponseEntity<SuccessResponse<Void>> completeContentsUpload(
             @PathVariable("contentsId") Long contentsId,
@@ -89,7 +90,7 @@ public class BackOfficeContentsController implements BackOfficeContentsApi {
         );
         return ResponseEntity.ok(SuccessResponse.of(null));
     }
-
+    @Override
     @GetMapping("/{contentsId}/upload/parts")
     public ResponseEntity<SuccessResponse<PageResponse<MultipartUploadPartUrlResponse>>> getContentsUploadPartUrls(
             @PathVariable("contentsId") Long contentsId,

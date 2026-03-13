@@ -91,6 +91,7 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
         return ResponseEntity.ok(SuccessResponse.of(backOfficeShortFormService.updateShortFormUpload(shortformId, request, authentication)));
     }
 
+    @Override
     @PostMapping("/{shortformId}/upload/complete")
     public ResponseEntity<SuccessResponse<Void>> completeShortFormUpload(
             @PathVariable("shortformId") Long shortformId,
@@ -109,6 +110,7 @@ public class BackOfficeShortFormController implements BackOfficeShortFormApi {
         return ResponseEntity.ok(SuccessResponse.of(null));
     }
 
+    @Override
     @GetMapping("/{shortformId}/upload/parts")
     public ResponseEntity<SuccessResponse<PageResponse<MultipartUploadPartUrlResponse>>> getShortFormUploadPartUrls(
             @PathVariable("shortformId") Long shortformId,
