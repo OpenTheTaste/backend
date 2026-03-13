@@ -8,14 +8,12 @@ import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.media_mood_tag.domain.MediaMoodTag;
-import com.ott.domain.media_mood_tag.repository.MediaMoodTagRepository;
 import com.ott.domain.mood_tag.domain.MoodTag;
 import com.ott.domain.mood_tag.repository.MoodTagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -31,8 +29,7 @@ public class AITaggingAsyncService {
     private final AiClient aiClient;
     private final MediaRepository mediaRepository;
     private final MoodTagRepository moodTagRepository;
-    private final MediaMoodTagRepository mediaMoodTagRepository;
-
+    private final MediaMoodTagAppend mediaMoodTagAppend;
 
     /**
      * TransactionPhase : 원본 트랜잭션의 어느 시점에 해당 이벤트를 실행시킬 것인가를 결정
@@ -53,26 +50,29 @@ public class AITaggingAsyncService {
      * NEVER - 기존 트랜잭션이 있으면 예외처리
      * NESTED - 잘 안씀
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async // 별도 백그라운드 스레드로 진행
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAiTagging(AiTaggingRequestedEvent event) {
 
-        Long mediaId = event.mediaId();
-        String description = event.description();
+        log.info("[AI Tagging] 미디어 ID: {} 백그라운드로 태깅 분류 시작", event.mediaId());
 
-        log.info("[AI Tagging] 미디어 ID: {} 백그라운드로 태깅 분류 시작", mediaId);
-
+        List<String> aiTags;
         try {
             // ML에서 추론된 태그 리스트 -> 순서가 보장됨
-            List<String> aiTags = aiClient.getEmotionTags(mediaId, description);
+            aiTags = aiClient.getEmotionTags(event.mediaId(), event.description());
 
-            if (aiTags == null || aiTags.isEmpty()) {
-                log.info("[AI Tagging] 미디어 ID: {} - AI가 반환한 태그가 없습니다.", mediaId);
+        } catch (Exception e) {
+            log.error("[AI Tagging] mediaId={} AI 호출 실패", event.mediaId(), e);
+            return;
+        }
+
+
+        if (aiTags == null || aiTags.isEmpty()) {
+                log.info("[AI Tagging] 미디어 ID: {} - AI가 반환한 태그가 없습니다.", event.mediaId());
                 return;
             }
 
-            Media media = mediaRepository.findById(mediaId)
+            Media media = mediaRepository.findById(event.mediaId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.MEDIA_NOT_FOUND));
 
             // DB단에서 매핑된 리스트 -> 순서 보장 x
@@ -111,7 +111,7 @@ public class AITaggingAsyncService {
 
 
             if (newMediaMoodTags.isEmpty()) {
-                log.warn("[AI Tagging] 미디어 ID: {} - DB에 매핑 가능한 mood_tag가 없습니다. aiTags={}", mediaId, aiTags);
+                log.warn("[AI Tagging] 미디어 ID: {} - DB에 매핑 가능한 mood_tag가 없습니다.", event.mediaId());
                 return;
             }
 
@@ -121,15 +121,14 @@ public class AITaggingAsyncService {
                     .distinct()
                     .toList();
 
-            // 등록 후, 줄거리가 수정될 경우 변경할 경우 삭제 후 삽입
-            mediaMoodTagRepository.deleteByMedia_Id(mediaId);
-            mediaMoodTagRepository.saveAll(newMediaMoodTags);
+            if (!missingTags.isEmpty()) {
+                log.warn("[AI Tagging] mediaId={} DB에 없는 mood tag 제외 {}", event.mediaId(), missingTags);
+            }
 
-            log.info("[AI Tagging] 미디어 ID: {} - mood tag {}건 저장 완료", mediaId, newMediaMoodTags.size());
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("[AI Tagging] 미디어 ID: {} - 태깅 저장 중 예외 발생", mediaId, e);
-        }
+            // 등록 후, 줄거리가 수정될 경우 변경할 경우 삭제 후 삽입
+            mediaMoodTagAppend.replaceMediaMoodTags(event.mediaId(), newMediaMoodTags);
+
+            log.info("[AI Tagging] mediaId={} mood tag {}건 저장 완료", event.mediaId(), newMediaMoodTags.size());
+
     }
 }
