@@ -9,6 +9,18 @@
 ALTER TABLE media
     ADD COLUMN media_status ENUM ('INIT','COMPLETED','FAILED') NOT NULL DEFAULT 'INIT';
 
+-- 임시로 VARCHAR로 변경하여 어떤 문자열이든 들어갈 수 있게 만듦
+ALTER
+    TABLE ingest_job MODIFY COLUMN ingest_status VARCHAR(50);
+
+SET SQL_SAFE_UPDATES = 0;
+
+-- 안전하게 데이터 업데이트
+UPDATE ingest_job
+    SET ingest_status = 'PENDING';
+
+SET SQL_SAFE_UPDATES = 1;
+
 -- 2. ingest_job.ingest_status ENUM 변경
 ALTER TABLE ingest_job
     MODIFY COLUMN ingest_status
