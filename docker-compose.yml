@@ -179,7 +179,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AI_MODEL_PATH=${AI_MODEL_PATH:-}
+      - AI_TAGGING_MODEL_PATH=/app/models/tagging
+      - AI_RECOMMEND_MODEL_PATH=/app/models/recommend
       - AI_BASE_URL=${AI_BASE_URL:-http://machine:8000} 
       - TIMEOUT_MS=2000
     healthcheck:
@@ -187,7 +188,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
 volumes:
   mysql-data:
   prometheus-data:

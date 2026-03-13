@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from app.config import settings
 import logging
 
 from app.errors import AppException, ErrorCode
@@ -8,7 +9,7 @@ from app.errors import AppException, ErrorCode
 logger = logging.getLogger(__name__)
 
 class MoodTagger:
-    def __init__(self, model_path: str = "models/klue_saved_model"):
+    def __init__(self, model_path: str):
         self.model_path = model_path
         # GPU가 있으면 쓰고, 없으면 CPU 사용
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -67,4 +68,4 @@ class MoodTagger:
         return results
 
 # 서버 기동 시 인스턴스를 하나만 생성해 둠
-mood_tagger = MoodTagger()
+mood_tagger = MoodTagger(settings.tagging_model_path)

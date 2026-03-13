@@ -9,7 +9,9 @@ class Settings(BaseSettings):
         default_factory=list,
         env="AI_CORS_ALLOW_ORIGINS"
     )
-    model_path: Optional[str] = None
+    tagging_model_path: str = Field(env="AI_TAGGING_MODEL_PATH")
+    # recommend_model_path: str = Field(env="AI_RECOMMEND_MODEL_PATH")
+    # model_path: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_prefix="AI_",
