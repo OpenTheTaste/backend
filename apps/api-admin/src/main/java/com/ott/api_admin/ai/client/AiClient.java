@@ -7,6 +7,7 @@ import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
@@ -18,6 +19,9 @@ import java.util.List;
 public class AiClient {
 
     private final WebClient aiWebClient;
+
+    @Value("${ai.timeout-ms}")
+    private Long timeoutMs;
 
     /**
      * FastAPI 서버에 영상 줄거리를 보내고 감정 태그 리스트를 받아옵니다.
@@ -33,7 +37,7 @@ public class AiClient {
                 .bodyValue(requestDto)
                 .retrieve()
                 .bodyToMono(TaggingResponse.class)
-                .timeout(Duration.ofSeconds(5))
+                .timeout(Duration.ofMillis(timeoutMs)) // 해당 시간까지 AI작업이 끝나야함을 명시
                 .block(); // 비동기 작업 내에서 안전하게 블로킹 처리
             
             if (response == null || response.getMoodTags() == null) {
