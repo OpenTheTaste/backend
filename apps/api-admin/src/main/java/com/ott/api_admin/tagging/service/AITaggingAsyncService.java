@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -35,6 +36,7 @@ public class AITaggingAsyncService {
     // 비동기 실행으로 관리자의 업로드 응답 속도에 영향을 주지 않도록 함
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
+    @Transactional
     public void handleAiTagging(AiTaggingRequestedEvent event) {
 
         Long mediaId = event.mediaId();
