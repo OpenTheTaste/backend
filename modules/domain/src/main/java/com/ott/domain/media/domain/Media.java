@@ -65,6 +65,14 @@ public class Media extends BaseEntity {
     @Column(name = "public_status", nullable = false)
     private PublicStatus publicStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "media_status", nullable = false)
+    private MediaStatus mediaStatus;
+
+    public void updateMediaStatus(MediaStatus mediaStatus) {
+        this.mediaStatus = mediaStatus;
+    }
+
     public void updateImageKeys(String posterUrl, String thumbnailUrl) {
         this.posterUrl = posterUrl;
         this.thumbnailUrl = thumbnailUrl;

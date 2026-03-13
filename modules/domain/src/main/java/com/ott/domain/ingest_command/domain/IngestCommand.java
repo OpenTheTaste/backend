@@ -1,7 +1,7 @@
-package com.ott.domain.ingest_job.domain;
+package com.ott.domain.ingest_command.domain;
 
 import com.ott.domain.common.BaseEntity;
-import com.ott.domain.media.domain.Media;
+import com.ott.domain.ingest_job.domain.IngestJob;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -24,22 +24,29 @@ import lombok.NoArgsConstructor;
 @Entity
 @Builder
 @Getter
-@Table(name = "ingest_job")
-public class IngestJob extends BaseEntity {
+@Table(name = "ingest_command")
+public class IngestCommand extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "media_id", nullable = false)
-    private Media media;
+    @JoinColumn(name = "ingest_job_id", nullable = false)
+    private IngestJob ingestJob;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "ingest_status", nullable = false)
-    private IngestStatus ingestStatus;
+    @Column(name = "command_type", nullable = false)
+    private CommandType commandType;
 
-    public void updateIngestStatus(IngestStatus ingestStatus) {
-        this.ingestStatus = ingestStatus;
+    @Column(name = "command_key", nullable = false, length = 50)
+    private String commandKey;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "command_status", nullable = false)
+    private CommandStatus commandStatus;
+
+    public void updateCommandStatus(CommandStatus commandStatus) {
+        this.commandStatus = commandStatus;
     }
 }
