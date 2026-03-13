@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS ingest_command
     command_type   ENUM ('TRANSCODE','THUMBNAIL')       NOT NULL,
     command_key    VARCHAR(50)                          NOT NULL,
     command_status ENUM ('PENDING','COMPLETED')         NOT NULL,
+    output_url     TEXT                                 NULL,
 
     created_date   DATETIME                             NOT NULL,
     modified_date  DATETIME                             NOT NULL,
@@ -46,3 +47,6 @@ ALTER TABLE ingest_command
     ADD CONSTRAINT fk_ingest_command_to_ingest_job
         FOREIGN KEY (ingest_job_id)
             REFERENCES ingest_job (id);
+
+-- 4. video_profile 테이블 삭제 (ingest_command.output_url로 대체)
+DROP TABLE IF EXISTS video_profile;

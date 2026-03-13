@@ -46,7 +46,14 @@ public class IngestCommand extends BaseEntity {
     @Column(name = "command_status", nullable = false)
     private CommandStatus commandStatus;
 
+    @Column(name = "output_url", columnDefinition = "TEXT")
+    private String outputUrl;
+
     public void updateCommandStatus(CommandStatus commandStatus) {
         this.commandStatus = commandStatus;
+    }
+
+    public void updateOutputUrl(String outputUrl) {
+        this.outputUrl = outputUrl;
     }
 }
