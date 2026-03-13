@@ -1,4 +1,4 @@
-package com.ott.domain.video_profile.domain;
+package com.ott.transcoder.ffmpeg;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

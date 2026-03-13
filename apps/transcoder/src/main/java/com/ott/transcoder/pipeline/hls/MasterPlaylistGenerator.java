@@ -1,6 +1,6 @@
 package com.ott.transcoder.pipeline.hls;
 
-import com.ott.domain.video_profile.domain.Resolution;
+import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,6 @@
 package com.ott.transcoder.command;
 
-import com.ott.domain.video_profile.domain.Resolution;
+import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import com.ott.transcoder.queue.TranscodeMessage;
 import lombok.RequiredArgsConstructor;

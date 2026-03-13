@@ -3,7 +3,7 @@ package com.ott.transcoder.job;
 import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.domain.ingest_job.domain.IngestJob;
 import com.ott.domain.ingest_job.repository.IngestJobRepository;
-import com.ott.domain.video_profile.domain.Resolution;
+import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.command.CommandExtractor;
 import com.ott.transcoder.command.TranscodeCommand;
