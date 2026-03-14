@@ -31,8 +31,8 @@ if settings.mood_model_path:
 
 def infer_targets(input_tags: Sequence[str], limit: int = 4) -> list[str]:
     tag_set = set(input_tags)
-    
-    all_possible_targets = set(
+    # set -> sorted 로 순서 고정 
+    all_possible_targets = sorted(
         target for targets_dict in WEIGHT_BIAS.values() for target in targets_dict.keys()
     )
     bias = {target: 0 for target in all_possible_targets}
@@ -50,7 +50,8 @@ def infer_targets(input_tags: Sequence[str], limit: int = 4) -> list[str]:
         return [tag for tag, _ in ranked[:limit]]
     
     else:
-        sorted_tags = sorted(bias.items(), key=lambda x: x[1], reverse=True)
+        # 동점일 경우 태그 이름(x[0])의 가나다순으로 정렬되도록 안정성 추가
+        sorted_tags = sorted(bias.items(), key=lambda x: (-x[1], x[0]))
         return [tag for tag, _ in sorted_tags[:limit]]
     
     
