@@ -126,7 +126,7 @@ public class JobOrchestrator {
     private String resolveUploadPrefix(MediaType mediaType, Long mediaId) {
         String typePrefix = switch (mediaType) {
             case CONTENTS -> "contents";
-            case SHORT_FORM -> "shortform";
+            case SHORT_FORM -> "short-forms";
             default -> throw new IllegalStateException("지원하지 않는 미디어 타입: " + mediaType);
         };
         return typePrefix + "/" + mediaId + "/transcoded";
