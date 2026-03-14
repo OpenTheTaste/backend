@@ -37,7 +37,7 @@ def infer_targets(input_tags: Sequence[str], limit: int = 4) -> list[str]:
     )
     bias = {target: 0 for target in all_possible_targets}
     
-    for tag in tag_set:
+    for tag in input_tags:
         if tag in WEIGHT_BIAS:
             for target, score in WEIGHT_BIAS[tag].items():
                 bias[target] += score
