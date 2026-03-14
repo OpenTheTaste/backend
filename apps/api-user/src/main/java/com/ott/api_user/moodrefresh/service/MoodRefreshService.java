@@ -2,6 +2,7 @@ package com.ott.api_user.moodrefresh.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import org.springframework.util.StringUtils;
 import com.ott.api_user.ai.client.AiClient;
 import com.ott.api_user.moodrefresh.dto.response.MoodRefreshResponse;
 import com.ott.domain.common.Status;
+import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_mood_tag.domain.MediaMoodTag;
 import com.ott.domain.media_mood_tag.repository.MediaMoodTagRepository;
@@ -52,9 +54,14 @@ public class MoodRefreshService {
 
     // 카드 숨김 요청 시
     @Transactional
-    public void hideRefreshCard(Long refreshId) {
+    public void hideRefreshCard(Long memberId, Long refreshId) {
         MemberMoodRefresh card = refreshRepository.findById(refreshId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_CARD_NOT_FOUND));
+        
+                if (!card.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS); // 접근 권한 에러 던지기
+        }
+        
         card.hideCard();
     }
 
@@ -88,6 +95,7 @@ public class MoodRefreshService {
         List<String> inputTags = extractTagsFromHistories(recentHistories);
         log.info("[Mood Refresh] Gate 통과 - memberId: {}, inputTags={}", memberId, inputTags);
 
+        // AI 호출
         List<String> targetTags = aiClient.getTargetTags(memberId, inputTags);
         if (targetTags == null || targetTags.isEmpty()) {
             log.warn("[Mood Refresh] AI 타겟 태그 응답이 없어 카드를 생성하지 않습니다. memberId: {}", memberId);
@@ -145,9 +153,14 @@ public class MoodRefreshService {
     // 2차 필터링: 최근 시청 이력 (72시간 내)의 감정 태그의 대표 카테고리가 같은 감정 카테고리인지 확인
     private boolean isAllSameMoodCategory(List<WatchHistory> histories) {
         List<Long> mediaIds = histories.stream()
-                .map(history -> history.getContents().getMedia().getId())
+                .map(WatchHistory::getContents)
+                .filter(Objects::nonNull)      // NPE 방어
+                .map(Contents::getMedia)
+                .filter(Objects::nonNull)      // NPE 방어
+                .map(Media::getId)
                 .distinct()
                 .toList();
+            if (mediaIds.isEmpty()) return false;
 
         // 1순위(priority = 0) 태그들 한 번에 IN 절로 조회
         List<MediaMoodTag> primaryTags = mediaMoodTagRepository
@@ -170,9 +183,15 @@ public class MoodRefreshService {
     // 3차 필터링: 3개의 시청 이력에서 각 영상당 상위 3개의 감정 태그를 추출하여 중복 없이 병합
     private List<String> extractTagsFromHistories(List<WatchHistory> histories) {
         List<Long> mediaIds = histories.stream()
-                .map(history -> history.getContents().getMedia().getId())
+                .map(WatchHistory::getContents)
+                .filter(Objects::nonNull)      // NPE 방어
+                .map(Contents::getMedia)
+                .filter(Objects::nonNull)      // NPE 방어
+                .map(Media::getId)
                 .distinct()
                 .toList();
+
+        if (mediaIds.isEmpty()) return List.of();
 
         // 3개 영상에 달린 모든 활성 태그 조회
         List<MediaMoodTag> allMoodTags = mediaMoodTagRepository

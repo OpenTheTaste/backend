@@ -27,9 +27,7 @@ public interface MoodRefreshApi {
             @ApiResponse(responseCode = "0", description = "조회 성공 - 환기 카드 상세 데이터", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = MoodRefreshResponse.class)) }),
             @ApiResponse(responseCode = "200", description = "환기 카드 조회 성공", content = {
-                    @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessResponse.class)) }),
-            @ApiResponse(responseCode = "404", description = "활성화된 카드가 없거나 찾을 수 없음", content = {
-                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)) })
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = SuccessResponse.class)) })
     })
     @GetMapping("/active")
     ResponseEntity<SuccessResponse<MoodRefreshResponse>> getActiveCard(
@@ -46,6 +44,7 @@ public interface MoodRefreshApi {
     })
     @PatchMapping("/{refreshId}/hide")
     ResponseEntity<Void> hideCard(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId, 
             @Parameter(description = "숨김 처리할 환기 카드 ID", example = "1") @PathVariable("refreshId") Long refreshId
     );
 }

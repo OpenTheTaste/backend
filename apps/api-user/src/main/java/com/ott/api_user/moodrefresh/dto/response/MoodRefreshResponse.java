@@ -23,7 +23,7 @@ public class MoodRefreshResponse {
     private Long refreshId;
     private Byte imageId;
     private String subtitle;
-    private List<MoodRecommendMediaDto> recommededMediaList;
+    private List<MoodRecommendMediaDto> recommendedMediaList;
 
     public static MoodRefreshResponse of(MemberMoodRefresh refresh, List<Media> mediaList) {
         // List 를 dto 로 변환
@@ -35,7 +35,7 @@ public class MoodRefreshResponse {
                 .refreshId(refresh.getId())
                 .imageId(refresh.getImageId())
                 .subtitle(refresh.getSubtitle())
-                .recommededMediaList(mediaDtoList)
+                .recommendedMediaList(mediaDtoList)
                 .build();
     }
     
