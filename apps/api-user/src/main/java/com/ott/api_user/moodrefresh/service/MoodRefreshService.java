@@ -14,6 +14,9 @@ import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media_mood_tag.domain.MediaMoodTag;
 import com.ott.domain.media_mood_tag.repository.MediaMoodTagRepository;
+import com.ott.domain.member.repository.MemberRepository;
+import com.ott.domain.mood_tag.domain.MoodTag;
+import com.ott.domain.mood_tag.repository.MoodTagRepository;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.moodrefresh.domain.MemberMoodRefresh;
 import com.ott.domain.moodrefresh.repository.MemberMoodRefreshRepository;
@@ -32,6 +35,8 @@ public class MoodRefreshService {
     private final WatchHistoryRepository watchHistoryRepository;
     private final AiClient aiClient;
     private final MediaMoodTagRepository mediaMoodTagRepository;
+    private final MoodTagRepository moodTagRepository;
+    private final MemberRepository memberRepository;
 
     // 홈 화면에 노출시킬 카드 
     @Transactional(readOnly = true)
@@ -84,9 +89,49 @@ public class MoodRefreshService {
         List<String> inputTags = extractTagsFromHistories(recentHistories);
         log.info("[Mood Refresh] Gate 통과 - memberId: {}, inputTags={}", memberId, inputTags);
 
-        // TODO: 파이썬 AI, 추천 미디어, 카드 저장 처리 이어서 구현
-    }
+        List<String> targetTags = aiClient.getTargetTags(memberId, inputTags);
+        if (targetTags == null || targetTags.isEmpty()) {
+            log.warn("[Mood Refresh] AI 타겟 태그 응답이 없어 카드를 생성하지 않습니다. memberId: {}", memberId);
+        }
 
+        String topTargetTag = targetTags.get(0);
+        List<Media> recommendedMedias = mediaRepository.findByTop3ByMoodTagName(topTargetTag);
+        
+        if (recommendedMedias.size() < 3) {
+            log.debug("[Mood Refresh] 타겟 태그({})에 해당하는 활성 영상이 3개 미만입니다. 카드 생성 취소", topTargetTag);
+            return;
+        }
+
+        List<Long> recommendedMediaIds = recommendedMedias.stream()
+                .map(Media::getId)
+                .toList();
+
+        MoodTag targetMoodTag = moodTagRepository.findByNameAndStatus(topTargetTag, Status.ACTIVE)
+                .orElseThrow(() -> new RuntimeException("DB에 존재하지 않는 태그 이름입니다: " + topTargetTag));
+        
+        Byte themeImageId = targetMoodTag.getMoodCategory().getId().byteValue();
+
+
+        // LLM 공감 문구 세팅 (현재는 임시 하드코딩)
+        String llmSubtitle = "요즘 비슷한 분위기의 작품들만 연달아 보셨네요! 이번엔 완전히 새로운 짜릿함을 느껴보세요!";
+
+
+        MemberMoodRefresh newCard = MemberMoodRefresh.builder()
+                .member(memberRepository.getReferenceById(memberId)) // 프록시 객체로 조회 쿼리 최적화
+                .imageId(themeImageId)
+                .subtitle(llmSubtitle)
+                .recommendedMediaIds(recommendedMediaIds)
+                .build();
+
+        refreshRepository.save(newCard);
+
+        recentHistories.forEach(WatchHistory::markAsUsedForMl);
+
+        log.info("[Mood Refresh] 유저 {}을 위한 분위기 환기 카드 생성 완료! (타겟 태그: {})", memberId, topTargetTag);
+    
+    
+    }
+    
 
 
     // 위 메인 로직에 필요한 필터링 메서드

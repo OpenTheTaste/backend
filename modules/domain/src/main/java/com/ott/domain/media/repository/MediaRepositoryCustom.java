@@ -52,5 +52,5 @@ public interface MediaRepositoryCustom {
 
 
         // mood AI 가 추천한 타겟 태그 이름을 기반으로 영상 추출
-        List<Media> findTop3ByMoodTagName(String tagName);
+        List<Media> findByTop3ByMoodTagName(String tagName);
 }
