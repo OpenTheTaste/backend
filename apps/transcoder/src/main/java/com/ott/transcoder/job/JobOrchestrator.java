@@ -1,5 +1,6 @@
 package com.ott.transcoder.job;
 
+import com.ott.domain.common.MediaType;
 import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.domain.ingest_job.domain.IngestJob;
 import com.ott.domain.ingest_job.repository.IngestJobRepository;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -91,36 +93,51 @@ public class JobOrchestrator {
             statusManager.createCommands(ingestJob, commandList);
 
             // 6. JobContext 생성
-            JobContext jobContext = new JobContext(mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult);
+            String uploadPrefix = resolveUploadPrefix(message.mediaType(), mediaId);
+            JobContext jobContext = new JobContext(
+                    mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult, uploadPrefix);
 
-            // 7. 커맨드별 파이프라인 실행 + 상태 반영
+            List<Resolution> completedResolutionList = new ArrayList<>();
+
+            // 7. 커맨드별 파이프라인 실행 (처리 + 업로드) + 상태 반영
             for (Command command : commandList) {
-                commandPipelineExecutor.execute(command, jobContext);
+                String outputUrl = commandPipelineExecutor.execute(command, jobContext);
 
-                // CP-5: 개별 커맨드 성공
-                statusManager.completeCommand(ingestJobId, command);
+                if (command.getType() == CommandType.TRANSCODE) {
+                    TranscodeCommand tc = (TranscodeCommand) command;
+
+                    // master.m3u8 점진적 갱신 + S3 업로드 (cross-command)
+                    completedResolutionList.add(tc.getResolution());
+                    masterPlaylistGenerator.generate(outputDir, completedResolutionList);
+                    videoStorage.putFile(
+                            outputDir.resolve("master.m3u8"),
+                            uploadPrefix + "/master.m3u8");
+
+                    // CP-5: DB 반영 (outputUrl + 최초 시 미디어 활성화)
+                    statusManager.completeTranscodeCommand(ingestJobId, command, outputUrl);
+                } else {
+                    // CP-5: 비-트랜스코드 커맨드
+                    statusManager.completeCommand(ingestJobId, command, outputUrl);
+                }
             }
 
             // CP-6: 전체 완료 확인
             statusManager.checkAllCompleted(ingestJobId);
 
-            // 8. 마스터 플레이리스트 생성
-            List<Resolution> resolutionList = commandList.stream()
-                    .filter(c -> c.getType() == CommandType.TRANSCODE)
-                    .map(c -> ((TranscodeCommand) c).getResolution())
-                    .toList();
-            masterPlaylistGenerator.generate(outputDir, resolutionList);
-
-            // 9. 결과물 업로드 (outputDir만 — 원본 제외)
-            String uploadedPath = videoStorage.upload(outputDir, "media/" + mediaId + "/hls");
-
-            log.info("모든 작업 성공 - mediaId: {}, ingestJobId: {}, uploadedPath: {}",
-                    mediaId, ingestJobId, uploadedPath);
+            log.info("모든 작업 성공 - mediaId: {}, ingestJobId: {}", mediaId, ingestJobId);
 
         } finally {
-            // 예외 발생 여부와 상관없이 로컬 작업 디렉토리는 반드시 정리
             cleanUp(workDir);
         }
+    }
+
+    private String resolveUploadPrefix(MediaType mediaType, Long mediaId) {
+        String typePrefix = switch (mediaType) {
+            case CONTENTS -> "contents";
+            case SHORT_FORM -> "shortform";
+            default -> throw new IllegalStateException("지원하지 않는 미디어 타입: " + mediaType);
+        };
+        return typePrefix + "/" + mediaId + "/transcoded";
     }
 
     private void createWorkDir(Path workDir) {
