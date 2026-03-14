@@ -77,6 +77,8 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       CF_SIGNED_COOKIE_KEY_PAIR_ID: ${CF_SIGNED_COOKIE_KEY_PAIR_ID}
       CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64}
+      AI_BASE_URL: ${AI_BASE_URL}
+      AI_TIMEOUT_MS: 30000
     depends_on:
       mysql:
         condition: service_healthy
@@ -177,7 +179,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AI_MODEL_PATH=${AI_MODEL_PATH:-}
+      - AI_TAGGING_MODEL_PATH=/app/models/tagging
+      - AI_RECOMMEND_MODEL_PATH=/app/models/recommend
       - AI_BASE_URL=${AI_BASE_URL:-http://machine:8000} 
       - TIMEOUT_MS=2000
     healthcheck:
@@ -185,7 +188,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
 volumes:
   mysql-data:
   prometheus-data:

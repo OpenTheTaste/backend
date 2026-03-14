@@ -5,6 +5,11 @@ WORKDIR /app
 COPY apps/machine/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY apps/machine/models/tagging /app/models/tagging
+COPY apps/machine/models/recommend /app/models/recommend
+
+
+
 COPY apps/machine/ ./machine/
 ENV PYTHONPATH=/app/machine
 
