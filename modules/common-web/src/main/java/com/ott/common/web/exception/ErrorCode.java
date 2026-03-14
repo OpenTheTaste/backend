@@ -58,8 +58,12 @@ public enum ErrorCode {
     EPISODE_NOT_REGISTERED(HttpStatus.NOT_FOUND, "B108", "아직 에피소드가 등록되지 않았습니다."),
   
     SHORT_FORM_NOT_FOUND(HttpStatus.NOT_FOUND, "B109", "숏폼을 찾을 수 없습니다"),
-
-   // ========== Business (B) - 비즈니스 (정책/유효성: 200번대) ==========
+    
+    REFRESH_CARD_NOT_FOUND(HttpStatus.NOT_FOUND, "B110", "환기 카드를 찾을 수 없습니다"),
+    ACTIVE_REFRESH_CARD_NOT_FOUND(HttpStatus.NOT_FOUND, "B111", "현재 활성화된 환기 카드가 없습니다"),
+    MOOD_TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "B112", "감정 태그를 찾을 수 없습니다"),
+   
+    // ========== Business (B) - 비즈니스 (정책/유효성: 200번대) ==========
     SEARCH_KEYWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "B201", "검색어는 최소 2글자 이상이어야 합니다"),
     DUPLICATE_TAG_IN_LIST(HttpStatus.BAD_REQUEST, "B202", "태그 목록에 중복된 값이 있습니다"),
     INVALID_TAG_SELECTION(HttpStatus.BAD_REQUEST, "B203", "카테고리에 맞지 않는 태그가 포함되어 있습니다"),

@@ -22,7 +22,8 @@ import com.ott.domain.moodrefresh.domain.MemberMoodRefresh;
 import com.ott.domain.moodrefresh.repository.MemberMoodRefreshRepository;
 import com.ott.domain.watch_history.domain.WatchHistory;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
-
+import com.ott.common.web.exception.BusinessException;
+import com.ott.common.web.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,8 +44,7 @@ public class MoodRefreshService {
     public MoodRefreshResponse getActiveRefreshCard(Long memberId) {
         MemberMoodRefresh activeCard = refreshRepository
                 .findTopByMemberIdAndIsHiddenFalseOrderByCreatedDateDesc(memberId)
-                .orElseThrow(() -> new RuntimeException("현재 활성화된 환기 카드가 없습니다."));
-
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVE_REFRESH_CARD_NOT_FOUND)); 
         List<Long> mediaIds = activeCard.getRecommendedMediaIds();
         List<Media> mediaList = mediaRepository.findAllById(mediaIds);
 
@@ -55,7 +55,7 @@ public class MoodRefreshService {
     @Transactional
     public void hideRefreshCard(Long refreshId) {
         MemberMoodRefresh card = refreshRepository.findById(refreshId)
-                .orElseThrow(() -> new RuntimeException("해당 카드를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_CARD_NOT_FOUND));
         card.hideCard();
     }
 
@@ -92,6 +92,7 @@ public class MoodRefreshService {
         List<String> targetTags = aiClient.getTargetTags(memberId, inputTags);
         if (targetTags == null || targetTags.isEmpty()) {
             log.warn("[Mood Refresh] AI 타겟 태그 응답이 없어 카드를 생성하지 않습니다. memberId: {}", memberId);
+            return;
         }
 
         String topTargetTag = targetTags.get(0);
@@ -107,7 +108,7 @@ public class MoodRefreshService {
                 .toList();
 
         MoodTag targetMoodTag = moodTagRepository.findByNameAndStatus(topTargetTag, Status.ACTIVE)
-                .orElseThrow(() -> new RuntimeException("DB에 존재하지 않는 태그 이름입니다: " + topTargetTag));
+                .orElseThrow(() -> new BusinessException(ErrorCode.MOOD_TAG_NOT_FOUND));
         
         Byte themeImageId = targetMoodTag.getMoodCategory().getId().byteValue();
 

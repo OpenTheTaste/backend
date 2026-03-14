@@ -1,34 +1,40 @@
 package com.ott.api_user.moodrefresh.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ott.api_user.moodrefresh.dto.response.MoodRefreshResponse;
 import com.ott.api_user.moodrefresh.service.MoodRefreshService;
+import com.ott.common.web.response.SuccessResponse;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/mood-refresh")
-public class MoodRefreshController {
+public class MoodRefreshController implements MoodRefreshApi {
 
     private final MoodRefreshService moodRefreshService;
 
-    // 1. 유저가 홈 화면에 들어왔을 때 호출
+    @Override
     @GetMapping("/active")
-    public ResponseEntity<MoodRefreshResponse> getActiveCard(@RequestAttribute("memberId") Long memberId) {
-        return ResponseEntity.ok(moodRefreshService.getActiveRefreshCard(memberId));
+    public ResponseEntity<SuccessResponse<MoodRefreshResponse>> getActiveCard(
+            @AuthenticationPrincipal Long memberId) {
+        
+        MoodRefreshResponse response = moodRefreshService.getActiveRefreshCard(memberId);
+        return ResponseEntity.ok(SuccessResponse.of(response));
     }
 
-    // 2. 유저가 X(닫기) 버튼을 눌렀을 때 호출
+    @Override
     @PatchMapping("/{refreshId}/hide")
-    public ResponseEntity<Void> hideCard(@PathVariable Long refreshId) {
+    public ResponseEntity<Void> hideCard(
+            @PathVariable("refreshId") Long refreshId) {
+        
         moodRefreshService.hideRefreshCard(refreshId);
         return ResponseEntity.noContent().build();
     }
