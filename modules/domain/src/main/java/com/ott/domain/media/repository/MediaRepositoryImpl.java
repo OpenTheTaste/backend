@@ -442,18 +442,20 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
         @Override
         public List<Media> findByTop3ByMoodTagName(String tagName){
                 return queryFactory
-                        .selectFrom(media)
-                        .join(mediaMoodTag).on(mediaMoodTag.media.id.eq(media.id))
-                        .join(moodTag).on(moodTag.id.eq(mediaMoodTag.moodTag.id))
-                        .where(
-                                moodTag.name.eq(tagName),
-                                mediaMoodTag.status.eq(Status.ACTIVE),
-                                isActiveAndPublic(),
-                                isDisplayable()
-                        )
-                        .orderBy(media.createdDate.desc(), media.id.desc())
-                        .limit(3)
-                        .fetch();
+                        .selectDistinct(media)
+                .from(mediaMoodTag)
+                .join(mediaMoodTag.media, media)
+                .join(mediaMoodTag.moodTag, moodTag)
+                .where(
+                        moodTag.name.eq(tagName),
+                        moodTag.status.eq(Status.ACTIVE), // ⬅️ 추가: MoodTag 자체도 ACTIVE인지 확인
+                        mediaMoodTag.status.eq(Status.ACTIVE),
+                        isActiveAndPublic(),
+                        isDisplayable()
+                )
+                .orderBy(media.createdDate.desc(), media.id.desc())
+                .limit(3)
+                .fetch();
                         
         }
 
