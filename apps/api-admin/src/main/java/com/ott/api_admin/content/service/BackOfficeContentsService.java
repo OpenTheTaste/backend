@@ -20,6 +20,7 @@ import com.ott.domain.common.PublicStatus;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.media.domain.Media;
+import com.ott.domain.media.domain.MediaStatus;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.media_tag.repository.MediaTagRepository;
@@ -120,6 +121,7 @@ public class BackOfficeContentsService {
                         .bookmarkCount(0L)
                         .likesCount(0L)
                         .mediaType(MediaType.CONTENTS)
+                        .mediaStatus(MediaStatus.INIT)
                         .publicStatus(request.publicStatus())
                         .build()
         );
