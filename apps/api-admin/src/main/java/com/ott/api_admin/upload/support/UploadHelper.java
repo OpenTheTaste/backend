@@ -257,9 +257,15 @@ public class UploadHelper {
     public void completeMultipartUpload(
             String objectKey,
             String uploadId,
+            int totalPartCount,
             List<MultipartPartETag> partETags
     ) {
-        if (!StringUtils.hasText(objectKey) || !StringUtils.hasText(uploadId) || partETags == null || partETags.isEmpty()) {
+        // 1) 입력값 기본 유효성 검증
+        if (!StringUtils.hasText(objectKey)
+                || !StringUtils.hasText(uploadId)
+                || totalPartCount <= 0
+                || partETags == null
+                || partETags.isEmpty()) {
             throw new BusinessException(ErrorCode.ETAG_LIST_INVALID);
         }
 
@@ -267,10 +273,18 @@ public class UploadHelper {
                 .sorted(Comparator.comparingInt(MultipartPartETag::partNumber))
                 .toList();
 
-        //ETAG List 유효성 검증
+        // 2) 전달된 ETag 개수가 기대 파트 개수와 일치하는지 검증
+        if (normalizedParts.size() != totalPartCount) {
+            throw new BusinessException(ErrorCode.ETAG_LIST_INVALID);
+        }
+
+        // 3) 각 파트의 번호 범위(1..totalPartCount), ETag 값, 중복 여부를 한 번에 검증
         Set<Integer> seenPartNumbers = new HashSet<>();
         normalizedParts.forEach(part -> {
-            if (part.partNumber() <= 0 || !StringUtils.hasText(part.eTag()) || !seenPartNumbers.add(part.partNumber())) {
+            if (part.partNumber() < 1
+                    || part.partNumber() > totalPartCount
+                    || !StringUtils.hasText(part.eTag())
+                    || !seenPartNumbers.add(part.partNumber())) {
                 throw new BusinessException(ErrorCode.ETAG_LIST_INVALID);
             }
         });
