@@ -15,10 +15,13 @@ import static com.ott.domain.comment.domain.QComment.comment;
 import static com.ott.domain.contents.domain.QContents.contents;
 import static com.ott.domain.media.domain.QMedia.media;
 import static com.ott.domain.member.domain.QMember.member;
+import static com.ott.domain.series.domain.QSeries.series;
+import com.ott.domain.media.domain.QMedia;
 
 @RequiredArgsConstructor
 public class CommentRepositoryImpl implements CommentRepositoryCustom {
 
+    private static final QMedia seriesMedia = new QMedia("seriesMedia");
     private final JPAQueryFactory queryFactory;
 
     @Override
@@ -28,6 +31,8 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
                 .join(comment.member, member).fetchJoin()
                 .join(comment.contents, contents).fetchJoin()
                 .join(contents.media, media).fetchJoin()
+                .leftJoin(contents.series, series).fetchJoin()
+                .leftJoin(series.media, seriesMedia).fetchJoin()
                 .where(
                         comment.member.id.eq(memberId),
                         comment.status.eq(status)

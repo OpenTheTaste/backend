@@ -13,11 +13,11 @@ public class WebClientConfig {
 
     @Bean
     public WebClient aiWebClient(
-            @Value("${ai.base-url:http://localhost:8000}") String baseUrl,
-            @Value("${ai.timeout-ms:2000}") long timeoutMs
+            @Value("${ai.base-url}") String baseUrl,
+            @Value("${ai.timeout-ms}") long timeoutMs
     ) {
         HttpClient httpClient = HttpClient.create()
-                .responseTimeout(Duration.ofMillis(timeoutMs));
+                .responseTimeout(Duration.ofMillis(timeoutMs)); // 응답이 해당 시간까지 안오면 끊겠다.
 
         return WebClient.builder()
                 .baseUrl(baseUrl)

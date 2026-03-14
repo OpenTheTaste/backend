@@ -7,6 +7,7 @@ import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
 import com.ott.api_admin.content.mapper.BackOfficeContentsMapper;
+import com.ott.api_admin.tagging.event.AiTaggingRequestedEvent;
 import com.ott.api_admin.upload.support.MediaTagLinker;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.exception.BusinessException;
@@ -25,6 +26,7 @@ import com.ott.domain.member.domain.Member;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +47,7 @@ public class BackOfficeContentsService {
     private final SeriesRepository seriesRepository;
     private final UploadHelper uploadHelper;
     private final MediaTagLinker mediaTagLinker;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public PageResponse<ContentsListResponse> getContents(int page, int size, String searchWord, PublicStatus publicStatus) {
@@ -147,6 +150,9 @@ public class BackOfficeContentsService {
         );
 
         mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
+
+        // 임시로 해당 위치로 삽입 상태 관리 픽스 후 추후 변경 예정
+        eventPublisher.publishEvent(new AiTaggingRequestedEvent(media.getId(), request.description()));
 
         return backOfficeContentsMapper.toContentsUploadResponse(
                 contentsId,

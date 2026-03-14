@@ -9,12 +9,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 
-@EnableAsync
+
 @SpringBootApplication
 @ComponentScan(basePackages = "com.ott")
 @EntityScan(basePackages = "com.ott.domain")
 @EnableJpaRepositories(basePackages = "com.ott.domain")
 @EnableJpaAuditing
+@EnableAsync
 public class ApiAdminApplication {
 
 	public static void main(String[] args) {

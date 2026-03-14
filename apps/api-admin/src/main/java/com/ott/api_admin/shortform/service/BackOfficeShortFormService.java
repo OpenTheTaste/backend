@@ -140,14 +140,23 @@ public class BackOfficeShortFormService {
 
                 Optional<Media> originMedia = shortForm.findOriginMedia();
                 String originMediaTitle = null;
+                Long originId = null;
+                MediaType originType = null;
                 if (originMedia.isPresent()) {
                         originMediaTitle = originMedia.get().getTitle();
+                        if (shortForm.getSeries() != null) {
+                                originId = shortForm.getSeries().getId();
+                                originType = MediaType.SERIES;
+                        } else if (shortForm.getContents() != null) {
+                                originId = shortForm.getContents().getId();
+                                originType = MediaType.CONTENTS;
+                        }
                 }
 
                 List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(mediaId);
 
                 return backOfficeShortFormMapper.toShortFormDetailResponse(shortForm, media, uploaderNickname,
-                                originMediaTitle, mediaTagList);
+                                originMediaTitle, originId, originType, mediaTagList);
         }
 
         @Transactional

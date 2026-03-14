@@ -44,13 +44,7 @@ __pycache__/
 *.pyc
 
 # ML artifacts
-apps/machine/models/klue_saved_model/checkpoints/
-apps/machine/models/klue_saved_model/*.bin
-apps/machine/models/klue_saved_model/training_args.bin
-apps/machine/models/klue_saved_model/optimizer.pt
-apps/machine/models/klue_saved_model/scheduler.pt
-apps/machine/models/klue_saved_model/rng_state.pth
-apps/machine/models/klue_saved_model/trainer_state.json
+apps/machine/models/
 
 
 ### Node ###
@@ -63,5 +57,6 @@ modules/infra/src/main/resources/db/seed/
 private_docs/
 AGENTS.md
 CLAUDE.md
+GEMINI.md
 
 **/application-local.yml

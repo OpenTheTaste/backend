@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 
-public interface ClickRepository extends JpaRepository<ClickEvent, Long> {
+public interface ClickRepository extends JpaRepository<ClickEvent, Long>, ClickRepositoryCustom {
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE ClickEvent c SET c.status = 'DELETE' WHERE c.member.id = :memberId")

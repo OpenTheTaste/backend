@@ -60,3 +60,4 @@ cloudfront:
 
 ai:
   base-url: ${AI_BASE_URL:http://localhost:8000}
+  timeout-ms: 30000
