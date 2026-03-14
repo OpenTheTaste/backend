@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
 import software.amazon.awssdk.services.s3.model.CompletedPart;
@@ -132,20 +133,19 @@ public class S3PresignService {
         }
     }
 
-    // TODO: Incomplete multipart uploads are currently cleaned up by S3 Lifecycle TTL policy.
-//    public void abortMultipartUpload(String objectKey, String uploadId) {
-//        try {
-//            s3Client.abortMultipartUpload(
-//                    AbortMultipartUploadRequest.builder()
-//                            .bucket(bucket)
-//                            .key(objectKey)
-//                            .uploadId(uploadId)
-//                            .build()
-//            );
-//        } catch (SdkException ex) {
-//            throw new IllegalStateException("Failed to abort multipart upload.", ex);
-//        }
-//    }
+    public void abortMultipartUpload(String objectKey, String uploadId) {
+        try {
+            s3Client.abortMultipartUpload(
+                    AbortMultipartUploadRequest.builder()
+                            .bucket(bucket)
+                            .key(objectKey)
+                            .uploadId(uploadId)
+                            .build()
+            );
+        } catch (SdkException ex) {
+            throw new IllegalStateException("Failed to abort multipart upload.", ex);
+        }
+    }
 
     public String toObjectUrl(String objectKey) {
         String encodedKey = URLEncoder.encode(objectKey, StandardCharsets.UTF_8)

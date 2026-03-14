@@ -4,10 +4,10 @@ import com.ott.api_admin.content.dto.request.ContentsUploadRequest;
 import com.ott.api_admin.content.dto.request.ContentsUpdateRequest;
 import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
-import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
-import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
+import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.mapper.BackOfficeContentsMapper;
+import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.api_admin.upload.support.MediaTagLinker;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.exception.BusinessException;
@@ -26,6 +26,7 @@ import com.ott.domain.member.domain.Member;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +37,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class BackOfficeContentsService {
 
     private final BackOfficeContentsMapper backOfficeContentsMapper;
@@ -134,38 +136,57 @@ public class BackOfficeContentsService {
         );
 
         Long contentsId = contents.getId();
-        UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
-                "contents",
-                contentsId,
-                request.posterFileName(),
-                request.thumbnailFileName(),
-                request.originFileName(),
-                request.videoSize()
-        );
 
-        media.updateImageKeys(
-                mediaCreateUploadResult.posterObjectUrl(),
-                mediaCreateUploadResult.thumbnailObjectUrl()
-        );
-        contents.updateStorageKeys(
-                mediaCreateUploadResult.originObjectUrl(),
-                mediaCreateUploadResult.masterPlaylistObjectUrl()
-        );
+        UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = null;
+        try {
+            mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
+                    "contents",
+                    contentsId,
+                    request.posterFileName(),
+                    request.thumbnailFileName(),
+                    request.originFileName(),
+                    request.videoSize()
+            );
 
-        mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
+            media.updateImageKeys(
+                    mediaCreateUploadResult.posterObjectUrl(),
+                    mediaCreateUploadResult.thumbnailObjectUrl()
+            );
+            contents.updateStorageKeys(
+                    mediaCreateUploadResult.originObjectUrl(),
+                    mediaCreateUploadResult.masterPlaylistObjectUrl()
+            );
 
-        return backOfficeContentsMapper.toContentsUploadResponse(
-                contentsId,
-                mediaCreateUploadResult.posterObjectKey(),
-                mediaCreateUploadResult.thumbnailObjectKey(),
-                mediaCreateUploadResult.originObjectKey(),
-                mediaCreateUploadResult.masterPlaylistObjectKey(),
-                mediaCreateUploadResult.posterUploadUrl(),
-                mediaCreateUploadResult.thumbnailUploadUrl(),
-                mediaCreateUploadResult.originUploadId(),
-                mediaCreateUploadResult.originTotalPartCount(),
-                mediaCreateUploadResult.originPartSizeBytes()
-        );
+            mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
+
+            return backOfficeContentsMapper.toContentsUploadResponse(
+                    contentsId,
+                    mediaCreateUploadResult.posterObjectKey(),
+                    mediaCreateUploadResult.thumbnailObjectKey(),
+                    mediaCreateUploadResult.originObjectKey(),
+                    mediaCreateUploadResult.masterPlaylistObjectKey(),
+                    mediaCreateUploadResult.posterUploadUrl(),
+                    mediaCreateUploadResult.thumbnailUploadUrl(),
+                    mediaCreateUploadResult.originUploadId(),
+                    mediaCreateUploadResult.originTotalPartCount(),
+                    mediaCreateUploadResult.originPartSizeBytes()
+            );
+        } catch (RuntimeException ex) {
+            if (mediaCreateUploadResult != null) {
+                try {
+                    uploadHelper.abortMultipartUpload(
+                            mediaCreateUploadResult.originObjectKey(),
+                            mediaCreateUploadResult.originUploadId()
+                    );
+                } catch (Exception abortEx) {
+                    log.warn("Failed to abort multipart upload. objectKey={}, uploadId={}",
+                            mediaCreateUploadResult.originObjectKey(),
+                            mediaCreateUploadResult.originUploadId(),
+                            abortEx);
+                }
+            }
+            throw ex;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -173,7 +194,7 @@ public class BackOfficeContentsService {
         Contents contents = contentsRepository.findById(contentsId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
-        uploadHelper.checkObjectKeyMatchesOriginUrl(
+        uploadHelper.validateOriginObjectKey(
                 objectKey,
                 contents.getOriginUrl(),
                 ErrorCode.CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH
@@ -193,14 +214,14 @@ public class BackOfficeContentsService {
         Contents contents = contentsRepository.findById(contentsId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
-        uploadHelper.checkObjectKeyMatchesOriginUrl(
+        uploadHelper.validateOriginObjectKey(
                 objectKey,
                 contents.getOriginUrl(),
                 ErrorCode.CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH
         );
 
-        int totalPartCount = uploadHelper.calculateMultipartPartCount(contents.getVideoSize());
-        PageResponse<UploadHelper.MultipartUploadPartUrl> partUrlPage = uploadHelper.getMultipartUploadPartUrlsPage(
+        int totalPartCount = uploadHelper.getMultipartPartCount(contents.getVideoSize());
+        PageResponse<UploadHelper.MultipartUploadPartUrl> partUrlPage = uploadHelper.getMultipartPartUrls(
                 objectKey,
                 uploadId,
                 totalPartCount,

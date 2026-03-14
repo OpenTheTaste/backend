@@ -58,6 +58,7 @@ public class UploadHelper {
         }
     }
 
+    //업로드할 파일명 정규화
     public String sanitizeFileName(String fileName) {
         String trimmed = fileName.trim();
         int extensionDelimiterIndex = trimmed.lastIndexOf('.');
@@ -84,34 +85,30 @@ public class UploadHelper {
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
     }
 
-    public UploadFileResult prepareRequiredUpload(
+    public UploadFileResult createImageUpload(
             String resourceRoot,
             Long resourceId,
             String assetType,
-            String fileName,
-            boolean isVideo
+            String fileName
     ) {
         String sanitizedFileName = sanitizeFileName(fileName);
         String objectKey = buildObjectKey(resourceRoot, resourceId, assetType, sanitizedFileName);
-        String contentType = isVideo
-                ? resolveVideoContentType(sanitizedFileName)
-                : resolveImageContentType(sanitizedFileName);
+        String contentType = resolveImageContentType(sanitizedFileName);
         String objectUrl = s3PresignService.toObjectUrl(objectKey);
         String uploadUrl = s3PresignService.createPutPresignedUrl(objectKey, contentType);
         return new UploadFileResult(objectKey, objectUrl, uploadUrl);
     }
 
-    public UploadFileResult prepareOptionalUpload(
+    public UploadFileResult createImageUploadOptional(
             String resourceRoot,
             Long resourceId,
             String assetType,
-            String fileName,
-            boolean isVideo
+            String fileName
     ) {
         if (!StringUtils.hasText(fileName)) {
             return null;
         }
-        return prepareRequiredUpload(resourceRoot, resourceId, assetType, fileName, isVideo);
+        return createImageUpload(resourceRoot, resourceId, assetType, fileName);
     }
 
     public String buildMasterPlaylistObjectKey(String resourceRoot, Long resourceId) {
@@ -122,7 +119,7 @@ public class UploadHelper {
         return s3PresignService.toObjectUrl(objectKey);
     }
 
-    public void checkObjectKeyMatchesOriginUrl(String objectKey, String expectedOriginUrl, ErrorCode mismatchErrorCode) {
+    public void validateOriginObjectKey(String objectKey, String expectedOriginUrl, ErrorCode mismatchErrorCode) {
         if (!StringUtils.hasText(objectKey) || !StringUtils.hasText(expectedOriginUrl)) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
@@ -139,8 +136,8 @@ public class UploadHelper {
             String posterFileName,
             String thumbnailFileName
     ) {
-        UploadFileResult posterUpload = prepareRequiredUpload(resourceRoot, resourceId, "poster", posterFileName, false);
-        UploadFileResult thumbnailUpload = prepareRequiredUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName, false);
+        UploadFileResult posterUpload = createImageUpload(resourceRoot, resourceId, "poster", posterFileName);
+        UploadFileResult thumbnailUpload = createImageUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName);
 
         return new ImageCreateUploadResult(
                 posterUpload.objectKey(),
@@ -160,8 +157,8 @@ public class UploadHelper {
             String currentPosterUrl,
             String currentThumbnailUrl
     ) {
-        UploadFileResult posterUpload = prepareOptionalUpload(resourceRoot, resourceId, "poster", posterFileName, false);
-        UploadFileResult thumbnailUpload = prepareOptionalUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName, false);
+        UploadFileResult posterUpload = createImageUploadOptional(resourceRoot, resourceId, "poster", posterFileName);
+        UploadFileResult thumbnailUpload = createImageUploadOptional(resourceRoot, resourceId, "thumbnail", thumbnailFileName);
 
         String finalPosterUrl = currentPosterUrl;
         String finalThumbnailUrl = currentThumbnailUrl;
@@ -199,13 +196,12 @@ public class UploadHelper {
             String originFileName,
             Integer originFileSizeKb
     ) {
-        UploadFileResult posterUpload = prepareRequiredUpload(resourceRoot, resourceId, "poster", posterFileName, false);
+        UploadFileResult posterUpload = createImageUpload(resourceRoot, resourceId, "poster", posterFileName);
         UploadFileResult thumbnailUpload =
-                thumbnailFileName == null ? null : prepareRequiredUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName, false);
-        MultipartUploadFileResult originUpload = prepareRequiredMultipartVideoUpload(
+                thumbnailFileName == null ? null : createImageUpload(resourceRoot, resourceId, "thumbnail", thumbnailFileName);
+        MultipartUploadFileResult originUpload = createVideoMultipartUpload(
                 resourceRoot,
                 resourceId,
-                "origin",
                 originFileName,
                 originFileSizeKb
         );
@@ -230,7 +226,7 @@ public class UploadHelper {
         );
     }
 
-    public PageResponse<MultipartUploadPartUrl> getMultipartUploadPartUrlsPage(
+    public PageResponse<MultipartUploadPartUrl> getMultipartPartUrls(
             String objectKey,
             String uploadId,
             int totalPartCount,
@@ -271,6 +267,7 @@ public class UploadHelper {
                 .sorted(Comparator.comparingInt(MultipartPartETag::partNumber))
                 .toList();
 
+        //ETAG List 유효성 검증
         Set<Integer> seenPartNumbers = new HashSet<>();
         normalizedParts.forEach(part -> {
             if (part.partNumber() <= 0 || !StringUtils.hasText(part.eTag()) || !seenPartNumbers.add(part.partNumber())) {
@@ -287,8 +284,18 @@ public class UploadHelper {
         );
     }
 
-    public int calculateMultipartPartCount(Integer fileSizeKb) {
-        return calculateMultipartUploadPlan(fileSizeKb).totalPartCount();
+    /**
+     * s3에 생긴 멀티파트 업로드 세션을 제거합니다.
+     */
+    public void abortMultipartUpload(String objectKey, String uploadId) {
+        if (!StringUtils.hasText(objectKey) || !StringUtils.hasText(uploadId)) {
+            return;
+        }
+        s3PresignService.abortMultipartUpload(objectKey, uploadId);
+    }
+
+    public int getMultipartPartCount(Integer fileSizeKb) {
+        return getMultipartPlan(fileSizeKb).totalPartCount();
     }
 
     /**
@@ -299,7 +306,7 @@ public class UploadHelper {
      * 고정 크기 : 적당한 용량의 파일 -> 파트 크기 16mb로 고정(파트 갯수가 줄어듬)
      * </p>
      */
-    public MultipartUploadPlan calculateMultipartUploadPlan(Integer fileSizeKb) {
+    public MultipartUploadPlan getMultipartPlan(Integer fileSizeKb) {
         if (multipartDefaultPartSizeBytes <= 0 || multipartMaxParts <= 0) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
@@ -332,19 +339,18 @@ public class UploadHelper {
         return new MultipartUploadPlan(totalPartCount, partSizeBytes);
     }
 
-    private MultipartUploadFileResult prepareRequiredMultipartVideoUpload(
+    private MultipartUploadFileResult createVideoMultipartUpload(
             String resourceRoot,
             Long resourceId,
-            String assetType,
             String fileName,
             Integer fileSizeKb
     ) {
         String sanitizedFileName = sanitizeFileName(fileName);
-        String objectKey = buildObjectKey(resourceRoot, resourceId, assetType, sanitizedFileName);
+        String objectKey = buildObjectKey(resourceRoot, resourceId, "origin", sanitizedFileName);
         String contentType = resolveVideoContentType(sanitizedFileName);
         String objectUrl = s3PresignService.toObjectUrl(objectKey);
 
-        MultipartUploadPlan multipartUploadPlan = calculateMultipartUploadPlan(fileSizeKb);
+        MultipartUploadPlan multipartUploadPlan = getMultipartPlan(fileSizeKb);
         String uploadId = s3PresignService.createMultipartUpload(objectKey, contentType);
 
         return new MultipartUploadFileResult(
