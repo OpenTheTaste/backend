@@ -3,6 +3,8 @@ package com.ott.api_user.event;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.ott.api_user.moodrefresh.service.MoodRefreshService;
 
@@ -17,10 +19,11 @@ public class MoodRefreshEventListener {
 
     /**
      * @Async: 유저의 메인 응답 스레드와 완전히 분리되어 백그라운드에서 돌아감
-     * @EventListener: 스프링 어플리케이션 내에서 WatchHistoryCreatedEvent를 발생시키면 알아서 실행됨..
+     * @EventListener: 스프링 어플리케이션 내에서 WatchHistoryCreatedEvent를 발생시키면 알아서 실행됨.
+     * @TransactionalEventListener: 메인 트랜잭션이 완벽하게 커밋(DB 저장 확정)된 직후에만 실행됨!.
      */
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleWatchHistoryCreated(WatchHistoryCreatedEvent event) {
         Long memberId = event.getMemberId();
         log.info("[Mood Refresh] 유저 {}의 시청 기록 추가 감지! 환기 조건 검사를 시작합니다.", memberId);
