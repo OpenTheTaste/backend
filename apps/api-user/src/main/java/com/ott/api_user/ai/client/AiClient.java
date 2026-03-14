@@ -30,7 +30,7 @@ public class AiClient {
                 .bodyValue(requestDto)
                 .retrieve()
                 .bodyToMono(MoodRefreshDto.Response.class)
-                .timeout(Duration.ofSeconds(5))
+                .timeout(Duration.ofSeconds(30))
                 .block(); // 비동기 작업 내에서 안전하게 블로킹 처리
 
             if (response == null || response.getTargetTagCodes() == null) {

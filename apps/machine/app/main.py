@@ -3,7 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.tagging import router as tagging_router
-# from app.api.recommend import router as recommend_router
+from app.api.recommend import router as recommend_router
 
 from app.errors import (
     AppException,
@@ -57,7 +57,7 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 
 # Routers
 app.include_router(tagging_router, prefix="/tagging", tags=["Tagging"])
-# app.include_router(recommend_router, prefix="/recommend", tags=["Recommend"])
+app.include_router(recommend_router, prefix="/recommend", tags=["Recommend"])
 
 
 @app.get(

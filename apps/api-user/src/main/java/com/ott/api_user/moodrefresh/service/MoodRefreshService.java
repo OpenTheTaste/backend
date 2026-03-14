@@ -42,13 +42,12 @@ public class MoodRefreshService {
     // 홈 화면에 노출시킬 카드 
     @Transactional(readOnly = true)
     public MoodRefreshResponse getActiveRefreshCard(Long memberId) {
-        MemberMoodRefresh activeCard = refreshRepository
-                .findTopByMemberIdAndIsHiddenFalseOrderByCreatedDateDesc(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVE_REFRESH_CARD_NOT_FOUND)); 
-        List<Long> mediaIds = activeCard.getRecommendedMediaIds();
-        List<Media> mediaList = mediaRepository.findAllById(mediaIds);
-
-        return MoodRefreshResponse.of(activeCard, mediaList);
+    return refreshRepository.findTopByMemberIdAndIsHiddenFalseOrderByCreatedDateDesc(memberId)
+            .map(activeCard -> {
+                List<Media> mediaList = mediaRepository.findAllById(activeCard.getRecommendedMediaIds());
+                return MoodRefreshResponse.of(activeCard, mediaList);
+            })
+            .orElse(null); // 에러를 던지지 않고 그냥 null을 반환합니다.
     }
 
     // 카드 숨김 요청 시
@@ -130,7 +129,7 @@ public class MoodRefreshService {
 
         log.info("[Mood Refresh] 유저 {}을 위한 분위기 환기 카드 생성 완료! (타겟 태그: {})", memberId, topTargetTag);
     
-    
+
     }
     
 
