@@ -39,3 +39,17 @@ scrape_configs:
     relabel_configs:
       - target_label: instance
         replacement: "transcoder"
+
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["__NODE_EXPORTER_TARGET__"]
+        labels:
+          app: "node-exporter"
+          env: "prod"
+
+  - job_name: "machine-node-exporter"
+    static_configs:
+      - targets: ["__MACHINE_NODE_EXPORTER_TARGET__"]
+        labels:
+          app: "machine"
+          env: "prod"
