@@ -13,6 +13,7 @@ scrape_configs:
       - targets: ["api-user:8080"]
         labels:
           app: "user-api"
+          application: "user-api"
           env: "local"
     relabel_configs:
       - target_label: instance
@@ -24,6 +25,7 @@ scrape_configs:
       - targets: ["api-admin:8081"]
         labels:
           app: "admin-api"
+          application: "admin-api"
           env: "local"
     relabel_configs:
       - target_label: instance
@@ -35,6 +37,7 @@ scrape_configs:
       - targets: ["transcoder:8082"]
         labels:
           app: "transcoder"
+          application: "transcoder"
           env: "local"
     relabel_configs:
       - target_label: instance
