@@ -53,4 +53,4 @@ volumes:
 networks:
   backend_shared:
     external: true
-    name: backend_default
+    name: ${BACKEND_SHARED_NETWORK:-backend_default}

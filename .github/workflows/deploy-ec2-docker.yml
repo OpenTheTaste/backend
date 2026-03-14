@@ -133,13 +133,17 @@ jobs:
               --query "Reservations[0].Instances[0].PrivateIpAddress" \
               --output text)
 
-            if [ "$promtail_role" = "user-api" ] && [ -n "$private_ip" ] && [ "$private_ip" != "None" ]; then
-              aws ssm put-parameter \
-                --region "$AWS_REGION" \
-                --name "$NODE_EXPORTER_TARGET_SSM_PARAM" \
-                --type String \
-                --overwrite \
-                --value "${private_ip}:9100" >/dev/null
+            if [ "$promtail_role" = "user-api" ]; then
+              if [ -n "$private_ip" ] && [ "$private_ip" != "None" ]; then
+                aws ssm put-parameter \
+                  --region "$AWS_REGION" \
+                  --name "$NODE_EXPORTER_TARGET_SSM_PARAM" \
+                  --type String \
+                  --overwrite \
+                  --value "${private_ip}:9100" >/dev/null
+              else
+                echo "::warning::user-api private IP is missing. NODE_EXPORTER_TARGET SSM parameter was not updated."
+              fi
             fi
 
             local run_cmd

@@ -13,6 +13,7 @@ scrape_configs:
       - targets: ["__USER_API_TARGET__"]
         labels:
           app: "user-api"
+          application: "user-api"
           env: "prod"
     relabel_configs:
       - target_label: instance
@@ -24,6 +25,7 @@ scrape_configs:
       - targets: ["__ADMIN_API_TARGET__"]
         labels:
           app: "admin-api"
+          application: "admin-api"
           env: "prod"
     relabel_configs:
       - target_label: instance
@@ -35,6 +37,7 @@ scrape_configs:
       - targets: ["__TRANSCODER_TARGET__"]
         labels:
           app: "transcoder"
+          application: "transcoder"
           env: "prod"
     relabel_configs:
       - target_label: instance
@@ -45,6 +48,7 @@ scrape_configs:
       - targets: ["__NODE_EXPORTER_TARGET__"]
         labels:
           app: "node-exporter"
+          application: "node-exporter"
           env: "prod"
 
   - job_name: "machine-node-exporter"
@@ -52,4 +56,5 @@ scrape_configs:
       - targets: ["__MACHINE_NODE_EXPORTER_TARGET__"]
         labels:
           app: "machine"
+          application: "machine"
           env: "prod"

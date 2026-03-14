@@ -145,12 +145,19 @@ jobs:
 
           if [ -n "$MONITORING_SG_ID" ] && [ "$MONITORING_SG_ID" != "None" ] && \
              [ -n "$MACHINE_SG_ID" ] && [ "$MACHINE_SG_ID" != "None" ]; then
-            aws ec2 authorize-security-group-ingress \
+            if ! INGRESS_OUTPUT=$(aws ec2 authorize-security-group-ingress \
               --region "$AWS_REGION" \
               --group-id "$MACHINE_SG_ID" \
               --protocol tcp \
               --port 9100 \
-              --source-group "$MONITORING_SG_ID" >/dev/null 2>&1 || true
+              --source-group "$MONITORING_SG_ID" 2>&1); then
+              if echo "$INGRESS_OUTPUT" | grep -q "InvalidPermission.Duplicate"; then
+                echo "Node exporter ingress rule already exists."
+              else
+                echo "::warning::Failed to open node-exporter ingress (monitoring -> ai)."
+                echo "$INGRESS_OUTPUT"
+              fi
+            fi
           fi
 
           PROMTAIL_CONFIG_B64=$(printf '%s\n' \

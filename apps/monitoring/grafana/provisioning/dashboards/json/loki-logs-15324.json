@@ -131,7 +131,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(count_over_time({namespace=\"$namespace\", pod=~\"$pod\"} |~ \"$search\"[$__interval]))",
+          "expr": "sum(count_over_time({job=\"docker\", role=~\"$role\"} |~ \"$search\"[$__interval]))",
           "refId": "A"
         }
       ],
@@ -199,7 +199,7 @@
       },
       "targets": [
         {
-          "expr": "{namespace=\"$namespace\", pod=~\"$pod\"} |~ \"$search\"",
+          "expr": "{job=\"docker\", role=~\"$role\"} |~ \"$search\"",
           "refId": "A"
         }
       ],
@@ -234,47 +234,21 @@
   "templating": {
     "list": [
       {
-        "allValue": null,
-        "current": {},
-        "datasource": {"type": "prometheus", "uid": "prometheus"},
-        "definition": "label_values(kube_pod_info, namespace)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "Namespace",
-        "multi": false,
-        "name": "namespace",
-        "options": [],
-        "query": {
-          "query": "label_values(kube_pod_info, namespace)",
-          "refId": "Prometheus-namespace-Variable-Query"
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
         "allValue": ".*",
         "current": {},
-        "datasource": {"type": "prometheus", "uid": "prometheus"},
-        "definition": "label_values(container_network_receive_bytes_total{namespace=~\"$namespace\"},pod)",
+        "datasource": {"type": "loki", "uid": "loki"},
+        "definition": "label_values({job=\"docker\"}, role)",
         "description": null,
         "error": null,
         "hide": 0,
         "includeAll": true,
-        "label": "Pod",
+        "label": "Role",
         "multi": true,
-        "name": "pod",
+        "name": "role",
         "options": [],
         "query": {
-          "query": "label_values(container_network_receive_bytes_total{namespace=~\"$namespace\"},pod)",
-          "refId": "Prometheus-pod-Variable-Query"
+          "query": "label_values({job=\"docker\"}, role)",
+          "refId": "Loki-role-Variable-Query"
         },
         "refresh": 1,
         "regex": "",
