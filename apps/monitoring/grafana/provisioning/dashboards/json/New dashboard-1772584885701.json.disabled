@@ -258,7 +258,7 @@
       },
       "id": 6,
       "panels": [],
-      "title": "서비스 핵심 지표",
+      "title": "?쒕퉬???듭떖 吏??,
       "type": "row"
     },
     {
@@ -353,7 +353,7 @@
           "refId": "A"
         }
       ],
-      "title": "API 요청 처리량 (RPS)",
+      "title": "API ?붿껌 泥섎━??(RPS)",
       "type": "timeseries"
     },
     {
@@ -473,7 +473,7 @@
           "refId": "A"
         }
       ],
-      "title": "JVM 메모리 사용량 (app별)",
+      "title": "JVM 硫붾え由??ъ슜??(app蹂?",
       "type": "timeseries"
     },
     {
@@ -541,7 +541,7 @@
           "refId": "A"
         }
       ],
-      "title": "서비스 상태 점검 (UP)",
+      "title": "?쒕퉬???곹깭 ?먭? (UP)",
       "type": "stat"
     },
     {
@@ -637,7 +637,7 @@
           "refId": "A"
         }
       ],
-      "title": "CPU 사용률 (app별)",
+      "title": "CPU ?ъ슜瑜?(app蹂?",
       "type": "timeseries"
     }
   ],
@@ -653,7 +653,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "모니터링 대시보드",
+  "title": "紐⑤땲?곕쭅 ??쒕낫??,
   "uid": "adk6x5b",
   "version": 1,
   "weekStart": ""
