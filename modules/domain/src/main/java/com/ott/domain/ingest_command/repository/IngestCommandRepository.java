@@ -11,6 +11,8 @@ public interface IngestCommandRepository extends JpaRepository<IngestCommand, Lo
 
     List<IngestCommand> findByIngestJobId(Long ingestJobId);
 
+    List<IngestCommand> findByIngestJobIdAndCommandStatus(Long ingestJobId, CommandStatus commandStatus);
+
     boolean existsByIngestJobIdAndCommandStatusNot(Long ingestJobId, CommandStatus commandStatus);
 
     Optional<IngestCommand> findByIngestJobIdAndCommandKey(Long ingestJobId, String commandKey);

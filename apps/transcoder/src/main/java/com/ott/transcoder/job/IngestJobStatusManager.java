@@ -1,6 +1,8 @@
 package com.ott.transcoder.job;
 
+import com.ott.common.web.exception.BusinessException;
 import com.ott.domain.ingest_command.domain.CommandStatus;
+import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.domain.ingest_command.domain.IngestCommand;
 import com.ott.domain.ingest_command.repository.IngestCommandRepository;
 import com.ott.domain.ingest_job.domain.IngestJob;
@@ -9,12 +11,16 @@ import com.ott.domain.ingest_job.repository.IngestJobRepository;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media.domain.MediaStatus;
 import com.ott.transcoder.command.Command;
+import com.ott.transcoder.ffmpeg.Resolution;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.ott.common.web.exception.ErrorCode.INGEST_COMMAND_NOT_FOUND;
+import static com.ott.common.web.exception.ErrorCode.INGEST_JOB_NOT_FOUND;
 
 /**
  * 트랜스코딩 체크포인트별 상태 전이 담당
@@ -32,27 +38,20 @@ public class IngestJobStatusManager {
     @Transactional
     public void startProcessing(Long ingestJobId) {
         IngestJob ingestJob = findIngestJob(ingestJobId);
-        ingestJob.updateIngestStatus(IngestStatus.PROCESSING);
-
-        log.info("IngestJob 상태 전이 - ingestJobId: {}, PENDING → PROCESSING", ingestJobId);
+        if (ingestJob.getIngestStatus().equals(IngestStatus.PENDING)) {
+            ingestJob.updateIngestStatus(IngestStatus.PROCESSING);
+            log.info("IngestJob 상태 전이 - ingestJobId: {}, PENDING → PROCESSING", ingestJobId);
+        }
     }
 
-    /** CP-4: 커맨드 추출 → Insert */
-    @Transactional
-    public void createCommands(IngestJob ingestJob, List<Command> commandList) {
-        List<IngestCommand> ingestCommandList = commandList.stream()
-                .map(command -> IngestCommand.builder()
-                        .ingestJob(ingestJob)
-                        .commandType(command.getType())
-                        .commandKey(command.getCommandKey())
-                        .commandStatus(CommandStatus.PENDING)
-                        .build())
+    /** 완료된 트랜스코드 해상도 목록 조회 (재시도 시 master.m3u8 복원용) */
+    @Transactional(readOnly = true)
+    public List<Resolution> getCompletedResolutions(Long ingestJobId) {
+        return ingestCommandRepository
+                .findByIngestJobIdAndCommandStatus(ingestJobId, CommandStatus.COMPLETED).stream()
+                .filter(ic -> ic.getCommandType() == CommandType.TRANSCODE)
+                .map(ic -> Resolution.fromKey(ic.getCommandKey()))
                 .toList();
-
-        // TODO: Bulk INSERT로 변경
-        ingestCommandRepository.saveAll(ingestCommandList);
-
-        log.info("IngestCommand 생성 - ingestJobId: {}, count: {}", ingestJob.getId(), ingestCommandList.size());
     }
 
     /**
@@ -89,9 +88,7 @@ public class IngestJobStatusManager {
     private void completeCommandInternal(Long ingestJobId, Command command, String outputUrl) {
         IngestCommand ingestCommand = ingestCommandRepository
                 .findByIngestJobIdAndCommandKey(ingestJobId, command.getCommandKey())
-                .orElseThrow(() -> new IllegalStateException(
-                        "IngestCommand를 찾을 수 없습니다 - ingestJobId: " + ingestJobId
-                                + ", commandKey: " + command.getCommandKey()));
+                .orElseThrow(() -> new BusinessException(INGEST_COMMAND_NOT_FOUND));
         ingestCommand.updateCommandStatus(CommandStatus.COMPLETED);
         ingestCommand.updateOutputUrl(outputUrl);
 
@@ -127,7 +124,6 @@ public class IngestJobStatusManager {
 
     private IngestJob findIngestJob(Long ingestJobId) {
         return ingestJobRepository.findById(ingestJobId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "IngestJob을 찾을 수 없습니다 - ingestJobId: " + ingestJobId));
+                .orElseThrow(() -> new BusinessException(INGEST_JOB_NOT_FOUND));
     }
 }

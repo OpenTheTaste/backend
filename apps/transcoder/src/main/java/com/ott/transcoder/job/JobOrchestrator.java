@@ -2,8 +2,6 @@ package com.ott.transcoder.job;
 
 import com.ott.domain.common.MediaType;
 import com.ott.domain.ingest_command.domain.CommandType;
-import com.ott.domain.ingest_job.domain.IngestJob;
-import com.ott.domain.ingest_job.repository.IngestJobRepository;
 import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.command.CommandExtractor;
@@ -50,7 +48,6 @@ public class JobOrchestrator {
     private final MasterPlaylistGenerator masterPlaylistGenerator;
 
     private final IngestJobStatusManager statusManager;
-    private final IngestJobRepository ingestJobRepository;
 
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
@@ -63,11 +60,10 @@ public class JobOrchestrator {
         Long mediaId = message.mediaId();
         Long ingestJobId = message.ingestJobId();
         Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
+        // CP-3: 작업 시작
+        statusManager.startProcessing(ingestJobId);
 
         try {
-            // CP-3: 작업 시작
-            statusManager.startProcessing(ingestJobId);
-
             // 1. 작업 디렉토리 생성 (공간 체크를 위해 디렉토리가 존재해야 함)
             createWorkDir(workDir);
 
@@ -83,21 +79,19 @@ public class JobOrchestrator {
             // 4. 미디어 검사
             ProbeResult probeResult = inspector.inspect(inputFile);
 
-            // 5. 커맨드 추출
+            // 5. 커맨드 추출 + 완료 필터링 + DB 저장
             List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
-
-            // CP-4: IngestCommand 생성
-            IngestJob ingestJob = ingestJobRepository.findById(ingestJobId)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "IngestJob을 찾을 수 없습니다 - ingestJobId: " + ingestJobId));
-            statusManager.createCommands(ingestJob, commandList);
 
             // 6. JobContext 생성
             String uploadPrefix = resolveUploadPrefix(message.mediaType(), mediaId);
             JobContext jobContext = new JobContext(
-                    mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult, uploadPrefix);
+                    mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult, uploadPrefix
+            );
 
-            List<Resolution> completedResolutionList = new ArrayList<>();
+            // 재시도 시 이미 완료된 해상도 복원 (master.m3u8용)
+            List<Resolution> completedResolutionList = new ArrayList<>(
+                    statusManager.getCompletedResolutions(ingestJobId)
+            );
 
             // 7. 커맨드별 파이프라인 실행 (처리 + 업로드) + 상태 반영
             for (Command command : commandList) {
@@ -109,9 +103,7 @@ public class JobOrchestrator {
                     // master.m3u8 점진적 갱신 + S3 업로드 (cross-command)
                     completedResolutionList.add(tc.getResolution());
                     masterPlaylistGenerator.generate(outputDir, completedResolutionList);
-                    videoStorage.putFile(
-                            outputDir.resolve("master.m3u8"),
-                            uploadPrefix + "/master.m3u8");
+                    videoStorage.putFile(outputDir.resolve("master.m3u8"), uploadPrefix + "/master.m3u8");
 
                     // CP-5: DB 반영 (outputUrl + 최초 시 미디어 활성화)
                     statusManager.completeTranscodeCommand(ingestJobId, command, outputUrl);

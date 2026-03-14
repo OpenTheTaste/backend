@@ -82,6 +82,9 @@ public enum ErrorCode {
     RADAR_PREFERENCE_NOT_FOUND(HttpStatus.NOT_FOUND, "B406", "레이더 차트 설정을 찾을 수 없습니다"),
     RADAR_PREFERENCE_UNMODIFIABLE(HttpStatus.NOT_FOUND, "B407", "총합 100점을 모두 사용해야 레이더 차트 설정이 가능합니다"),
 
+    INGEST_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "B408", "IngestJob을 찾을 수 없습니다."),
+    INGEST_COMMAND_NOT_FOUND(HttpStatus.NOT_FOUND, "B409", "IngestCommand를 찾을 수 없습니다."),
+
     // ========== Server (S) - 서버/시스템 ==========
     STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다");
     
