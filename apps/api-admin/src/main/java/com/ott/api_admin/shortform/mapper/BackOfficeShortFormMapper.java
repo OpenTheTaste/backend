@@ -80,7 +80,9 @@ public class BackOfficeShortFormMapper {
             String masterPlaylistObjectKey,
             String posterUploadUrl,
             String thumbnailUploadUrl,
-            String originUploadUrl
+            String originUploadId,
+            int originTotalPartCount,
+            long originPartSizeBytes
     ) {
         return new ShortFormUploadResponse(
                 shortFormId,
@@ -90,7 +92,9 @@ public class BackOfficeShortFormMapper {
                 masterPlaylistObjectKey,
                 posterUploadUrl,
                 thumbnailUploadUrl,
-                originUploadUrl
+                originUploadId,
+                originTotalPartCount,
+                originPartSizeBytes
         );
     }
 

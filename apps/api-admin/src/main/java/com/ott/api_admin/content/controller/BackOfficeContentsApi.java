@@ -6,6 +6,8 @@ import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
+import com.ott.api_admin.upload.dto.request.MultipartUploadCompleteRequest;
+import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.common.web.exception.ErrorResponse;
 import com.ott.common.web.response.PageResponse;
 import com.ott.common.web.response.SuccessResponse;
@@ -114,5 +116,66 @@ public interface BackOfficeContentsApi {
 
             @Parameter(description = "ContentsUpdateRequest를 참고해주세요.", required = true)
             @Valid @RequestBody ContentsUpdateRequest request
+    );
+
+    @Operation(
+            summary = "콘텐츠 멀티파트 업로드 완료",
+            description = "objectKey, uploadId, 업로드된 part eTag 목록을 사용해 콘텐츠 원본 영상의 S3 멀티파트 업로드를 완료합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "멀티파트 업로드 완료 성공",
+                    content = {@Content(mediaType = "application/json")}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "잘못된 멀티파트 완료 요청",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<Void>> completeContentsUpload(
+            @Parameter(description = "대상 콘텐츠 ID", required = true, example = "1")
+            @PathVariable("contentsId") Long contentsId,
+
+            @Parameter(description = "멀티파트 업로드 완료 요청 바디", required = true)
+            @Valid @RequestBody MultipartUploadCompleteRequest request
+    );
+
+    @Operation(
+            summary = "콘텐츠 멀티파트 업로드 URL 조회",
+            description = "콘텐츠 원본 영상 멀티파트 업로드용 presigned URL을 페이지 단위로 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "멀티파트 업로드 URL 조회 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "잘못된 요청 파라미터",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<PageResponse<MultipartUploadPartUrlResponse>>> getContentsUploadPartUrls(
+            @Parameter(description = "대상 콘텐츠 ID", required = true, example = "1")
+            @PathVariable("contentsId") Long contentsId,
+
+            @Parameter(description = "S3 object key", required = true, example = "contents/1/origin/video.mp4")
+            @RequestParam("objectKey") String objectKey,
+
+            @Parameter(description = "S3 multipart upload ID", required = true)
+            @RequestParam("uploadId") String uploadId,
+
+            @Parameter(description = "페이지 번호(0부터 시작)", required = true, example = "0")
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+
+            @Parameter(description = "페이지 크기", required = true, example = "100")
+            @RequestParam(value = "size", defaultValue = "100") Integer size
     );
 }

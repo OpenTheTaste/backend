@@ -14,7 +14,7 @@ public class S3PresignerConfig {
     public S3Presigner s3Presigner(@Value("${aws.region:ap-northeast-2}") String region) {
         return S3Presigner.builder()
                 .region(Region.of(region))
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
                 .build();
     }
 }
