@@ -42,7 +42,7 @@ public class MoodRefreshService {
     @Transactional(readOnly = true)
     public MoodRefreshResponse getActiveRefreshCard(Long memberId) {
         MemberMoodRefresh activeCard = refreshRepository
-                .findTopByMemberIdAndIsHiddenFalseOrderByCreatedAtDesc(memberId)
+                .findTopByMemberIdAndIsHiddenFalseOrderByCreatedDateDesc(memberId)
                 .orElseThrow(() -> new RuntimeException("현재 활성화된 환기 카드가 없습니다."));
 
         List<Long> mediaIds = activeCard.getRecommendedMediaIds();
@@ -192,5 +192,4 @@ public class MoodRefreshService {
                 .toList();
     }
 
-    
 }
