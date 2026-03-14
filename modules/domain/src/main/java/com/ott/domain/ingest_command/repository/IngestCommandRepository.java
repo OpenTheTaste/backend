@@ -5,6 +5,7 @@ import com.ott.domain.ingest_command.domain.IngestCommand;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IngestCommandRepository extends JpaRepository<IngestCommand, Long> {
 
@@ -12,5 +13,5 @@ public interface IngestCommandRepository extends JpaRepository<IngestCommand, Lo
 
     boolean existsByIngestJobIdAndCommandStatusNot(Long ingestJobId, CommandStatus commandStatus);
 
-    IngestCommand findByIngestJobIdAndCommandKey(Long ingestJobId, String commandKey);
+    Optional<IngestCommand> findByIngestJobIdAndCommandKey(Long ingestJobId, String commandKey);
 }

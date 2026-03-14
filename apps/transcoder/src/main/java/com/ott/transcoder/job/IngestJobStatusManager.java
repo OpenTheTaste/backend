@@ -1,7 +1,6 @@
 package com.ott.transcoder.job;
 
 import com.ott.domain.ingest_command.domain.CommandStatus;
-import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.domain.ingest_command.domain.IngestCommand;
 import com.ott.domain.ingest_command.repository.IngestCommandRepository;
 import com.ott.domain.ingest_job.domain.IngestJob;
@@ -56,31 +55,48 @@ public class IngestJobStatusManager {
         log.info("IngestCommand 생성 - ingestJobId: {}, count: {}", ingestJob.getId(), ingestCommandList.size());
     }
 
-    /** CP-5: 개별 커맨드 성공 */
+    /**
+     * CP-5: 트랜스코드 커맨드 완료
+     * - IngestCommand: PENDING → COMPLETED + outputUrl
+     * - 최초 성공 시: IngestJob → PARTIAL_SUCCESS, Media → COMPLETED
+     * - masterPlaylistUrl은 업로드 시 미리 설정됨 (트랜스코더에서 관리하지 않음)
+     */
     @Transactional
-    public void completeCommand(Long ingestJobId, Command command) {
-        // 1. IngestCommand: PENDING → COMPLETED
+    public void completeTranscodeCommand(Long ingestJobId, Command command, String outputUrl) {
+        // 1. IngestCommand: PENDING → COMPLETED + outputUrl
         // TODO: IngestJobId & CommandKey Unique Key 도입 필요
-        IngestCommand ingestCommand = ingestCommandRepository
-                .findByIngestJobIdAndCommandKey(ingestJobId, command.getCommandKey());
-        ingestCommand.updateCommandStatus(CommandStatus.COMPLETED);
+        completeCommandInternal(ingestJobId, command, outputUrl);
 
-        log.info("IngestCommand 완료 - ingestJobId: {}, type: {}, key: {}",
-                ingestJobId, command.getType(), command.getCommandKey());
+        // 2. 최초 트랜스코딩 성공 → 미디어 활성화
+        IngestJob ingestJob = findIngestJob(ingestJobId);
+        if (ingestJob.getIngestStatus() == IngestStatus.PROCESSING) {
+            ingestJob.updateIngestStatus(IngestStatus.PARTIAL_SUCCESS);
 
-        // 2. 최초 트랜스코딩 성공 → IngestJob: PROCESSING → PARTIAL_SUCCESS + Media: INIT → COMPLETED
-        if (command.getType() == CommandType.TRANSCODE) {
-            IngestJob ingestJob = findIngestJob(ingestJobId);
-            if (ingestJob.getIngestStatus() == IngestStatus.PROCESSING) {
-                ingestJob.updateIngestStatus(IngestStatus.PARTIAL_SUCCESS);
+            Media media = ingestJob.getMedia();
+            media.updateMediaStatus(MediaStatus.COMPLETED);
 
-                Media media = ingestJob.getMedia();
-                media.updateMediaStatus(MediaStatus.COMPLETED);
-
-                log.info("최초 트랜스코딩 성공 - ingestJobId: {}, mediaId: {}, PROCESSING → PARTIAL_SUCCESS, Media → COMPLETED",
-                        ingestJobId, media.getId());
-            }
+            log.info("미디어 활성화 - ingestJobId: {}, mediaId: {}, PROCESSING → PARTIAL_SUCCESS, Media → COMPLETED",
+                    ingestJobId, media.getId());
         }
+    }
+
+    /** CP-5: 비-트랜스코드 커맨드 완료 (THUMBNAIL 등) */
+    @Transactional
+    public void completeCommand(Long ingestJobId, Command command, String outputUrl) {
+        completeCommandInternal(ingestJobId, command, outputUrl);
+    }
+
+    private void completeCommandInternal(Long ingestJobId, Command command, String outputUrl) {
+        IngestCommand ingestCommand = ingestCommandRepository
+                .findByIngestJobIdAndCommandKey(ingestJobId, command.getCommandKey())
+                .orElseThrow(() -> new IllegalStateException(
+                        "IngestCommand를 찾을 수 없습니다 - ingestJobId: " + ingestJobId
+                                + ", commandKey: " + command.getCommandKey()));
+        ingestCommand.updateCommandStatus(CommandStatus.COMPLETED);
+        ingestCommand.updateOutputUrl(outputUrl);
+
+        log.info("IngestCommand 완료 - ingestJobId: {}, key: {}, outputUrl: {}",
+                ingestJobId, command.getCommandKey(), outputUrl);
     }
 
     /** CP-6: 모든 커맨드 완료 확인 */
