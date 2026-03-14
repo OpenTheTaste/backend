@@ -29,6 +29,7 @@ import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.domain.short_form.domain.ShortForm;
 import com.ott.domain.short_form.repository.ShortFormRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,365 +44,380 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BackOfficeShortFormService {
 
-        private final BackOfficeShortFormMapper backOfficeShortFormMapper;
+    private final BackOfficeShortFormMapper backOfficeShortFormMapper;
 
-        private final MediaRepository mediaRepository;
-        private final MediaTagRepository mediaTagRepository;
-        private final SeriesRepository seriesRepository;
-        private final ContentsRepository contentsRepository;
-        private final ShortFormRepository shortFormRepository;
-        private final UploadHelper uploadHelper;
+    private final MediaRepository mediaRepository;
+    private final MediaTagRepository mediaTagRepository;
+    private final SeriesRepository seriesRepository;
+    private final ContentsRepository contentsRepository;
+    private final ShortFormRepository shortFormRepository;
+    private final UploadHelper uploadHelper;
 
-        @Transactional(readOnly = true)
-        public PageResponse<ShortFormListResponse> getShortFormList(
-                        Integer page, Integer size, String searchWord, PublicStatus publicStatus,
-                        Authentication authentication) {
-                Pageable pageable = PageRequest.of(page, size);
+    @Transactional(readOnly = true)
+    public PageResponse<ShortFormListResponse> getShortFormList(
+            Integer page, Integer size, String searchWord, PublicStatus publicStatus,
+            Authentication authentication) {
+        Pageable pageable = PageRequest.of(page, size);
 
-                Long memberId = (Long) authentication.getPrincipal();
-                boolean isEditor = authentication.getAuthorities().stream()
-                                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
-                Long uploaderId = null;
+        Long memberId = (Long) authentication.getPrincipal();
+        boolean isEditor = authentication.getAuthorities().stream()
+                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
+        Long uploaderId = null;
 
-                if (isEditor) {
-                        uploaderId = memberId;
-                }
-
-                Page<Media> mediaPage = mediaRepository
-                                .findMediaListByMediaTypeAndSearchWordAndPublicStatusAndUploaderId(
-                                                pageable, MediaType.SHORT_FORM, searchWord, publicStatus, uploaderId);
-
-                List<ShortFormListResponse> responseList = mediaPage.getContent().stream()
-                                .map(backOfficeShortFormMapper::toShortFormListResponse)
-                                .toList();
-
-                PageInfo pageInfo = PageInfo.toPageInfo(
-                                mediaPage.getNumber(),
-                                mediaPage.getTotalPages(),
-                                mediaPage.getSize());
-
-                return PageResponse.toPageResponse(pageInfo, responseList);
+        if (isEditor) {
+            uploaderId = memberId;
         }
 
-        @Transactional(readOnly = true)
-        public PageResponse<OriginMediaTitleListResponse> getOriginMediaTitle(Integer page, Integer size,
-                        String searchWord) {
-                Pageable pageable = PageRequest.of(page, size);
+        Page<Media> mediaPage = mediaRepository
+                .findMediaListByMediaTypeAndSearchWordAndPublicStatusAndUploaderId(
+                        pageable, MediaType.SHORT_FORM, searchWord, publicStatus, uploaderId);
 
-                Page<Media> mediaPage = mediaRepository.findOriginMediaListBySearchWord(pageable, searchWord);
+        List<ShortFormListResponse> responseList = mediaPage.getContent().stream()
+                .map(backOfficeShortFormMapper::toShortFormListResponse)
+                .toList();
 
-                List<Media> mediaList = mediaPage.getContent();
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                mediaPage.getNumber(),
+                mediaPage.getTotalPages(),
+                mediaPage.getSize());
 
-                List<Long> seriesMediaIdList = mediaList.stream()
-                                .filter(m -> m.getMediaType() == MediaType.SERIES)
-                                .map(Media::getId)
-                                .toList();
+        return PageResponse.toPageResponse(pageInfo, responseList);
+    }
 
-                List<Long> contentsMediaIdList = mediaList.stream()
-                                .filter(m -> m.getMediaType() == MediaType.CONTENTS)
-                                .map(Media::getId)
-                                .toList();
+    @Transactional(readOnly = true)
+    public PageResponse<OriginMediaTitleListResponse> getOriginMediaTitle(Integer page, Integer size, String searchWord) {
+        Pageable pageable = PageRequest.of(page, size);
 
-                Map<Long, Long> seriesIdByMediaId = seriesRepository.findAllByMediaIdIn(seriesMediaIdList).stream()
-                                .collect(Collectors.toMap(s -> s.getMedia().getId(), Series::getId));
+        Page<Media> mediaPage = mediaRepository.findOriginMediaListBySearchWord(pageable, searchWord);
 
-                Map<Long, Long> contentsIdByMediaId = contentsRepository.findAllByMediaIdIn(contentsMediaIdList)
-                                .stream()
-                                .collect(Collectors.toMap(c -> c.getMedia().getId(), Contents::getId));
+        List<Media> mediaList = mediaPage.getContent();
 
-                List<OriginMediaTitleListResponse> responseList = mediaList.stream()
-                                .map(m -> backOfficeShortFormMapper.toOriginMediaTitleListResponse(m, seriesIdByMediaId,
-                                                contentsIdByMediaId))
-                                .toList();
+        List<Long> seriesMediaIdList = mediaList.stream()
+                .filter(m -> m.getMediaType() == MediaType.SERIES)
+                .map(Media::getId)
+                .toList();
 
-                PageInfo pageInfo = PageInfo.toPageInfo(
-                                mediaPage.getNumber(),
-                                mediaPage.getTotalPages(),
-                                mediaPage.getSize());
+        List<Long> contentsMediaIdList = mediaList.stream()
+                .filter(m -> m.getMediaType() == MediaType.CONTENTS)
+                .map(Media::getId)
+                .toList();
 
-                return PageResponse.toPageResponse(pageInfo, responseList);
+        Map<Long, Long> seriesIdByMediaId = seriesRepository.findAllByMediaIdIn(seriesMediaIdList).stream()
+                .collect(Collectors.toMap(s -> s.getMedia().getId(), Series::getId));
+
+        Map<Long, Long> contentsIdByMediaId = contentsRepository.findAllByMediaIdIn(contentsMediaIdList)
+                .stream()
+                .collect(Collectors.toMap(c -> c.getMedia().getId(), Contents::getId));
+
+        List<OriginMediaTitleListResponse> responseList = mediaList.stream()
+                .map(m -> backOfficeShortFormMapper.toOriginMediaTitleListResponse(m, seriesIdByMediaId,
+                        contentsIdByMediaId))
+                .toList();
+
+        PageInfo pageInfo = PageInfo.toPageInfo(
+                mediaPage.getNumber(),
+                mediaPage.getTotalPages(),
+                mediaPage.getSize());
+
+        return PageResponse.toPageResponse(pageInfo, responseList);
+    }
+
+    @Transactional(readOnly = true)
+    public ShortFormDetailResponse getShortFormDetail(Long mediaId, Authentication authentication) {
+        ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByMediaId(mediaId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
+
+        Long memberId = (Long) authentication.getPrincipal();
+        boolean isEditor = authentication.getAuthorities().stream()
+                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
+
+        Media media = shortForm.getMedia();
+        if (isEditor && !media.getUploader().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        @Transactional(readOnly = true)
-        public ShortFormDetailResponse getShortFormDetail(Long mediaId, Authentication authentication) {
-                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByMediaId(mediaId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
+        String uploaderNickname = media.getUploader().getNickname();
 
-                Long memberId = (Long) authentication.getPrincipal();
-                boolean isEditor = authentication.getAuthorities().stream()
-                                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
-
-                Media media = shortForm.getMedia();
-                if (isEditor && !media.getUploader().getId().equals(memberId)) {
-                        throw new BusinessException(ErrorCode.FORBIDDEN);
-                }
-
-                String uploaderNickname = media.getUploader().getNickname();
-
-                Optional<Media> originMedia = shortForm.findOriginMedia();
-                String originMediaTitle = null;
-                Long originId = null;
-                MediaType originType = null;
-                if (originMedia.isPresent()) {
-                        originMediaTitle = originMedia.get().getTitle();
-                        if (shortForm.getSeries() != null) {
-                                originId = shortForm.getSeries().getId();
-                                originType = MediaType.SERIES;
-                        } else if (shortForm.getContents() != null) {
-                                originId = shortForm.getContents().getId();
-                                originType = MediaType.CONTENTS;
-                        }
-                }
-
-                List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(mediaId);
-
-                return backOfficeShortFormMapper.toShortFormDetailResponse(
-                                shortForm,
-                                media,
-                                uploaderNickname,
-                                originMediaTitle,
-                                originId,
-                                originType,
-                                mediaTagList
-                );
+        Optional<Media> originMedia = shortForm.findOriginMedia();
+        String originMediaTitle = null;
+        Long originId = null;
+        MediaType originType = null;
+        if (originMedia.isPresent()) {
+            originMediaTitle = originMedia.get().getTitle();
+            if (shortForm.getSeries() != null) {
+                originId = shortForm.getSeries().getId();
+                originType = MediaType.SERIES;
+            } else if (shortForm.getContents() != null) {
+                originId = shortForm.getContents().getId();
+                originType = MediaType.CONTENTS;
+            }
         }
 
-        @Transactional
-        public ShortFormUploadResponse createShortFormUpload(ShortFormUploadRequest request, Long memberId) {
-                Member uploader = uploadHelper.resolveUploader(memberId);
-                Series series = null;
-                Contents contents = null;
+        List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(mediaId);
 
-                if ( request.mediaType().equals(MediaType.SERIES) ) {
-                        series = seriesRepository.findById(request.originId())
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
-                } else if ( request.mediaType().equals(MediaType.CONTENTS) ){
-                        contents = resolveContents(request.originId());
-                } else {
-                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
-                }
+        return backOfficeShortFormMapper.toShortFormDetailResponse(
+                shortForm,
+                media,
+                uploaderNickname,
+                originMediaTitle,
+                originId,
+                originType,
+                mediaTagList
+        );
+    }
 
-                Media media = mediaRepository.save(
-                                Media.builder()
-                                                .uploader(uploader)
-                                                .title(request.title())
-                                                .description(request.description())
-                                                .posterUrl("PENDING")
-                                                .thumbnailUrl("PENDING")
-                                                .bookmarkCount(0L)
-                                                .likesCount(0L)
-                                                .mediaType(MediaType.SHORT_FORM)
-                                                .publicStatus(request.publicStatus())
-                                                .build());
+    @Transactional
+    public ShortFormUploadResponse createShortFormUpload(ShortFormUploadRequest request, Long memberId) {
+        Member uploader = uploadHelper.resolveUploader(memberId);
+        Series series = null;
+        Contents contents = null;
 
-                ShortForm shortForm = shortFormRepository.save(
-                                ShortForm.builder()
-                                                .media(media)
-                                                .series(series)
-                                                .contents(contents)
-                                                .duration(request.duration())
-                                                .videoSize(request.videoSize())
-                                                .originUrl("PENDING")
-                                                .masterPlaylistUrl("PENDING")
-                                                .build());
-
-                Long shortFormId = shortForm.getId();
-                UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
-                                "short-forms",
-                                shortFormId,
-                                request.posterFileName(),
-                                null,
-                                request.originFileName(),
-                                request.videoSize()
-                );
-
-                media.updateImageKeys(
-                                mediaCreateUploadResult.posterObjectUrl(),
-                                mediaCreateUploadResult.thumbnailObjectUrl());
-                shortForm.updateStorageKeys(
-                                mediaCreateUploadResult.originObjectUrl(),
-                                mediaCreateUploadResult.masterPlaylistObjectUrl());
-
-                Long originMediaId = resolveOriginMediaId(series, contents);
-                inheritOriginMediaTags(media, originMediaId);
-
-                return backOfficeShortFormMapper.toShortFormUploadResponse(
-                                shortFormId,
-                                mediaCreateUploadResult.posterObjectKey(),
-                                mediaCreateUploadResult.thumbnailObjectKey(),
-                                mediaCreateUploadResult.originObjectKey(),
-                                mediaCreateUploadResult.masterPlaylistObjectKey(),
-                                mediaCreateUploadResult.posterUploadUrl(),
-                                mediaCreateUploadResult.thumbnailUploadUrl(),
-                                mediaCreateUploadResult.originUploadId(),
-                                mediaCreateUploadResult.originTotalPartCount(),
-                                mediaCreateUploadResult.originPartSizeBytes());
+        if (request.mediaType().equals(MediaType.SERIES)) {
+            series = seriesRepository.findById(request.originId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+        } else if (request.mediaType().equals(MediaType.CONTENTS)) {
+            contents = resolveContents(request.originId());
+        } else {
+            throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
         }
 
-        @Transactional(readOnly = true)
-        public void completeShortFormOriginUpload(
-                        Long shortFormId,
-                        String objectKey,
-                        String uploadId,
-                        List<UploadHelper.MultipartPartETag> parts,
-                        Authentication authentication
-        ) {
-                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortFormId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
+        Media media = mediaRepository.save(
+                Media.builder()
+                        .uploader(uploader)
+                        .title(request.title())
+                        .description(request.description())
+                        .posterUrl("PENDING")
+                        .thumbnailUrl("PENDING")
+                        .bookmarkCount(0L)
+                        .likesCount(0L)
+                        .mediaType(MediaType.SHORT_FORM)
+                        .publicStatus(request.publicStatus())
+                        .build());
 
-                Media media = shortForm.getMedia();
-                Long memberId = (Long) authentication.getPrincipal();
-                boolean isEditor = authentication.getAuthorities().stream()
-                                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
-                if (isEditor && !media.getUploader().getId().equals(memberId)) {
-                        throw new BusinessException(ErrorCode.FORBIDDEN);
+        ShortForm shortForm = shortFormRepository.save(
+                ShortForm.builder()
+                        .media(media)
+                        .series(series)
+                        .contents(contents)
+                        .duration(request.duration())
+                        .videoSize(request.videoSize())
+                        .originUrl("PENDING")
+                        .masterPlaylistUrl("PENDING")
+                        .build());
+
+        Long shortFormId = shortForm.getId();
+        UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = null;
+        try {
+            mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
+                    "short-forms",
+                    shortFormId,
+                    request.posterFileName(),
+                    null,
+                    request.originFileName(),
+                    request.videoSize()
+            );
+
+            media.updateImageKeys(
+                    mediaCreateUploadResult.posterObjectUrl(),
+                    mediaCreateUploadResult.thumbnailObjectUrl());
+            shortForm.updateStorageKeys(
+                    mediaCreateUploadResult.originObjectUrl(),
+                    mediaCreateUploadResult.masterPlaylistObjectUrl());
+
+            Long originMediaId = resolveOriginMediaId(series, contents);
+            inheritOriginMediaTags(media, originMediaId);
+
+            return backOfficeShortFormMapper.toShortFormUploadResponse(
+                    shortFormId,
+                    mediaCreateUploadResult.posterObjectKey(),
+                    mediaCreateUploadResult.thumbnailObjectKey(),
+                    mediaCreateUploadResult.originObjectKey(),
+                    mediaCreateUploadResult.masterPlaylistObjectKey(),
+                    mediaCreateUploadResult.posterUploadUrl(),
+                    mediaCreateUploadResult.thumbnailUploadUrl(),
+                    mediaCreateUploadResult.originUploadId(),
+                    mediaCreateUploadResult.originTotalPartCount(),
+                    mediaCreateUploadResult.originPartSizeBytes());
+        } catch (RuntimeException ex) {
+            if (mediaCreateUploadResult != null) {
+                try {
+                    uploadHelper.abortMultipartUpload(
+                            mediaCreateUploadResult.originObjectKey(),
+                            mediaCreateUploadResult.originUploadId()
+                    );
+                } catch (Exception abortEx) {
+                    log.warn("Failed to abort multipart upload. objectKey={}, uploadId={}",
+                            mediaCreateUploadResult.originObjectKey(),
+                            mediaCreateUploadResult.originUploadId(),
+                            abortEx);
                 }
+            }
+            throw ex;
+        }
+    }
 
-                uploadHelper.checkObjectKeyMatchesOriginUrl(
-                                objectKey,
-                                shortForm.getOriginUrl(),
-                                ErrorCode.SHORTFORM_ORIGIN_OBJECT_KEY_MISMATCH
-                );
+    @Transactional(readOnly = true)
+    public void completeShortFormOriginUpload(
+            Long shortFormId,
+            String objectKey,
+            String uploadId,
+            List<UploadHelper.MultipartPartETag> parts,
+            Authentication authentication
+    ) {
+        ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortFormId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
 
-                uploadHelper.completeMultipartUpload(objectKey, uploadId, parts);
+        Media media = shortForm.getMedia();
+        Long memberId = (Long) authentication.getPrincipal();
+        boolean isEditor = authentication.getAuthorities().stream()
+                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
+        if (isEditor && !media.getUploader().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        @Transactional(readOnly = true)
-        public PageResponse<MultipartUploadPartUrlResponse> getShortFormOriginUploadPartUrls(
-                        Long shortFormId,
-                        String objectKey,
-                        String uploadId,
-                        Integer page,
-                        Integer size,
-                        Authentication authentication
-        ) {
-                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortFormId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
+        uploadHelper.validateOriginObjectKey(
+                objectKey,
+                shortForm.getOriginUrl(),
+                ErrorCode.SHORTFORM_ORIGIN_OBJECT_KEY_MISMATCH
+        );
 
-                Media media = shortForm.getMedia();
-                Long memberId = (Long) authentication.getPrincipal();
-                boolean isEditor = authentication.getAuthorities().stream()
-                                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
-                if (isEditor && !media.getUploader().getId().equals(memberId)) {
-                        throw new BusinessException(ErrorCode.FORBIDDEN);
-                }
+        uploadHelper.completeMultipartUpload(objectKey, uploadId, parts);
+    }
 
-                uploadHelper.checkObjectKeyMatchesOriginUrl(
-                                objectKey,
-                                shortForm.getOriginUrl(),
-                                ErrorCode.SHORTFORM_ORIGIN_OBJECT_KEY_MISMATCH
-                );
+    @Transactional(readOnly = true)
+    public PageResponse<MultipartUploadPartUrlResponse> getShortFormOriginUploadPartUrls(
+            Long shortFormId,
+            String objectKey,
+            String uploadId,
+            Integer page,
+            Integer size,
+            Authentication authentication
+    ) {
+        ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortFormId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
 
-                int totalPartCount = uploadHelper.calculateMultipartPartCount(shortForm.getVideoSize());
-                PageResponse<UploadHelper.MultipartUploadPartUrl> partUrlPage = uploadHelper.getMultipartUploadPartUrlsPage(
-                                objectKey,
-                                uploadId,
-                                totalPartCount,
-                                page,
-                                size
-                );
-
-                List<MultipartUploadPartUrlResponse> dataList = partUrlPage.getDataList().stream()
-                                .map(part -> new MultipartUploadPartUrlResponse(part.partNumber(), part.uploadUrl()))
-                                .toList();
-
-                return PageResponse.toPageResponse(partUrlPage.getPageInfo(), dataList);
+        Media media = shortForm.getMedia();
+        Long memberId = (Long) authentication.getPrincipal();
+        boolean isEditor = authentication.getAuthorities().stream()
+                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
+        if (isEditor && !media.getUploader().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        @Transactional
-        public ShortFormUpdateResponse updateShortFormUpload(Long shortformId, ShortFormUpdateRequest request, Authentication authentication) {
-                ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortformId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
+        uploadHelper.validateOriginObjectKey(
+                objectKey,
+                shortForm.getOriginUrl(),
+                ErrorCode.SHORTFORM_ORIGIN_OBJECT_KEY_MISMATCH
+        );
 
-                Media media = shortForm.getMedia();
-                Long memberId = (Long) authentication.getPrincipal();
-                boolean isEditor = authentication.getAuthorities().stream()
-                                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
-                if (isEditor && !media.getUploader().getId().equals(memberId)) {
-                        throw new BusinessException(ErrorCode.FORBIDDEN);
-                }
+        int totalPartCount = uploadHelper.getMultipartPartCount(shortForm.getVideoSize());
+        PageResponse<UploadHelper.MultipartUploadPartUrl> partUrlPage = uploadHelper.getMultipartPartUrls(
+                objectKey,
+                uploadId,
+                totalPartCount,
+                page,
+                size
+        );
 
-                Series series = null;
-                Contents contents = null;
+        List<MultipartUploadPartUrlResponse> dataList = partUrlPage.getDataList().stream()
+                .map(part -> new MultipartUploadPartUrlResponse(part.partNumber(), part.uploadUrl()))
+                .toList();
 
-                if ( request.mediaType().equals(MediaType.SERIES) ) {
-                        series = seriesRepository.findById(request.originId())
-                                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
-                } else if ( request.mediaType().equals(MediaType.CONTENTS) ){
-                        contents = resolveContents(request.originId());
-                } else {
-                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
-                }
+        return PageResponse.toPageResponse(partUrlPage.getPageInfo(), dataList);
+    }
 
+    @Transactional
+    public ShortFormUpdateResponse updateShortFormUpload(Long shortformId, ShortFormUpdateRequest request, Authentication authentication) {
+        ShortForm shortForm = shortFormRepository.findWithMediaAndUploaderByShortFormId(shortformId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
 
-                media.updateMetadata(request.title(), request.description(), request.publicStatus());
-                // 숏폼 수정 API에서는 영상(원본 URL, 길이, 용량)을 변경하지 않습니다.
-                shortForm.updateMetadata(series, contents);
-
-                Long shortFormId = shortForm.getId();
-                UploadHelper.ImageUpdateUploadResult imageUpdateUploadResult = uploadHelper.prepareImageUpdate(
-                                "short-forms",
-                                shortFormId,
-                                request.posterFileName(),
-                                null,
-                                media.getPosterUrl(),
-                                media.getThumbnailUrl()
-                );
-
-                media.updateImageKeys(
-                                imageUpdateUploadResult.nextPosterUrl(),
-                                imageUpdateUploadResult.nextThumbnailUrl()
-                );
-
-                Long originMediaId = resolveOriginMediaId(series, contents);
-                mediaTagRepository.deleteAllByMedia_Id(media.getId());
-                inheritOriginMediaTags(media, originMediaId);
-
-                return backOfficeShortFormMapper.toShortFormUpdateResponse(
-                                shortFormId,
-                                imageUpdateUploadResult.posterObjectKey(),
-                                imageUpdateUploadResult.thumbnailObjectKey(),
-                                imageUpdateUploadResult.posterUploadUrl(),
-                                imageUpdateUploadResult.thumbnailUploadUrl());
+        Media media = shortForm.getMedia();
+        Long memberId = (Long) authentication.getPrincipal();
+        boolean isEditor = authentication.getAuthorities().stream()
+                .anyMatch(authority -> Role.EDITOR.getKey().equals(authority.getAuthority()));
+        if (isEditor && !media.getUploader().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        private Contents resolveContents(Long contentsId) {
-                if (contentsId == null) {
-                        return null;
-                }
-                Contents contents = contentsRepository.findById(contentsId)
-                                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
-                // 시리즈에 속한 콘텐츠는 숏폼 원본으로 허용하지 않습니다.
-                if (contents.getSeries() != null) {
-                        throw new BusinessException(ErrorCode.INVALID_SHORTFORM_CONTENTS_TARGET);
-                }
-                return contents;
+        Series series = null;
+        Contents contents = null;
+
+        if (request.mediaType().equals(MediaType.SERIES)) {
+            series = seriesRepository.findById(request.originId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+        } else if (request.mediaType().equals(MediaType.CONTENTS)) {
+            contents = resolveContents(request.originId());
+        } else {
+            throw new BusinessException(ErrorCode.INVALID_SHORTFORM_TARGET);
         }
 
-        private Long resolveOriginMediaId(Series series, Contents contents) {
-                if (series != null) {
-                        return series.getMedia().getId();
-                }
-                if (contents != null) {
-                        return contents.getMedia().getId();
-                }
-                throw new BusinessException(ErrorCode.SHORTFORM_ORIGIN_MEDIA_NOT_FOUND);
+        media.updateMetadata(request.title(), request.description(), request.publicStatus());
+        shortForm.updateMetadata(series, contents);
+
+        Long shortFormId = shortForm.getId();
+        UploadHelper.ImageUpdateUploadResult imageUpdateUploadResult = uploadHelper.prepareImageUpdate(
+                "short-forms",
+                shortFormId,
+                request.posterFileName(),
+                null,
+                media.getPosterUrl(),
+                media.getThumbnailUrl()
+        );
+
+        media.updateImageKeys(
+                imageUpdateUploadResult.nextPosterUrl(),
+                imageUpdateUploadResult.nextThumbnailUrl()
+        );
+
+        Long originMediaId = resolveOriginMediaId(series, contents);
+        mediaTagRepository.deleteAllByMedia_Id(media.getId());
+        inheritOriginMediaTags(media, originMediaId);
+
+        return backOfficeShortFormMapper.toShortFormUpdateResponse(
+                shortFormId,
+                imageUpdateUploadResult.posterObjectKey(),
+                imageUpdateUploadResult.thumbnailObjectKey(),
+                imageUpdateUploadResult.posterUploadUrl(),
+                imageUpdateUploadResult.thumbnailUploadUrl());
+    }
+
+    private Contents resolveContents(Long contentsId) {
+        if (contentsId == null) {
+            return null;
+        }
+        Contents contents = contentsRepository.findById(contentsId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
+        if (contents.getSeries() != null) {
+            throw new BusinessException(ErrorCode.INVALID_SHORTFORM_CONTENTS_TARGET);
+        }
+        return contents;
+    }
+
+    private Long resolveOriginMediaId(Series series, Contents contents) {
+        if (series != null) {
+            return series.getMedia().getId();
+        }
+        if (contents != null) {
+            return contents.getMedia().getId();
+        }
+        throw new BusinessException(ErrorCode.SHORTFORM_ORIGIN_MEDIA_NOT_FOUND);
+    }
+
+    private void inheritOriginMediaTags(Media targetMedia, Long originMediaId) {
+        List<MediaTag> originMediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(originMediaId);
+        if (originMediaTagList.isEmpty()) {
+            return;
         }
 
-        private void inheritOriginMediaTags(Media targetMedia, Long originMediaId) {
-                List<MediaTag> originMediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(originMediaId);
-                if (originMediaTagList.isEmpty()) {
-                        return;
-                }
-
-                List<MediaTag> targetMediaTagList = originMediaTagList.stream()
-                                .map(originMediaTag -> MediaTag.builder()
-                                                .media(targetMedia)
-                                                .tag(originMediaTag.getTag())
-                                                .build())
-                                .toList();
-                mediaTagRepository.saveAll(targetMediaTagList);
-        }
+        List<MediaTag> targetMediaTagList = originMediaTagList.stream()
+                .map(originMediaTag -> MediaTag.builder()
+                        .media(targetMedia)
+                        .tag(originMediaTag.getTag())
+                        .build())
+                .toList();
+        mediaTagRepository.saveAll(targetMediaTagList);
+    }
 }
