@@ -284,7 +284,8 @@ public class BackOfficeShortFormService {
                 ErrorCode.SHORTFORM_ORIGIN_OBJECT_KEY_MISMATCH
         );
 
-        uploadHelper.completeMultipartUpload(objectKey, uploadId, parts);
+        int totalPartCount = uploadHelper.getMultipartPartCount(shortForm.getVideoSize());
+        uploadHelper.completeMultipartUpload(objectKey, uploadId, totalPartCount, parts);
     }
 
     @Transactional(readOnly = true)

@@ -206,7 +206,8 @@ public class BackOfficeContentsService {
                 ErrorCode.CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH
         );
 
-        uploadHelper.completeMultipartUpload(objectKey, uploadId, parts);
+        int totalPartCount = uploadHelper.getMultipartPartCount(contents.getVideoSize());
+        uploadHelper.completeMultipartUpload(objectKey, uploadId, totalPartCount, parts);
     }
 
     @Transactional(readOnly = true)
