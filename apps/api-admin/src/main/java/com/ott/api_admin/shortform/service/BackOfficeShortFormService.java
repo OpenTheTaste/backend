@@ -1,6 +1,7 @@
 package com.ott.api_admin.shortform.service;
 
 import com.ott.api_admin.content.vo.IngestJobResult;
+import com.ott.api_admin.publish.RabbitTranscodePublisher;
 import com.ott.api_admin.shortform.dto.request.ShortFormUpdateRequest;
 import com.ott.api_admin.shortform.dto.request.ShortFormUploadRequest;
 import com.ott.api_admin.shortform.dto.response.OriginMediaTitleListResponse;
@@ -12,6 +13,7 @@ import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.common.PublicStatus;
+import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -32,6 +34,7 @@ public class BackOfficeShortFormService {
     private final BackOfficeShortFormReader reader;
     private final BackOfficeShortFormWriter writer;
     private final UploadHelper uploadHelper;
+    private final RabbitTranscodePublisher transcodePublisher;
 
     // ── 읽기 위임 ──
 
@@ -81,10 +84,14 @@ public class BackOfficeShortFormService {
         IngestJobResult result = writer.createIngestJob(shortFormId, objectKey);
 
         // Phase 4: 메시지 발행 (트랜잭션 밖)
-        // TODO: RabbitMQ 의존성 추가 후 구현
-        // transcodePublisher.publish(new TranscodeMessage(
-        //     result.mediaId(), result.ingestJobId(),
-        //     result.originObjectKey(), result.fileSize(), result.mediaType()));
+        transcodePublisher.publish(new TranscodeMessage(
+                result.mediaId(),
+                result.ingestJobId(),
+                result.originObjectKey(),
+                result.fileSize(),
+                result.mediaType()
+                )
+        );
 
         log.info("업로드 완료 + 트랜스코딩 요청 - shortFormId: {}, mediaId: {}, ingestJobId: {}",
                 shortFormId, result.mediaId(), result.ingestJobId());

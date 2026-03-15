@@ -7,10 +7,12 @@ import com.ott.api_admin.content.dto.response.ContentsListResponse;
 import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
 import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
 import com.ott.api_admin.content.vo.IngestJobResult;
+import com.ott.api_admin.publish.RabbitTranscodePublisher;
 import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.common.PublicStatus;
+import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class BackOfficeContentsService {
     private final BackOfficeContentsReader reader;
     private final BackOfficeContentsWriter writer;
     private final UploadHelper uploadHelper;
+    private final RabbitTranscodePublisher transcodePublisher;
 
     // ── 읽기 위임 ──
 
@@ -72,10 +75,14 @@ public class BackOfficeContentsService {
         IngestJobResult result = writer.createIngestJob(contentsId, objectKey);
 
         // Phase 4: 메시지 발행 (트랜잭션 밖)
-        // TODO: RabbitMQ 의존성 추가 후 구현
-        // transcodePublisher.publish(new TranscodeMessage(
-        //     result.mediaId(), result.ingestJobId(),
-        //     result.originObjectKey(), result.fileSize(), result.mediaType()));
+        transcodePublisher.publish(new TranscodeMessage(
+                result.mediaId(),
+                result.ingestJobId(),
+                result.originObjectKey(), 
+                result.fileSize(),
+                result.mediaType()
+                )
+        );
 
         log.info("업로드 완료 + 트랜스코딩 요청 - contentsId: {}, mediaId: {}, ingestJobId: {}",
                 contentsId, result.mediaId(), result.ingestJobId());
