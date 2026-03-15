@@ -59,7 +59,7 @@ public class MoodRefreshService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.REFRESH_CARD_NOT_FOUND));
         
                 if (!card.getMember().getId().equals(memberId)) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS); // 접근 권한 에러 던지기
+            throw new BusinessException(ErrorCode.ACCESS_DENIED); // 접근 권한 에러 던지기
         }
         
         card.hideCard();
@@ -162,9 +162,9 @@ public class MoodRefreshService {
                 .toList();
             if (mediaIds.isEmpty()) return false;
 
-        // 1순위(priority = 0) 태그들 한 번에 IN 절로 조회
+        // 1순위(priority = 1) 태그들 한 번에 IN 절로 조회
         List<MediaMoodTag> primaryTags = mediaMoodTagRepository
-                .findByMedia_IdInAndStatusAndPriorityOrderByMedia_IdAscPriorityAsc(mediaIds, Status.ACTIVE, 0);
+                .findByMedia_IdInAndStatusAndPriorityOrderByMedia_IdAscPriorityAsc(mediaIds, Status.ACTIVE, 1);
 
         // 태그가 누락된 영상이 하나라도 있다면 환기 불가로 간주
         if (primaryTags.size() < mediaIds.size()) {

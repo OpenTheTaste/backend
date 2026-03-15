@@ -44,7 +44,7 @@ public enum ErrorCode {
     // ========== User (U) - 사용자 ==========
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다"),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "U002", "이미 존재하는 이메일입니다"),
-    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "U003", "해당 리소스에 대한 접근 권한이 없습니다."),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "U003", "해당 리소스에 대한 접근 권한이 없습니다."),
 
     
     // ========== Business (B) - 비즈니스 (조회 실패: 100번대) ==========

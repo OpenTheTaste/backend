@@ -16,6 +16,7 @@ import java.util.Optional;
 
 import static com.ott.domain.common.Status.ACTIVE;
 import static com.ott.domain.contents.domain.QContents.contents;
+import static com.ott.domain.media.domain.QMedia.media;
 import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
 import static com.ott.domain.playback.domain.QPlayback.playback;
 import static com.ott.domain.tag.domain.QTag.tag;
@@ -165,12 +166,13 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
     public List<WatchHistory> findRecentUnusedHistoriesWithin(Long memberId, LocalDateTime cutoff, int limit) {
         return queryFactory
                 .selectFrom(watchHistory)
-                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .join(watchHistory.contents, contents).fetchJoin()
+                .join(contents.media, media).fetchJoin()
                 .where(
                         watchHistory.member.id.eq(memberId),
                         watchHistory.status.eq(ACTIVE),
                         watchHistory.isUsedForMl.eq(false),
-                        watchHistory.lastWatchedAt.goe(cutoff)
+                        watchHistory.lastWatchedAt.goe(cutoff) //goe: >= 의미
                 )
                 .orderBy(watchHistory.lastWatchedAt.desc())
                 .limit(limit)

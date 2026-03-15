@@ -3,6 +3,8 @@ package com.ott.api_user.ai.client;
 import com.ott.api_user.ai.dto.MoodRefreshDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -17,6 +19,9 @@ public class AiClient {
 
     private final WebClient aiWebClient;
 
+    @Value("${ai.timeout.mood-ms}")
+    private long moodTimeoutMs;
+
     /**
      * FastAPI 서버에 최근 부정적 태그 시퀀스를 보내고 환기용 타겟 태그를 받아옵니다.
      */
@@ -30,7 +35,7 @@ public class AiClient {
                 .bodyValue(requestDto)
                 .retrieve()
                 .bodyToMono(MoodRefreshDto.Response.class)
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofMillis(moodTimeoutMs))
                 .block(); // 비동기 작업 내에서 안전하게 블로킹 처리
 
             if (response == null || response.getTargetTagCodes() == null) {
