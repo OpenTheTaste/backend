@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.ott.common.web.exception.ErrorCode.INGEST_COMMAND_NOT_FOUND;
 import static com.ott.common.web.exception.ErrorCode.INGEST_JOB_NOT_FOUND;
@@ -113,7 +114,12 @@ public class IngestJobStatusManager {
     /** CP-7: 재시도 소진 → 실패 처리 */
     @Transactional
     public void fail(Long ingestJobId) {
-        IngestJob ingestJob = findIngestJob(ingestJobId);
+        Optional<IngestJob> findIngestJob = ingestJobRepository.findById(ingestJobId);
+        if (findIngestJob.isEmpty()) {
+            log.warn("작업 실패 처리 중 해당 Job을 찾을 수 없음 - ingestJobId: {} (무시하고 종료)", ingestJobId);
+            return;
+        }
+        IngestJob ingestJob = findIngestJob.get();
         ingestJob.updateIngestStatus(IngestStatus.FAILED);
 
         Media media = ingestJob.getMedia();
