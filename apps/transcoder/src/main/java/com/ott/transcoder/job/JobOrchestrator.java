@@ -1,6 +1,5 @@
 package com.ott.transcoder.job;
 
-import com.ott.domain.common.MediaType;
 import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.command.Command;
@@ -86,7 +85,7 @@ public class JobOrchestrator {
             List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
 
             // 6. JobContext 생성
-            String uploadPrefix = resolveUploadPrefix(message.mediaType(), mediaId);
+            String uploadPrefix = resolveUploadPrefix(message.originUrl());
             JobContext jobContext = new JobContext(
                     mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult, uploadPrefix
             );
@@ -126,13 +125,12 @@ public class JobOrchestrator {
         }
     }
 
-    private String resolveUploadPrefix(MediaType mediaType, Long mediaId) {
-        String typePrefix = switch (mediaType) {
-            case CONTENTS -> "contents";
-            case SHORT_FORM -> "short-forms";
-            default -> throw new IllegalStateException("지원하지 않는 미디어 타입: " + mediaType);
-        };
-        return typePrefix + "/" + mediaId + "/transcoded";
+    private String resolveUploadPrefix(String originUrl) {
+        int originIndex = originUrl.indexOf("/origin/");
+        if (originIndex == -1) {
+            throw new IllegalStateException("originUrl에서 /origin/ 경로를 찾을 수 없음: " + originUrl);
+        }
+        return originUrl.substring(0, originIndex) + "/transcoded";
     }
 
     private void createWorkDir(Path workDir) {
