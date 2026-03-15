@@ -5,8 +5,7 @@ dependencies {
 	implementation project(':modules:infra-db')
 	implementation project(':modules:infra-s3')
 	implementation project(':modules:common-web')
-
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation project(':modules:infra-mq')
 
 	implementation platform('software.amazon.awssdk:bom:2.42.0')
 	implementation 'software.amazon.awssdk:s3'
