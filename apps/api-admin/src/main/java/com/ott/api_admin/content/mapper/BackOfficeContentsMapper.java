@@ -56,7 +56,9 @@ public class BackOfficeContentsMapper {
             String masterPlaylistObjectKey,
             String posterUploadUrl,
             String thumbnailUploadUrl,
-            String originUploadUrl
+            String originUploadId,
+            int originTotalPartCount,
+            long originPartSizeBytes
     ) {
         return new ContentsUploadResponse(
                 contentsId,
@@ -66,7 +68,9 @@ public class BackOfficeContentsMapper {
                 masterPlaylistObjectKey,
                 posterUploadUrl,
                 thumbnailUploadUrl,
-                originUploadUrl
+                originUploadId,
+                originTotalPartCount,
+                originPartSizeBytes
         );
     }
 

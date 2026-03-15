@@ -56,7 +56,6 @@ public enum ErrorCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "B106", "댓글을 찾을 수 없습니다"),
     BOOKMARK_NOT_FOUND(HttpStatus.NOT_FOUND, "B107", "북마크를 찾을 수 없습니다"),
     EPISODE_NOT_REGISTERED(HttpStatus.NOT_FOUND, "B108", "아직 에피소드가 등록되지 않았습니다."),
-  
     SHORT_FORM_NOT_FOUND(HttpStatus.NOT_FOUND, "B109", "숏폼을 찾을 수 없습니다"),
     
     REFRESH_CARD_NOT_FOUND(HttpStatus.NOT_FOUND, "B110", "환기 카드를 찾을 수 없습니다"),
@@ -70,6 +69,10 @@ public enum ErrorCode {
     INVALID_ROLE_CHANGE(HttpStatus.BAD_REQUEST, "B204", "허용되지 않는 역할 변경입니다"),
     COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "B205", "본인이 작성한 댓글만 수정/삭제할 수 있습니다"),
     INVALID_PLAYLIST_SOURCE(HttpStatus.BAD_REQUEST, "B206", "재생목록 소스(source)는 필수값입니다"),
+
+    CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH(HttpStatus.BAD_REQUEST, "B207", "contents objectKey가 원본 영상 URL과 일치하지 않습니다"),
+    SHORTFORM_ORIGIN_OBJECT_KEY_MISMATCH(HttpStatus.BAD_REQUEST, "B208", "shortform objectKey가 원본 영상 URL과 일치하지 않습니다"),
+    ETAG_LIST_INVALID(HttpStatus.BAD_REQUEST, "B209", "multipart eTag 목록이 유효하지 않습니다"),
 
     // ========== Business (B) - 비즈니스 (미디어/파일 전용: 300번대) ==========
     UNSUPPORTED_IMAGE_EXTENSION(HttpStatus.BAD_REQUEST, "B301", "지원하지 않는 이미지 확장자입니다"),
@@ -94,3 +97,4 @@ public enum ErrorCode {
     private final String code;
     private final String message;
 }
+

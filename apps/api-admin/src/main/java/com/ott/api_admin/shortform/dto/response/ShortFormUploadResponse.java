@@ -25,7 +25,13 @@ public record ShortFormUploadResponse(
         @Schema(type = "String", description = "썸네일 업로드용 사전 서명 URL")
         String thumbnailUploadUrl,
 
-        @Schema(type = "String", description = "원본 영상 업로드용 사전 서명 URL")
-        String originUploadUrl
+        @Schema(type = "String", description = "S3 멀티파트 업로드 ID", example  = "2~Qf8xq2nM8YJf4l9Yxj2k3bA7rTz9Lk8aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789")
+        String originUploadId,
+
+        @Schema(type = "Integer", description = "멀티파트 업로드 : 파트 갯수", example = "800")
+        int originTotalPartCount,
+
+        @Schema(type = "Long", description = "파트별 크기", example = "16777216   <-(16mb)")
+        long originPartSizeBytes
 ) {
 }

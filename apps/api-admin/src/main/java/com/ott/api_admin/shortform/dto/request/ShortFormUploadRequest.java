@@ -31,10 +31,12 @@ public record ShortFormUploadRequest(
 
         @Schema(type = "Integer", description = "영상 길이(초)", example = "60")
         @PositiveOrZero
+        @NotNull
         Integer duration,
 
         @Schema(type = "Integer", description = "영상 크기(KB)", example = "10240")
         @PositiveOrZero
+        @NotNull
         Integer videoSize,
 
         @Schema(type = "String", description = "포스터 원본 파일명", example = "poster.jpg")
