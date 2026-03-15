@@ -87,6 +87,7 @@ public enum ErrorCode {
 
     INGEST_JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "B408", "IngestJob을 찾을 수 없습니다."),
     INGEST_COMMAND_NOT_FOUND(HttpStatus.NOT_FOUND, "B409", "IngestCommand를 찾을 수 없습니다."),
+    ALREADY_INGESTED(HttpStatus.CONFLICT, "B410", "이미 트랜스코딩 작업이 등록된 미디어입니다"),
 
     // ========== Server (S) - 서버/시스템 ==========
     STRATEGY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "S001", "적절한 재생목록 전략을 찾을 수 없습니다");

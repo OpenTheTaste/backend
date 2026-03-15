@@ -1,294 +1,83 @@
 package com.ott.api_admin.content.service;
 
-import com.ott.api_admin.content.dto.request.ContentsUploadRequest;
 import com.ott.api_admin.content.dto.request.ContentsUpdateRequest;
+import com.ott.api_admin.content.dto.request.ContentsUploadRequest;
 import com.ott.api_admin.content.dto.response.ContentsDetailResponse;
 import com.ott.api_admin.content.dto.response.ContentsListResponse;
-import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
 import com.ott.api_admin.content.dto.response.ContentsUpdateResponse;
-import com.ott.api_admin.content.mapper.BackOfficeContentsMapper;
+import com.ott.api_admin.content.dto.response.ContentsUploadResponse;
+import com.ott.api_admin.content.vo.IngestJobResult;
 import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
-import com.ott.api_admin.tagging.event.AiTaggingRequestedEvent;
-import com.ott.api_admin.upload.support.MediaTagLinker;
 import com.ott.api_admin.upload.support.UploadHelper;
-import com.ott.common.web.exception.BusinessException;
-import com.ott.common.web.exception.ErrorCode;
-import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
-import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
-import com.ott.domain.contents.domain.Contents;
-import com.ott.domain.contents.repository.ContentsRepository;
-import com.ott.domain.media.domain.Media;
-import com.ott.domain.media.domain.MediaStatus;
-import com.ott.domain.media.repository.MediaRepository;
-import com.ott.domain.media_tag.domain.MediaTag;
-import com.ott.domain.media_tag.repository.MediaTagRepository;
-import com.ott.domain.member.domain.Member;
-import com.ott.domain.series.domain.Series;
-import com.ott.domain.series.repository.SeriesRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Contents 오케스트레이션 서비스
+ * 트랜잭션을 직접 갖지 않으며, Reader/Writer에 위임
+ * S3 같은 외부 호출은 이 계층에서 직접 호출하여 트랜잭션 밖에서 실행
+ */
 @RequiredArgsConstructor
 @Service
 @Slf4j
 public class BackOfficeContentsService {
 
-    private final BackOfficeContentsMapper backOfficeContentsMapper;
-
-    private final MediaRepository mediaRepository;
-    private final MediaTagRepository mediaTagRepository;
-    private final ContentsRepository contentsRepository;
-    private final SeriesRepository seriesRepository;
+    private final BackOfficeContentsReader reader;
+    private final BackOfficeContentsWriter writer;
     private final UploadHelper uploadHelper;
-    private final MediaTagLinker mediaTagLinker;
-    private final ApplicationEventPublisher eventPublisher;
 
-    @Transactional(readOnly = true)
+    // ── 읽기 위임 ──
+
     public PageResponse<ContentsListResponse> getContents(int page, int size, String searchWord, PublicStatus publicStatus) {
-        Pageable pageable = PageRequest.of(page, size);
-
-        // 미디어 중 콘텐츠 대상 페이징
-        Page<Media> mediaPage = mediaRepository.findMediaListByMediaTypeAndSearchWordAndPublicStatus(
-                pageable,
-                MediaType.CONTENTS,
-                searchWord,
-                publicStatus
-        );
-
-        List<ContentsListResponse> responseList = mediaPage.getContent().stream()
-                .map(backOfficeContentsMapper::toContentsListResponse)
-                .toList();
-
-        PageInfo pageInfo = PageInfo.toPageInfo(
-                mediaPage.getNumber(),
-                mediaPage.getTotalPages(),
-                mediaPage.getSize()
-        );
-        return PageResponse.toPageResponse(pageInfo, responseList);
+        return reader.getContents(page, size, searchWord, publicStatus);
     }
 
-    @Transactional(readOnly = true)
     public ContentsDetailResponse getContentsDetail(Long mediaId) {
-        Contents contents = contentsRepository.findWithMediaAndUploaderByMediaId(mediaId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
-
-        Media media = contents.getMedia();
-        String uploaderNickname = media.getUploader().getNickname();
-
-        // 2. 소속 시리즈 제목 및 태그 추출
-        Long originMediaId = mediaId;
-        String seriesTitle = null;
-        Long seriesId = null;
-        if (contents.getSeries() != null) {
-            Media originMedia = contents.getSeries().getMedia();
-            originMediaId = originMedia.getId();
-            seriesTitle = originMedia.getTitle();
-            seriesId = contents.getSeries().getId();
-        }
-
-        // 3. 태그 조회
-        List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(originMediaId);
-
-        return backOfficeContentsMapper.toContentsDetailResponse(seriesId, contents, media, uploaderNickname, seriesTitle, mediaTagList);
+        return reader.getContentsDetail(mediaId);
     }
 
-    @Transactional
-    // 콘텐츠/미디어 레코드를 생성하고 S3 업로드용 Presigned URL을 발급합니다.
-    public ContentsUploadResponse createContentsUpload(ContentsUploadRequest request, Long memberId) {
-        Member uploader = uploadHelper.resolveUploader(memberId);
-        Series series = resolveSeries(request.seriesId());
-
-        // S3 object key 안정성을 위해 파일명을 정규화합니다.
-        Media media = mediaRepository.save(
-                Media.builder()
-                        .uploader(uploader)
-                        .title(request.title())
-                        .description(request.description())
-                        // 콘텐츠 ID 생성 전이라 최종 URL을 만들 수 없어 임시값을 저장합니다.
-                        .posterUrl("PENDING")
-                        // 콘텐츠 ID 기반 object key 확정 후 실제 S3 URL로 즉시 갱신합니다.
-                        .thumbnailUrl("PENDING")
-                        .bookmarkCount(0L)
-                        .likesCount(0L)
-                        .mediaType(MediaType.CONTENTS)
-                        .mediaStatus(MediaStatus.INIT)
-                        .publicStatus(request.publicStatus())
-                        .build()
-        );
-
-        Contents contents = contentsRepository.save(
-                Contents.builder()
-                        .media(media)
-                        .series(series)
-                        .actors(request.actors())
-                        .duration(request.duration())
-                        .videoSize(request.videoSize())
-                        // 콘텐츠 ID 생성 전이라 원본 URL을 확정할 수 없어 임시값을 저장합니다.
-                        .originUrl("PENDING")
-                        // 트랜스코딩 결과 URL도 ID 기반 경로 계산 후 갱신합니다.
-                        .masterPlaylistUrl("PENDING")
-                        .build()
-        );
-
-        Long contentsId = contents.getId();
-
-        UploadHelper.MediaCreateUploadResult mediaCreateUploadResult = null;
-        try {
-            mediaCreateUploadResult = uploadHelper.prepareMediaCreate(
-                    "contents",
-                    contentsId,
-                    request.posterFileName(),
-                    request.thumbnailFileName(),
-                    request.originFileName(),
-                    request.videoSize()
-            );
-
-            media.updateImageKeys(
-                    mediaCreateUploadResult.posterObjectUrl(),
-                    mediaCreateUploadResult.thumbnailObjectUrl()
-            );
-            contents.updateStorageKeys(
-                    mediaCreateUploadResult.originObjectUrl(),
-                    mediaCreateUploadResult.masterPlaylistObjectUrl()
-            );
-
-            mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
-
-            // 임시로 해당 위치로 삽입 상태 관리 픽스 후 추후 변경 예정
-            eventPublisher.publishEvent(new AiTaggingRequestedEvent(media.getId(), request.description()));
-
-            return backOfficeContentsMapper.toContentsUploadResponse(
-                    contentsId,
-                    mediaCreateUploadResult.posterObjectKey(),
-                    mediaCreateUploadResult.thumbnailObjectKey(),
-                    mediaCreateUploadResult.originObjectKey(),
-                    mediaCreateUploadResult.masterPlaylistObjectKey(),
-                    mediaCreateUploadResult.posterUploadUrl(),
-                    mediaCreateUploadResult.thumbnailUploadUrl(),
-                    mediaCreateUploadResult.originUploadId(),
-                    mediaCreateUploadResult.originTotalPartCount(),
-                    mediaCreateUploadResult.originPartSizeBytes()
-            );
-        } catch (RuntimeException ex) {
-            if (mediaCreateUploadResult != null) {
-                try {
-                    uploadHelper.abortMultipartUpload(
-                            mediaCreateUploadResult.originObjectKey(),
-                            mediaCreateUploadResult.originUploadId()
-                    );
-                } catch (Exception abortEx) {
-                    log.warn("Failed to abort multipart upload. objectKey={}, uploadId={}",
-                            mediaCreateUploadResult.originObjectKey(),
-                            mediaCreateUploadResult.originUploadId(),
-                            abortEx);
-                }
-            }
-            throw ex;
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public void completeContentsOriginUpload(Long contentsId, String objectKey, String uploadId, List<UploadHelper.MultipartPartETag> parts) {
-        Contents contents = contentsRepository.findById(contentsId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
-
-        uploadHelper.validateOriginObjectKey(
-                objectKey,
-                contents.getOriginUrl(),
-                ErrorCode.CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH
-        );
-
-        int totalPartCount = uploadHelper.getMultipartPartCount(contents.getVideoSize());
-        uploadHelper.completeMultipartUpload(objectKey, uploadId, totalPartCount, parts);
-    }
-
-    @Transactional(readOnly = true)
     public PageResponse<MultipartUploadPartUrlResponse> getContentsOriginUploadPartUrls(
-            Long contentsId,
-            String objectKey,
-            String uploadId,
-            Integer page,
-            Integer size
-    ) {
-        Contents contents = contentsRepository.findById(contentsId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
-
-        uploadHelper.validateOriginObjectKey(
-                objectKey,
-                contents.getOriginUrl(),
-                ErrorCode.CONTENTS_ORIGIN_OBJECT_KEY_MISMATCH
-        );
-
-        int totalPartCount = uploadHelper.getMultipartPartCount(contents.getVideoSize());
-        PageResponse<UploadHelper.MultipartUploadPartUrl> partUrlPage = uploadHelper.getMultipartPartUrls(
-                objectKey,
-                uploadId,
-                totalPartCount,
-                page,
-                size
-        );
-
-        List<MultipartUploadPartUrlResponse> dataList = partUrlPage.getDataList().stream()
-                .map(part -> new MultipartUploadPartUrlResponse(part.partNumber(), part.uploadUrl()))
-                .toList();
-
-        return PageResponse.toPageResponse(partUrlPage.getPageInfo(), dataList);
+            Long contentsId, String objectKey, String uploadId, Integer page, Integer size) {
+        return reader.getContentsOriginUploadPartUrls(contentsId, objectKey, uploadId, page, size);
     }
 
-    @Transactional
+    // ── 쓰기 위임 ──
+
+    public ContentsUploadResponse createContentsUpload(ContentsUploadRequest request, Long memberId) {
+        return writer.createContentsUpload(request, memberId);
+    }
+
     public ContentsUpdateResponse updateContentsUpload(Long contentsId, ContentsUpdateRequest request) {
-        Contents contents = contentsRepository.findWithMediaById(contentsId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
-
-        Media media = contents.getMedia();
-        Series series = resolveSeries(request.seriesId());
-
-        media.updateMetadata(request.title(), request.description(), request.publicStatus());
-        // 콘텐츠 수정 API에서는 영상(원본 URL, 길이, 용량)을 변경하지 않습니다.
-        contents.updateMetadata(series, request.actors());
-
-        UploadHelper.ImageUpdateUploadResult imageUpdateUploadResult = uploadHelper.prepareImageUpdate(
-                "contents",
-                contentsId,
-                request.posterFileName(),
-                request.thumbnailFileName(),
-                media.getPosterUrl(),
-                media.getThumbnailUrl()
-        );
-
-        media.updateImageKeys(
-                imageUpdateUploadResult.nextPosterUrl(),
-                imageUpdateUploadResult.nextThumbnailUrl()
-        );
-
-        mediaTagRepository.deleteAllByMedia_Id(media.getId());
-        mediaTagLinker.linkTags(media, request.categoryId(), request.tagIdList());
-
-        return backOfficeContentsMapper.toContentsUpdateResponse(
-                contentsId,
-                imageUpdateUploadResult.posterObjectKey(),
-                imageUpdateUploadResult.thumbnailObjectKey(),
-                imageUpdateUploadResult.posterUploadUrl(),
-                imageUpdateUploadResult.thumbnailUploadUrl()
-        );
+        return writer.updateContentsUpload(contentsId, request);
     }
 
-    private Series resolveSeries(Long seriesId) {
-        if (seriesId == null) {
-            return null;
-        }
-        // 요청으로 전달된 seriesId의 존재 여부를 확인합니다.
-        return seriesRepository.findById(seriesId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.SERIES_NOT_FOUND));
+    // ── complete ──
+
+    public void completeContentsOriginUpload(
+            Long contentsId, String objectKey, String uploadId,
+            List<UploadHelper.MultipartPartETag> parts) {
+
+        // Phase 1: 검증 + 정보 조회 (readOnly 트랜잭션)
+        int totalPartCount = reader.getContentsUploadInfo(contentsId, objectKey);
+
+        // Phase 2: S3 멀티파트 완료 (트랜잭션 밖 — 외부 호출)
+        uploadHelper.completeMultipartUpload(objectKey, uploadId, totalPartCount, parts);
+
+        // Phase 3: IngestJob 생성 (쓰기 트랜잭션)
+        IngestJobResult result = writer.createIngestJob(contentsId, objectKey);
+
+        // Phase 4: 메시지 발행 (트랜잭션 밖)
+        // TODO: RabbitMQ 의존성 추가 후 구현
+        // transcodePublisher.publish(new TranscodeMessage(
+        //     result.mediaId(), result.ingestJobId(),
+        //     result.originObjectKey(), result.fileSize(), result.mediaType()));
+
+        log.info("업로드 완료 + 트랜스코딩 요청 - contentsId: {}, mediaId: {}, ingestJobId: {}",
+                contentsId, result.mediaId(), result.ingestJobId());
     }
 }
