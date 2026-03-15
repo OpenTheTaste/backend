@@ -14,6 +14,7 @@ public class MqMessageConfig {
     @Bean
     public DefaultClassMapper classMapper() {
         DefaultClassMapper classMapper = new DefaultClassMapper();
+        classMapper.setTrustedPackages("com.ott.infra.mq");
         classMapper.setDefaultType(TranscodeMessage.class);
         return classMapper;
     }
