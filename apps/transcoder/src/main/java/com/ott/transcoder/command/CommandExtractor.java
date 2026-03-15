@@ -37,10 +37,16 @@ public class CommandExtractor {
         // 1. 후보 커맨드 추출
         List<Command> candidateList = buildCandidateList(message, probeResult);
 
-        // 2. 완료된 commandKey 조회
-        Set<String> completedKeySet = ingestCommandRepository // key는 360P, 720P, thumbnail 등 고유
-                .findByIngestJobIdAndCommandStatus(ingestJobId, CommandStatus.COMPLETED)
-                .stream()
+        // 2. 기존 커맨드 한 번에 조회
+        List<IngestCommand> existingCommandList = ingestCommandRepository
+                .findByIngestJobId(ingestJobId);
+
+        Set<String> completedKeySet = existingCommandList.stream()
+                .filter(cmd -> cmd.getCommandStatus() == CommandStatus.COMPLETED)
+                .map(IngestCommand::getCommandKey)
+                .collect(Collectors.toSet());
+
+        Set<String> existingKeySet = existingCommandList.stream()
                 .map(IngestCommand::getCommandKey)
                 .collect(Collectors.toSet());
 
@@ -48,12 +54,6 @@ public class CommandExtractor {
         List<Command> pendingList = candidateList.stream()
                 .filter(cmd -> !completedKeySet.contains(cmd.getCommandKey()))
                 .toList();
-
-        // 4. DB에 없는 것만 저장
-        Set<String> existingKeySet = ingestCommandRepository
-                .findByIngestJobId(ingestJobId).stream()
-                .map(IngestCommand::getCommandKey)
-                .collect(Collectors.toSet());
 
         List<IngestCommand> newCommandList = pendingList.stream()
                 .filter(cmd -> !existingKeySet.contains(cmd.getCommandKey()))
