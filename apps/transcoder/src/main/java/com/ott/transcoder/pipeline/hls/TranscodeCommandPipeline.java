@@ -43,7 +43,7 @@ public class TranscodeCommandPipeline implements CommandPipeline<TranscodeComman
                 jobContext.mediaId(), profile.resolution().getKey());
 
         // 3. post: 해상도 디렉토리 S3 업로드
-        String commandKey = command.getCommandKey();
+        String commandKey = command.getCommandKey().toLowerCase();
         Path resolutionDir = jobContext.outputDir().resolve(commandKey);
         String destinationPrefix = jobContext.uploadPrefix() + "/" + commandKey;
         videoStorage.upload(resolutionDir, destinationPrefix);
