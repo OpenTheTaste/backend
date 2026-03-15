@@ -37,12 +37,17 @@ public class IngestJobStatusManager {
 
     /** CP-3: 메시지 컨슘 → 작업 시작 */
     @Transactional
-    public void startProcessing(Long ingestJobId) {
+    public boolean startProcessing(Long ingestJobId) {
         IngestJob ingestJob = findIngestJob(ingestJobId);
+        if (ingestJob.getIngestStatus().equals(IngestStatus.FAILED) || ingestJob.getIngestStatus().equals(IngestStatus.SUCCESS)) {
+            return false;
+        }
+
         if (ingestJob.getIngestStatus().equals(IngestStatus.PENDING)) {
             ingestJob.updateIngestStatus(IngestStatus.PROCESSING);
             log.info("IngestJob 상태 전이 - ingestJobId: {}, PENDING → PROCESSING", ingestJobId);
         }
+        return true;
     }
 
     /** 완료된 트랜스코드 해상도 목록 조회 (재시도 시 master.m3u8 복원용) */
@@ -120,6 +125,12 @@ public class IngestJobStatusManager {
             return;
         }
         IngestJob ingestJob = findIngestJob.get();
+
+        if (ingestJob.getIngestStatus() == IngestStatus.PARTIAL_SUCCESS || ingestJob.getIngestStatus() == IngestStatus.SUCCESS) {
+            log.warn("후속 커맨드 실패이지만 이미 노출 가능한 상태를 유지합니다 - ingestJobId: {}, status: {}", ingestJobId, ingestJob.getIngestStatus());
+            return;
+        }
+
         ingestJob.updateIngestStatus(IngestStatus.FAILED);
 
         Media media = ingestJob.getMedia();

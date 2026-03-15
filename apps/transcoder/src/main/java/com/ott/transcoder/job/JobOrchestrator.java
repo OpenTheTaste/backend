@@ -61,7 +61,10 @@ public class JobOrchestrator {
         Long ingestJobId = message.ingestJobId();
         Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
         // CP-3: 작업 시작
-        statusManager.startProcessing(ingestJobId);
+        if (statusManager.startProcessing(ingestJobId)) {
+            log.info("종료 상태 IngestJob 재수신 - ingestJobId: {} (스킵)", ingestJobId);
+            return;
+        }
 
         try {
             // 1. 작업 디렉토리 생성 (공간 체크를 위해 디렉토리가 존재해야 함)
