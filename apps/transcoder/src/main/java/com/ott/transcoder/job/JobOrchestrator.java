@@ -13,7 +13,7 @@ import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import com.ott.transcoder.pipeline.CommandPipelineExecutor;
 import com.ott.transcoder.pipeline.hls.MasterPlaylistGenerator;
-import com.ott.transcoder.queue.TranscodeMessage;
+import com.ott.infra.mq.TranscodeMessage;
 import com.ott.transcoder.storage.VideoStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

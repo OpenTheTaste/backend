@@ -1,8 +1,8 @@
 package com.ott.transcoder.queue.rabbit;
 
-import com.ott.transcoder.config.RabbitConfig;
+import com.ott.transcoder.config.RabbitConsumerConfig;
 import com.ott.transcoder.job.IngestJobStatusManager;
-import com.ott.transcoder.queue.TranscodeMessage;
+import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -17,7 +17,7 @@ public class RabbitDeadLetterListener {
 
     private final IngestJobStatusManager statusManager;
 
-    @RabbitListener(queues = RabbitConfig.DEAD_LETTER_QUEUE)
+    @RabbitListener(queues = RabbitConsumerConfig.DEAD_LETTER_QUEUE)
     public void handleDeadLetter(TranscodeMessage message) {
         log.error("DLQ 수신 - mediaId: {}, ingestJobId: {}",
                 message.mediaId(), message.ingestJobId());

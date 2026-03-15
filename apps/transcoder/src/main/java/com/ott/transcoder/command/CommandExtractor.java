@@ -9,7 +9,7 @@ import com.ott.domain.ingest_job.domain.IngestJob;
 import com.ott.domain.ingest_job.repository.IngestJobRepository;
 import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.inspection.probe.ProbeResult;
-import com.ott.transcoder.queue.TranscodeMessage;
+import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

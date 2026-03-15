@@ -1,5 +1,7 @@
 package com.ott.transcoder.queue;
 
+import com.ott.infra.mq.TranscodeMessage;
+
 /**
  * 메시지 큐 소비자 추상화 인터페이스
  *
