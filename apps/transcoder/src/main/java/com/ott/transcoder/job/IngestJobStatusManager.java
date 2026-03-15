@@ -112,7 +112,7 @@ public class IngestJobStatusManager {
             IngestJob ingestJob = findIngestJob(ingestJobId);
             ingestJob.updateIngestStatus(IngestStatus.SUCCESS);
 
-            log.info("모든 커맨드 완료 - ingestJobId: {}, PARTIAL_SUCCESS → SUCCESS", ingestJobId);
+            log.info("모든 커맨드 완료 - ingestJobId: {}, SUCCESS", ingestJobId);
         }
     }
 
