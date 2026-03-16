@@ -11,6 +11,9 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
+    networks:
+      - default
+      - backend_shared
     restart: unless-stopped
 
   loki:
@@ -33,6 +36,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/json/node-exporter-full-1860.json
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -45,3 +49,8 @@ volumes:
   prometheus_data:
   grafana_data:
   loki_data:
+
+networks:
+  backend_shared:
+    external: true
+    name: ${BACKEND_SHARED_NETWORK:-backend_default}

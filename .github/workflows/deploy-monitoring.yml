@@ -23,6 +23,16 @@ on:
         required: true
         default: "/oplust/monitoring/targets/transcoder"
         type: string
+      node_exporter_target_ssm_param:
+        description: "SSM parameter name for node-exporter target (host:port)"
+        required: true
+        default: "/oplust/monitoring/targets/node-exporter"
+        type: string
+      machine_node_exporter_target_ssm_param:
+        description: "SSM parameter name for machine node-exporter target (host:port)"
+        required: true
+        default: "/oplust/monitoring/targets/machine-node-exporter"
+        type: string
       grafana_password_ssm_param:
         description: "SSM SecureString parameter name for Grafana admin password"
         required: true
@@ -57,6 +67,8 @@ jobs:
           USER_API_TARGET_SSM_PARAM: ${{ github.event.inputs.user_api_target_ssm_param }}
           ADMIN_API_TARGET_SSM_PARAM: ${{ github.event.inputs.admin_api_target_ssm_param }}
           TRANSCODER_TARGET_SSM_PARAM: ${{ github.event.inputs.transcoder_target_ssm_param }}
+          NODE_EXPORTER_TARGET_SSM_PARAM: ${{ github.event.inputs.node_exporter_target_ssm_param }}
+          MACHINE_NODE_EXPORTER_TARGET_SSM_PARAM: ${{ github.event.inputs.machine_node_exporter_target_ssm_param }}
         run: |
           set -euo pipefail
 
@@ -81,9 +93,25 @@ jobs:
             --query 'Parameter.Value' \
             --output text)
 
+          NODE_EXPORTER_TARGET=$(aws ssm get-parameter \
+            --region "$AWS_REGION" \
+            --name "$NODE_EXPORTER_TARGET_SSM_PARAM" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)
+
+          MACHINE_NODE_EXPORTER_TARGET=$(aws ssm get-parameter \
+            --region "$AWS_REGION" \
+            --name "$MACHINE_NODE_EXPORTER_TARGET_SSM_PARAM" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)
+
           if [ -z "$USER_API_TARGET" ] || [ "$USER_API_TARGET" = "None" ] || \
              [ -z "$ADMIN_API_TARGET" ] || [ "$ADMIN_API_TARGET" = "None" ] || \
-             [ -z "$TRANSCODER_TARGET" ] || [ "$TRANSCODER_TARGET" = "None" ]; then
+             [ -z "$TRANSCODER_TARGET" ] || [ "$TRANSCODER_TARGET" = "None" ] || \
+             [ -z "$NODE_EXPORTER_TARGET" ] || [ "$NODE_EXPORTER_TARGET" = "None" ] || \
+             [ -z "$MACHINE_NODE_EXPORTER_TARGET" ] || [ "$MACHINE_NODE_EXPORTER_TARGET" = "None" ]; then
             echo "One or more scrape targets are empty. Check SSM parameter values." >&2
             exit 1
           fi
@@ -91,6 +119,8 @@ jobs:
           echo "USER_API_TARGET=$USER_API_TARGET" >> "$GITHUB_ENV"
           echo "ADMIN_API_TARGET=$ADMIN_API_TARGET" >> "$GITHUB_ENV"
           echo "TRANSCODER_TARGET=$TRANSCODER_TARGET" >> "$GITHUB_ENV"
+          echo "NODE_EXPORTER_TARGET=$NODE_EXPORTER_TARGET" >> "$GITHUB_ENV"
+          echo "MACHINE_NODE_EXPORTER_TARGET=$MACHINE_NODE_EXPORTER_TARGET" >> "$GITHUB_ENV"
 
       - name: Render prod Prometheus config
         run: |
@@ -100,6 +130,8 @@ jobs:
             -e "s|__USER_API_TARGET__|${USER_API_TARGET}|g" \
             -e "s|__ADMIN_API_TARGET__|${ADMIN_API_TARGET}|g" \
             -e "s|__TRANSCODER_TARGET__|${TRANSCODER_TARGET}|g" \
+            -e "s|__NODE_EXPORTER_TARGET__|${NODE_EXPORTER_TARGET}|g" \
+            -e "s|__MACHINE_NODE_EXPORTER_TARGET__|${MACHINE_NODE_EXPORTER_TARGET}|g" \
             apps/monitoring/prometheus/prometheus.prod.yml.tpl > apps/monitoring/prometheus/prometheus.prod.yml
 
       - name: Resolve Grafana admin password
