@@ -109,10 +109,10 @@ public class MoodRefreshService {
         String topTargetTag = targetTags.get(0);
         List<Media> recommendedMedias = mediaRepository.findByTop3ByMoodTagName(topTargetTag);
         
-        if (recommendedMedias.size() < 3) {
-            log.info("[Mood Refresh] 타겟 태그({})에 해당하는 활성 영상이 3개 미만입니다. 카드 생성 취소", topTargetTag);
-            return;
-        }
+        // if (recommendedMedias.size() < 3) {
+        //     log.info("[Mood Refresh] 타겟 태그({})에 해당하는 활성 영상이 3개 미만입니다. 카드 생성 취소", topTargetTag);
+        //     return;
+        // }
 
         List<Long> recommendedMediaIds = recommendedMedias.stream()
                 .map(Media::getId)
