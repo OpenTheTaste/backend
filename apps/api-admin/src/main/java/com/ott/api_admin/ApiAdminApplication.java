@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 
+
+
 @SpringBootApplication
 @ComponentScan(basePackages = "com.ott")
 @EntityScan(basePackages = "com.ott.domain")

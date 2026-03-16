@@ -49,4 +49,8 @@ public interface MediaRepositoryCustom {
 
         // 유저용 통합 검색 (활성 상태 및 공개 처리된 시리즈+단편만 조회)
         Page<Media> findUserSearchMediaList(Pageable pageable, String searchWord);
+
+
+        // mood AI 가 추천한 타겟 태그 이름을 기반으로 영상 추출
+        List<Media> findByTop3ByMoodTagName(String tagName);
 }

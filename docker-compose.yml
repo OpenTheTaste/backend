@@ -46,6 +46,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       CF_SIGNED_COOKIE_KEY_PAIR_ID: ${CF_SIGNED_COOKIE_KEY_PAIR_ID}
       CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64}
+      AI_BASE_URL: ${AI_BASE_URL}
     depends_on:
       mysql:
         condition: service_healthy
@@ -82,9 +83,6 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      api-user:
-        condition: service_healthy
-
   # ============ Message Queue ============
   rabbitmq:
     image: rabbitmq:3-management
@@ -182,7 +180,7 @@ services:
       - AI_TAGGING_MODEL_PATH=/app/models/tagging
       - AI_RECOMMEND_MODEL_PATH=/app/models/recommend
       - AI_BASE_URL=${AI_BASE_URL:-http://machine:8000} 
-      - TIMEOUT_MS=2000
+      - TIMEOUT_MS=30000
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 10s

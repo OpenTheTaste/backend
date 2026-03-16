@@ -4,11 +4,13 @@ from pydantic import BaseModel, Field
 from app.services import recommend as recommend_service
 
 
+
+# Request DTO
 class MoodRefreshTargetRequest(BaseModel):
     member_id: int = Field(..., ge=1)
-    recent_negative_tags: list[str] = Field(..., min_items=1)
+    input_tags: list[str] = Field(..., min_length=1, description="최근 3편의 영상에서 추출된 대표 태그 배열")
 
-
+# Response DTO
 class MoodRefreshTargetResponse(BaseModel):
     target_tag_codes: list[str]
 
@@ -18,5 +20,8 @@ router = APIRouter()
 
 @router.post("/mood-refresh/target", response_model=MoodRefreshTargetResponse)
 def target_tags(payload: MoodRefreshTargetRequest) -> MoodRefreshTargetResponse:
-    target_tag_codes = recommend_service.predict_target_tags(payload.recent_negative_tags)
-    return MoodRefreshTargetResponse(target_tag_codes=target_tag_codes)
+    # 추론 서비스 호출
+    target_tags = recommend_service.infer_targets(payload.input_tags)
+    
+    # 결과를 담아서 반환
+    return MoodRefreshTargetResponse(target_tag_codes=target_tags)

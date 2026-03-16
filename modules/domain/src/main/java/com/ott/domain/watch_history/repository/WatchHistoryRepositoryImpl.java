@@ -1,6 +1,7 @@
 package com.ott.domain.watch_history.repository;
 
 import com.ott.domain.common.Status;
+import com.ott.domain.watch_history.domain.WatchHistory;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -15,6 +16,7 @@ import java.util.Optional;
 
 import static com.ott.domain.common.Status.ACTIVE;
 import static com.ott.domain.contents.domain.QContents.contents;
+import static com.ott.domain.media.domain.QMedia.media;
 import static com.ott.domain.media_tag.domain.QMediaTag.mediaTag;
 import static com.ott.domain.playback.domain.QPlayback.playback;
 import static com.ott.domain.tag.domain.QTag.tag;
@@ -44,6 +46,7 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .groupBy(tag.id, tag.name)
                 .fetch();
     }
+
 
     // 특정 회원의 1달 시청이력 기반 태그 집계
     @Override
@@ -142,7 +145,7 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-
+    
     @Override
     public Optional<Long> findLatestContentMediaIdByMemberIdAndSeriesId(Long memberId, Long seriesId){
         Long resultMediaId = queryFactory
@@ -157,5 +160,22 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .orderBy(watchHistory.lastWatchedAt.desc())
                 .fetchFirst();
         return Optional.ofNullable(resultMediaId);
+    }
+    
+    @Override
+    public List<WatchHistory> findRecentUnusedHistoriesWithin(Long memberId, LocalDateTime cutoff, int limit) {
+        return queryFactory
+                .selectFrom(watchHistory)
+                .join(watchHistory.contents, contents).fetchJoin()
+                .join(contents.media, media).fetchJoin()
+                .where(
+                        watchHistory.member.id.eq(memberId),
+                        watchHistory.status.eq(ACTIVE),
+                        watchHistory.isUsedForMl.eq(false),
+                        watchHistory.lastWatchedAt.goe(cutoff) //goe: >= 의미
+                )
+                .orderBy(watchHistory.lastWatchedAt.desc())
+                .limit(limit)
+                .fetch();
     }
 }
