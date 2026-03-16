@@ -58,7 +58,7 @@ public class PlaylistStrategyService {
 
         for (Media media : mediaPage.getContent()) {
             if (media.getMediaType() == MediaType.SERIES) {
-                Long targetId = watchHistoryRepository.findLatestContentMediaIdByMemberIdAndSeriesId(memberId, media.getId())
+                Long targetId = watchHistoryRepository.findLatestContentMediaIdByMemberIdAndSeriesMediaId(memberId, media.getId())
                         //시청 이력이 없다면 첫번째화 가져오기
                         .orElseGet(() -> getFirstEpisodeMediaId(media.getId()));
                 mediaToTargetIdMap.put(media.getId(), targetId);
@@ -191,7 +191,7 @@ public class PlaylistStrategyService {
     private Long getFirstEpisodeMediaId(Long seriesId) {
         Pageable limitOne = PageRequest.of(0, 1);
         Page<Contents> firstContentPage = contentsRepository
-                .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, limitOne);
+                .findBySeries_Media_IdAndStatusAndMedia_PublicStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, limitOne);
 
         if (firstContentPage.isEmpty()) {
             // 시리즈 껍데기만 있고 콘텐츠가 아직 안 올라온 예외 상황 방어

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.ott.api_user.ai.client.AiClient;
+import com.ott.api_user.ai.service.GeminiService;
 import com.ott.api_user.moodrefresh.dto.response.MoodRefreshResponse;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
@@ -40,6 +41,7 @@ public class MoodRefreshService {
     private final MediaMoodTagRepository mediaMoodTagRepository;
     private final MoodTagRepository moodTagRepository;
     private final MemberRepository memberRepository;
+    private final GeminiService geminiService;
 
     // 홈 화면에 노출시킬 카드 
     @Transactional(readOnly = true)
@@ -70,6 +72,8 @@ public class MoodRefreshService {
     @Transactional
     public void analyzeAndCreateRefreshCard(Long memberId) {
 
+        log.info("🚨 [테스트] analyzeAndCreateRefreshCard 함수에 확실히 진입했습니다! memberId: {}", memberId);
+
         // 해당 멤버의 쿨다운 확인
         if (isInCooldown(memberId)) {
             log.info("[Mood Refresh] 쿨다운(6시간) 통과 실패 - memberId: {}", memberId);
@@ -83,12 +87,12 @@ public class MoodRefreshService {
                 .findRecentUnusedHistoriesWithin(memberId, seventyTwoHoursAgo, 3);
 
         if (recentHistories.size() < 3) {
-            log.debug("[Mood Refresh] 최근 72시간 이력 부족 - memberId: {}, records={}", memberId, recentHistories.size());
+            log.info("[Mood Refresh] 최근 72시간 이력 부족 - memberId: {}, records={}", memberId, recentHistories.size());
             return;
         }
 
         if (!isAllSameMoodCategory(recentHistories)) {
-            log.debug("[Mood Refresh] 대표 감정 그룹 불일치 - memberId: {}", memberId);
+            log.info("[Mood Refresh] 대표 감정 그룹 불일치 - memberId: {}", memberId);
             return;
         }
 
@@ -106,7 +110,7 @@ public class MoodRefreshService {
         List<Media> recommendedMedias = mediaRepository.findByTop3ByMoodTagName(topTargetTag);
         
         if (recommendedMedias.size() < 3) {
-            log.debug("[Mood Refresh] 타겟 태그({})에 해당하는 활성 영상이 3개 미만입니다. 카드 생성 취소", topTargetTag);
+            log.info("[Mood Refresh] 타겟 태그({})에 해당하는 활성 영상이 3개 미만입니다. 카드 생성 취소", topTargetTag);
             return;
         }
 
@@ -120,14 +124,19 @@ public class MoodRefreshService {
         Byte themeImageId = targetMoodTag.getMoodCategory().getId().byteValue();
 
 
-        // LLM 공감 문구 세팅 (현재는 임시 하드코딩)
-        String llmSubtitle = "요즘 비슷한 분위기의 작품들만 연달아 보셨네요! 이번엔 완전히 새로운 짜릿함을 느껴보세요!";
+        String userMoodStr = String.join(", ", inputTags); 
+        
+        // 2. Gemini 호출! (유저 기분 문자열과 AI가 추천해준 타겟 태그 리스트 전달)
+        String llmSubtitle = geminiService.generateHealingMessage(userMoodStr, targetTags);
+        
+        log.info("[Mood Refresh] Gemini 멘트 생성 완료: {}", llmSubtitle);
 
+        String combinedContent = llmSubtitle + "|" + String.join(",", targetTags);
 
         MemberMoodRefresh newCard = MemberMoodRefresh.builder()
                 .member(memberRepository.getReferenceById(memberId)) // 프록시 객체로 조회 쿼리 최적화
                 .imageId(themeImageId)
-                .subtitle(llmSubtitle)
+                .subtitle(combinedContent) // 합친 문자열을 저장
                 .recommendedMediaIds(recommendedMediaIds)
                 .build();
 
@@ -140,7 +149,6 @@ public class MoodRefreshService {
 
     }
     
-
 
     // 위 메인 로직에 필요한 필터링 메서드
 

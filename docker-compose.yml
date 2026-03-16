@@ -50,6 +50,7 @@ services:
       CF_SIGNED_COOKIE_KEY_PAIR_ID: ${CF_SIGNED_COOKIE_KEY_PAIR_ID}
       CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64}
       AI_BASE_URL: ${AI_BASE_URL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
     depends_on:
       mysql:
         condition: service_healthy

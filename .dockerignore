@@ -1,0 +1,15 @@
+# .dockerignore
+.git
+.gradle
+.idea
+build/
+bin/
+out/
+
+# Python 관련
+**/venv/
+**/__pycache__/
+
+# Docker 관련
+docker-data/
+mysql-data/
