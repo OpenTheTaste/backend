@@ -1,5 +1,6 @@
 package com.ott.domain.member.repository;
 
+import com.ott.domain.common.Status;
 import com.ott.domain.member.domain.Member;
 import com.ott.domain.member.domain.Role;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -25,6 +26,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         List<Member> memberList = queryFactory
                 .selectFrom(member)
                 .where(
+                        member.status.eq(Status.ACTIVE),
                         nicknameContains(searchWord),
                         roleEq(role)
                 )
@@ -37,6 +39,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
                 .select(member.count())
                 .from(member)
                 .where(
+                        member.status.eq(Status.ACTIVE),
                         nicknameContains(searchWord),
                         roleEq(role)
                 );
