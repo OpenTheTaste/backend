@@ -2,9 +2,11 @@ package com.ott.api_user.history.service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ott.api_user.event.WatchHistoryCreatedEvent;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.common.PublicStatus;
@@ -27,14 +29,17 @@ import lombok.RequiredArgsConstructor;
 public class WatchHistoryService {
     private final WatchHistoryRepository watchHistoryRepository;
     private final ContentsRepository contentsRepository;
-    private final MemberRepository memberRepository;
+    private final ApplicationEventPublisher eventPublisher; // 스프링의 이벤트 발송기
 
     //사용자가 영상 클릭 시 시청 이력 생성
     public void upsertWatchHistory(Long memberId, Long mediaId){
         Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                 .orElseThrow(()-> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         
+                
         watchHistoryRepository.upsertWatchHistory(memberId, contents.getId());
+        
+        eventPublisher.publishEvent(new WatchHistoryCreatedEvent(memberId));
 
     }
     

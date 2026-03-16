@@ -1,6 +1,6 @@
 package com.ott.transcoder.ffmpeg;
 
-import com.ott.domain.video_profile.domain.Resolution;
+import com.ott.transcoder.ffmpeg.Resolution;
 
 /**
  * 단일 해상도에 대한 트랜스코딩 설정 묶음

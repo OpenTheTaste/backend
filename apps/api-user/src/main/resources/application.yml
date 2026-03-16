@@ -82,3 +82,5 @@ cloudfront:
 
 ai:
   base-url: ${AI_BASE_URL:http://localhost:8000}
+  timeout:
+    mood-ms: ${AI_TIMEOUT_MOOD_MS:30000} # 기본 30초

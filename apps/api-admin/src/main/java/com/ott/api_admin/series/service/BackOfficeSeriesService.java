@@ -16,6 +16,7 @@ import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.common.MediaType;
 import com.ott.domain.media.domain.Media;
+import com.ott.domain.media.domain.MediaStatus;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.media_tag.domain.MediaTag;
 import com.ott.domain.media_tag.repository.MediaTagRepository;
@@ -133,6 +134,7 @@ public class BackOfficeSeriesService {
                         .bookmarkCount(0L)
                         .likesCount(0L)
                         .mediaType(MediaType.SERIES)
+                        .mediaStatus(MediaStatus.INIT)
                         .publicStatus(request.publicStatus())
                         .build()
         );

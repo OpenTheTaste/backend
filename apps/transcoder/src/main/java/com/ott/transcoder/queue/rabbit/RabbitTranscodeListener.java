@@ -1,9 +1,9 @@
 package com.ott.transcoder.queue.rabbit;
 
 import com.ott.transcoder.job.JobOrchestrator;
-import com.ott.transcoder.config.RabbitConfig;
+import com.ott.transcoder.config.RabbitConsumerConfig;
 import com.ott.transcoder.queue.MessageListener;
-import com.ott.transcoder.queue.TranscodeMessage;
+import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -19,7 +19,7 @@ public class RabbitTranscodeListener implements MessageListener {
     private final JobOrchestrator jobOrchestrator;
 
     @Override
-    @RabbitListener(queues = RabbitConfig.QUEUE_NAME)
+    @RabbitListener(queues = RabbitConsumerConfig.QUEUE_NAME)
     public void listen(TranscodeMessage message) {
         log.info("작업 요청 수신 - mediaId: {}, originUrl: {}", message.mediaId(), message.originUrl());
 

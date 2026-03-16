@@ -1,4 +1,4 @@
-package com.ott.domain.video_profile.domain;
+package com.ott.domain.ingest_command.domain;
 
 import com.ott.domain.common.BaseEntity;
 import com.ott.domain.ingest_job.domain.IngestJob;
@@ -24,8 +24,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Builder
 @Getter
-@Table(name = "video_profile")
-public class VideoProfile extends BaseEntity {
+@Table(name = "ingest_command")
+public class IngestCommand extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,14 +35,25 @@ public class VideoProfile extends BaseEntity {
     @JoinColumn(name = "ingest_job_id", nullable = false)
     private IngestJob ingestJob;
 
-    @Column(name = "media_playlist_url", nullable = false, columnDefinition = "TEXT")
-    private String mediaPlaylistUrl;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "command_type", nullable = false)
+    private CommandType commandType;
+
+    @Column(name = "command_key", nullable = false, length = 50)
+    private String commandKey;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "resolution", nullable = false)
-    private Resolution resolution;
+    @Column(name = "command_status", nullable = false)
+    private CommandStatus commandStatus;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "profile_status", nullable = false)
-    private ProfileStatus profileStatus;
+    @Column(name = "output_url", columnDefinition = "TEXT")
+    private String outputUrl;
+
+    public void updateCommandStatus(CommandStatus commandStatus) {
+        this.commandStatus = commandStatus;
+    }
+
+    public void updateOutputUrl(String outputUrl) {
+        this.outputUrl = outputUrl;
+    }
 }

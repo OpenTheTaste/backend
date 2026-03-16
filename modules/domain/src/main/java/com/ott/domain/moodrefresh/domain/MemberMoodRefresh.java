@@ -45,8 +45,9 @@ public class MemberMoodRefresh extends BaseEntity {
     @Column(name = "recommended_media_ids", columnDefinition = "json")
     private List<Long> recommendedMediaIds;
 
-    @Column(name = "is_exposed", nullable = false)
-    private boolean isExposed = false;
+    // 유저가 닫기 버튼을 눌렀는지 여부
+    @Column(name = "is_hidden", nullable = false)
+    private boolean isHidden = false;
 
     @Builder
     public MemberMoodRefresh(Member member, Byte imageId, String subtitle, List<Long> recommendedMediaIds) {
@@ -54,11 +55,10 @@ public class MemberMoodRefresh extends BaseEntity {
         this.imageId = imageId;
         this.subtitle = subtitle;
         this.recommendedMediaIds = recommendedMediaIds;
-        this.isExposed = false;
+        this.isHidden = false; // 처음엔 무조건 보여야하므로 false 처리
     }
     
-    // 이 결과가 홈에 노출 됐을 때
-    public void markAsExposed() {
-        this.isExposed = true;
+    public void hideCard() {
+        this.isHidden = true;
     }
 }
