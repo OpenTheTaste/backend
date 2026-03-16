@@ -45,6 +45,6 @@ public interface MoodRefreshApi {
     @PatchMapping("/{refreshId}/hide")
     ResponseEntity<Void> hideCard(
             @Parameter(hidden = true) @AuthenticationPrincipal Long memberId, 
-            @Parameter(description = "숨김 처리할 환기 카드 ID", example = "1") @PathVariable("refreshId") Long refreshId
+            @PathVariable("refreshId") @Parameter(description = "숨김 처리할 환기 카드 ID", example = "1") Long refreshId
     );
 }

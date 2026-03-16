@@ -47,7 +47,7 @@ public class ShortFormFeedResponse {
         Media originMedia = shortForm.findOriginMedia().orElse(null);
 
         return ShortFormFeedResponse.builder()
-                .shortFormId(shortForm.getId())
+                .shortFormId(shortForm.getMedia().getId())
                 .title(shortForm.getMedia().getTitle())
                 .editorName(shortForm.getMedia().getUploader().getNickname())
                 .uploadDate(shortForm.getCreatedDate())

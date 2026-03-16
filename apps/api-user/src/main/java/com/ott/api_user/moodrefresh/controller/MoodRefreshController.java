@@ -33,8 +33,8 @@ public class MoodRefreshController implements MoodRefreshApi {
     @Override
     @PatchMapping("/{refreshId}/hide")
     public ResponseEntity<Void> hideCard(
-            @PathVariable("refreshId") Long refreshId,
-            @AuthenticationPrincipal Long memberId) {
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable("refreshId") Long refreshId) {
         
         moodRefreshService.hideRefreshCard(memberId, refreshId);
         return ResponseEntity.noContent().build();

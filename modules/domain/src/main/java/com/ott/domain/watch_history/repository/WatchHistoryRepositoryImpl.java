@@ -161,6 +161,25 @@ public class WatchHistoryRepositoryImpl implements WatchHistoryRepositoryCustom 
                 .fetchFirst();
         return Optional.ofNullable(resultMediaId);
     }
+
+
+    @Override
+    public Optional<Long> findLatestContentMediaIdByMemberIdAndSeriesMediaId(Long memberId, Long seriesMediaId){ // 파라미터 이름도 명확하게 변경!
+        Long resultMediaId = queryFactory
+                .select(contents.media.id)
+                .from(watchHistory)
+                .join(contents).on(watchHistory.contents.id.eq(contents.id))
+                .where(
+                        watchHistory.member.id.eq(memberId), 
+                        contents.series.media.id.eq(seriesMediaId), 
+                        watchHistory.status.eq(Status.ACTIVE)
+                )
+                .orderBy(watchHistory.lastWatchedAt.desc())
+                .fetchFirst();
+        return Optional.ofNullable(resultMediaId);
+    }
+
+
     
     @Override
     public List<WatchHistory> findRecentUnusedHistoriesWithin(Long memberId, LocalDateTime cutoff, int limit) {

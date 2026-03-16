@@ -84,3 +84,9 @@ ai:
   base-url: ${AI_BASE_URL:http://localhost:8000}
   timeout:
     mood-ms: ${AI_TIMEOUT_MOOD_MS:30000} # 기본 30초
+
+
+gemini:
+  api:
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent
+    key: ${GEMINI_API_KEY}
