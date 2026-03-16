@@ -1,9 +1,9 @@
 package com.ott.transcoder.job;
 
-import com.ott.domain.video_profile.domain.Resolution;
+import com.ott.domain.ingest_command.domain.CommandType;
+import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.command.CommandExtractor;
-import com.ott.transcoder.command.CommandType;
 import com.ott.transcoder.command.TranscodeCommand;
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
@@ -12,7 +12,7 @@ import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
 import com.ott.transcoder.pipeline.CommandPipelineExecutor;
 import com.ott.transcoder.pipeline.hls.MasterPlaylistGenerator;
-import com.ott.transcoder.queue.TranscodeMessage;
+import com.ott.infra.mq.TranscodeMessage;
 import com.ott.transcoder.storage.VideoStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -45,6 +46,8 @@ public class JobOrchestrator {
     private final CommandPipelineExecutor commandPipelineExecutor;
     private final MasterPlaylistGenerator masterPlaylistGenerator;
 
+    private final IngestJobStatusManager statusManager;
+
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
 
@@ -56,52 +59,78 @@ public class JobOrchestrator {
         Long mediaId = message.mediaId();
         Long ingestJobId = message.ingestJobId();
         Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
+        // CP-3: 작업 시작
+        if (!statusManager.startProcessing(ingestJobId)) {
+            log.info("종료 상태 IngestJob 재수신 - ingestJobId: {} (스킵)", ingestJobId);
+            return;
+        }
 
         try {
             // 1. 작업 디렉토리 생성 (공간 체크를 위해 디렉토리가 존재해야 함)
             createWorkDir(workDir);
 
-            // 2. 디스크 공간 확인 (메시지의 fileSize 기반)
+            // 2. 디스크 공간 확인
             diskSpaceGuard.check(workDir, message.fileSize() != null ? message.fileSize() : 0L);
 
             Path outputDir = workDir.resolve("output");
             createWorkDir(outputDir);
 
-            // 3. 원본 다운로드 (RetryableException 발생 가능)
+            // 3. 원본 다운로드
             Path inputFile = videoStorage.download(message.originUrl(), workDir);
 
-            // 4. 미디어 검사 (Fatal/RetryableException 발생 가능)
+            // 4. 미디어 검사
             ProbeResult probeResult = inspector.inspect(inputFile);
 
-            // 5. 커맨드 추출
+            // 5. 커맨드 추출 + 완료 필터링 + DB 저장
             List<Command> commandList = commandExtractor.extractCommand(message, probeResult);
 
             // 6. JobContext 생성
-            JobContext jobContext = new JobContext(mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult);
+            String uploadPrefix = resolveUploadPrefix(message.originUrl());
+            JobContext jobContext = new JobContext(
+                    mediaId, ingestJobId, workDir, outputDir, inputFile, probeResult, uploadPrefix
+            );
 
-            // 7. 커맨드별 파이프라인 실행 (MAIN)
-            for (Command command : commandList)
-                commandPipelineExecutor.execute(command, jobContext);
+            // 재시도 시 이미 완료된 해상도 복원 (master.m3u8용)
+            List<Resolution> completedResolutionList = new ArrayList<>(
+                    statusManager.getCompletedResolutions(ingestJobId)
+            );
 
-            // === POST ===
+            // 7. 커맨드별 파이프라인 실행 (처리 + 업로드) + 상태 반영
+            for (Command command : commandList) {
+                String outputUrl = commandPipelineExecutor.execute(command, jobContext);
 
-            // 8. 마스터 플레이리스트 생성
-            List<Resolution> resolutionList = commandList.stream()
-                    .filter(c -> c.getType() == CommandType.TRANSCODE)
-                    .map(c -> ((TranscodeCommand) c).getResolution())
-                    .toList();
-            masterPlaylistGenerator.generate(outputDir, resolutionList);
+                if (command.getType() == CommandType.TRANSCODE) {
+                    TranscodeCommand tc = (TranscodeCommand) command;
 
-            // 9. 결과물 업로드 (outputDir만 — 원본 제외)
-            String uploadedPath = videoStorage.upload(outputDir, "media/" + mediaId + "/hls");
+                    // master.m3u8 점진적 갱신 + S3 업로드 (cross-command)
+                    completedResolutionList.add(tc.getResolution());
+                    masterPlaylistGenerator.generate(outputDir, completedResolutionList);
+                    videoStorage.putFile(outputDir.resolve("master.m3u8"), uploadPrefix + "/master.m3u8");
 
-            log.info("모든 작업 성공 - mediaId: {}, ingestJobId: {}, uploadedPath: {}",
-                    mediaId, ingestJobId, uploadedPath);
+                    // CP-5: DB 반영 (outputUrl + 최초 시 미디어 활성화)
+                    statusManager.completeTranscodeCommand(ingestJobId, command, outputUrl);
+                } else {
+                    // CP-5: 비-트랜스코드 커맨드
+                    statusManager.completeCommand(ingestJobId, command, outputUrl);
+                }
+            }
+
+            // CP-6: 전체 완료 확인
+            statusManager.checkAllCompleted(ingestJobId);
+
+            log.info("모든 작업 성공 - mediaId: {}, ingestJobId: {}", mediaId, ingestJobId);
 
         } finally {
-            // 예외 발생 여부와 상관없이 로컬 작업 디렉토리는 반드시 정리합니다.
             cleanUp(workDir);
         }
+    }
+
+    private String resolveUploadPrefix(String originUrl) {
+        int originIndex = originUrl.indexOf("/origin/");
+        if (originIndex == -1) {
+            throw new IllegalStateException("originUrl에서 /origin/ 경로를 찾을 수 없음: " + originUrl);
+        }
+        return originUrl.substring(0, originIndex) + "/transcoded";
     }
 
     private void createWorkDir(Path workDir) {

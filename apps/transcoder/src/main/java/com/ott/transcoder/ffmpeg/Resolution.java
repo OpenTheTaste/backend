@@ -1,7 +1,9 @@
-package com.ott.domain.video_profile.domain;
+package com.ott.transcoder.ffmpeg;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.Arrays;
 
 @AllArgsConstructor
 @Getter
@@ -16,4 +18,11 @@ public enum Resolution {
     private final int width;
     private final long videoBitrate;
     private final String audioBitrate;
+
+    public static Resolution fromKey(String key) {
+        return Arrays.stream(values())
+                .filter(r -> r.key.equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown resolution key: " + key));
+    }
 }

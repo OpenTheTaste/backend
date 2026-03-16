@@ -10,6 +10,7 @@ public record JobContext(
         Path workDir,
         Path outputDir,
         Path inputFile,
-        ProbeResult probeResult
+        ProbeResult probeResult,
+        String uploadPrefix
 ) {
 }

@@ -4,6 +4,7 @@ dependencies {
 	implementation project(':modules:domain')
 	implementation project(':modules:infra-db')
 	implementation project(':modules:infra-s3')
+	implementation project(':modules:infra-mq')
 	implementation project(':modules:common-web')
 	implementation project(':modules:common-security')
 

@@ -1,16 +1,13 @@
 package com.ott.transcoder.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ott.infra.mq.TranscodeConstants;
 import com.ott.transcoder.exception.fatal.FatalException;
 import com.ott.transcoder.exception.retryable.RetryableException;
-import com.ott.transcoder.queue.TranscodeMessage;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.FatalExceptionStrategy;
-import org.springframework.amqp.support.converter.DefaultClassMapper;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -21,16 +18,16 @@ import org.springframework.util.ErrorHandler;
 
 import java.util.Map;
 
-/** 
- * 비즈니스 로직에서 발생하는 예외의 성격(Fatal vs Retryable)을 판단하여, 자동으로 재시도하거나 실패 큐(DLQ)로 격리
+/**
+ * 트랜스코더 소비자 전용 RabbitMQ 설정.
+ * Queue/Binding/DLQ 선언, ListenerContainerFactory, 재시도 정책, 에러 핸들러를 관리한다.
+ * 공유 설정(Exchange/RoutingKey 상수, MessageConverter)은 infra-mq 모듈에서 제공한다.
  */
 @Configuration
 @ConditionalOnProperty(name = "transcoder.messaging.provider", havingValue = "rabbit")
-public class RabbitConfig {
+public class RabbitConsumerConfig {
 
-    public static final String EXCHANGE_NAME = "transcode.exchange";
     public static final String QUEUE_NAME = "transcode.queue";
-    public static final String ROUTING_KEY = "transcode.request";
 
     public static final String DEAD_LETTER_EXCHANGE = "transcode.dead.exchange";
     public static final String DEAD_LETTER_QUEUE = "transcode.dead.queue";
@@ -38,10 +35,10 @@ public class RabbitConfig {
 
     @Bean
     public DirectExchange transcodeExchange() {
-        return ExchangeBuilder.directExchange(EXCHANGE_NAME).durable(true).build();
+        return ExchangeBuilder.directExchange(TranscodeConstants.EXCHANGE_NAME).durable(true).build();
     }
 
-    /** 
+    /**
      * 실패(Reject) 시 자동으로 실패 수용소(DLX)로 안내
      */
     @Bean
@@ -76,8 +73,8 @@ public class RabbitConfig {
     @Bean
     public Binding transcodeBinding(Queue transcodeQueue, DirectExchange transcodeExchange) {
         return BindingBuilder.bind(transcodeQueue)
-                .to(transcodeExchange).
-                with(ROUTING_KEY);
+                .to(transcodeExchange)
+                .with(TranscodeConstants.ROUTING_KEY);
     }
 
     /** 예외를 분석하여 '재시도'할지 '즉시 포기'할지 결정 */
@@ -92,8 +89,6 @@ public class RabbitConfig {
         configurer.configure(factory, connectionFactory);
         factory.setMessageConverter(jacksonMessageConverter);
 
-        // FatalException 발생 시 재시도 없이 즉시 거절(Reject) 처리
-//        factory.setErrorHandler(new ConditionalRejectingErrorHandler(new TranscodeFatalExceptionStrategy()));
         factory.setErrorHandler(errorHandler());
 
         // 일시적 장애(Retryable) 시 3회 재시도 (1s -> 2s -> 4s)
@@ -113,19 +108,5 @@ public class RabbitConfig {
     @Bean
     public FatalExceptionStrategy fatalExceptionStrategy() {
         return new TranscodeFatalExceptionStrategy();
-    }
-
-    @Bean
-    public DefaultClassMapper classMapper() {
-        DefaultClassMapper classMapper = new DefaultClassMapper();
-        classMapper.setDefaultType(TranscodeMessage.class);
-        return classMapper;
-    }
-
-    @Bean
-    public MessageConverter jacksonMessageConverter(ObjectMapper objectMapper, DefaultClassMapper classMapper) {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
-        converter.setClassMapper(classMapper);
-        return converter;
     }
 }

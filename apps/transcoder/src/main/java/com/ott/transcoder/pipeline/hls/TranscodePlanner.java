@@ -1,6 +1,6 @@
 package com.ott.transcoder.pipeline.hls;
 
-import com.ott.domain.video_profile.domain.Resolution;
+import com.ott.transcoder.ffmpeg.Resolution;
 import com.ott.transcoder.command.TranscodeCommand;
 import com.ott.transcoder.ffmpeg.TranscodeProfile;
 import com.ott.transcoder.inspection.probe.ProbeResult;

@@ -93,6 +93,24 @@ public class S3VideoStorage implements VideoStorage {
         return destinationPrefix;
     }
 
+    @Override
+    public void putFile(Path file, String destinationKey) {
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(destinationKey)
+                            .contentType(resolveContentType(file))
+                            .build(),
+                    RequestBody.fromFile(file)
+            );
+        } catch (SdkException e) {
+            throw new StorageException(TranscodeErrorCode.STORAGE_FAILED,
+                    "S3 파일 업로드 실패 - key: " + destinationKey, e);
+        }
+        log.info("S3 파일 업로드 - s3://{}/{}", bucket, destinationKey);
+    }
+
     private String resolveContentType(Path file) {
         String fileName = file.getFileName().toString().toLowerCase();
         if (fileName.endsWith(M3U8)) {

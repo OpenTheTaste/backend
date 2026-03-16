@@ -38,4 +38,8 @@ public class IngestJob extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "ingest_status", nullable = false)
     private IngestStatus ingestStatus;
+
+    public void updateIngestStatus(IngestStatus ingestStatus) {
+        this.ingestStatus = ingestStatus;
+    }
 }

@@ -67,4 +67,17 @@ public class LocalVideoStorage implements VideoStorage {
         log.info("업로드 완료 - {} → {}", localDir, destination);
         return destination.toString();
     }
+
+    @Override
+    public void putFile(Path file, String destinationKey) {
+        Path target = Path.of(outputDir, destinationKey);
+        try {
+            Files.createDirectories(target.getParent());
+            Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new StorageException(TranscodeErrorCode.STORAGE_FAILED,
+                    "로컬 파일 업로드 실패 - " + target, e);
+        }
+        log.info("로컬 파일 업로드 - {}", target);
+    }
 }

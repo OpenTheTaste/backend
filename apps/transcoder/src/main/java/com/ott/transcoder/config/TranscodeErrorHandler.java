@@ -1,12 +1,12 @@
 package com.ott.transcoder.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
-import org.springframework.amqp.ImmediateAcknowledgeAmqpException;
 import org.springframework.amqp.rabbit.listener.FatalExceptionStrategy;
-import org.springframework.amqp.rabbit.support.ListenerExecutionFailedException;
 import org.springframework.util.ErrorHandler;
 
+@Slf4j
 @RequiredArgsConstructor
 public class TranscodeErrorHandler implements ErrorHandler {
 
@@ -14,9 +14,12 @@ public class TranscodeErrorHandler implements ErrorHandler {
 
     @Override
     public void handleError(Throwable t) {
-        if (this.fatalExceptionStrategy.isFatal(t) && t instanceof ListenerExecutionFailedException)
-            throw new ImmediateAcknowledgeAmqpException("[Fatal Error Detected]: " + t.getMessage(), t);
-//        if (t instanceof RetryableException)
-        throw new AmqpRejectAndDontRequeueException("[Retryable Error Detected]: " + t.getMessage(), t);
+        if (this.fatalExceptionStrategy.isFatal(t)) {
+            log.error("[Fatal] 재시도 불가 → DLQ 이동: {}", t.getMessage(), t);
+        } else {
+            log.warn("[Retryable] 재시도 소진 → DLQ 이동: {}", t.getMessage(), t);
+        }
+
+        throw new AmqpRejectAndDontRequeueException("메시지 처리 실패 → DLQ 이동: " + t.getMessage(), t);
     }
 }

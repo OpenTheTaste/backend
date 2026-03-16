@@ -1,4 +1,4 @@
-package com.ott.transcoder.command;
+package com.ott.domain.ingest_command.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
