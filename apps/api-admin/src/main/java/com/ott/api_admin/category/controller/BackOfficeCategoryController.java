@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/back-office/admin/categories")
+@RequestMapping("/back-office/categories")
 @RequiredArgsConstructor
 public class BackOfficeCategoryController implements BackOfficeCategoryApi {
 

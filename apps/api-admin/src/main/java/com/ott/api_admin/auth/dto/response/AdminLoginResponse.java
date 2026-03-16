@@ -21,4 +21,10 @@ public class AdminLoginResponse {
 
     @Schema(type= "String", description = "회원 역할", example = "ADMIN")
     private String role;
+
+    @Schema(type = "String", description = "이메일", example = "admin@example.com")
+    private String email;
+
+    @Schema(type = "String", description = "닉네임", example = "관리자")
+    private String nickname;
 }

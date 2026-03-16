@@ -59,6 +59,8 @@ public class AdminAuthService {
                 .refreshToken(refreshToken)
                 .memberId(member.getId())
                 .role(member.getRole().name())
+                .email(member.getEmail())
+                .nickname(member.getNickname())
                 .build();
     }
 
