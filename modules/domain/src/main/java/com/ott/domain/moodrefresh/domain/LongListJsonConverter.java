@@ -6,21 +6,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
+import java.util.Collections;
 import java.util.List;
 
 @Converter
 public class LongListJsonConverter implements AttributeConverter<List<Long>, String> {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    // 메모리 최적화
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     // 1. Java List -> DB JSON String 저장할 때
     @Override
     public String convertToDatabaseColumn(List<Long> attribute) {
         // null 입력 시 DB에도 실제 null로 저장되도록 처리
-        if (attribute == null) {
+        if (attribute == null || attribute.isEmpty()) {
             return null;
         }
-
         try {
             return mapper.writeValueAsString(attribute);
         } catch (JsonProcessingException e) {
@@ -32,8 +33,8 @@ public class LongListJsonConverter implements AttributeConverter<List<Long>, Str
     @Override
     public List<Long> convertToEntityAttribute(String dbData) {
         try {
-            if (dbData == null || dbData.isEmpty()) {
-                return null;
+            if (dbData == null || dbData.trim().isEmpty()) {
+                return Collections.emptyList();
             }
             return mapper.readValue(dbData, new TypeReference<List<Long>>() {});
         } catch (JsonProcessingException e) {
