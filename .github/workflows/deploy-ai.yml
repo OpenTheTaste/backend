@@ -209,6 +209,7 @@ jobs:
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy ${CONTAINER_NAME}:${IMAGE_TAG}" \
+            --timeout-seconds 7200 \
             --parameters "file://${PARAMS_FILE}" \
             --query 'Command.CommandId' \
             --output text)
@@ -217,7 +218,7 @@ jobs:
 
           echo "[${CONTAINER_NAME}] command id: ${COMMAND_ID} (instance: ${INSTANCE_ID})"
 
-          for _ in $(seq 1 120); do
+          for _ in $(seq 1 720); do
             STATUS=$(aws ssm get-command-invocation \
               --region "$AWS_REGION" \
               --command-id "$COMMAND_ID" \
@@ -236,11 +237,11 @@ jobs:
                 exit 1
                 ;;
               Pending|InProgress|Delayed|"")
-                sleep 5
+                sleep 10
                 ;;
               *)
                 echo "[${CONTAINER_NAME}] unexpected status: ${STATUS}" >&2
-                sleep 5
+                sleep 10
                 ;;
             esac
           done
