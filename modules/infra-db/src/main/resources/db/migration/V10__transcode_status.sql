@@ -17,7 +17,7 @@ SET SQL_SAFE_UPDATES = 0;
 
 -- 안전하게 데이터 업데이트
 UPDATE ingest_job
-    SET ingest_status = 'PENDING';
+    SET ingest_status = 'COMPLETED';
 
 SET SQL_SAFE_UPDATES = 1;
 
