@@ -17,7 +17,7 @@ public class BackOfficeContentsMapper {
     public ContentsListResponse toContentsListResponse(Media media) {
         return new ContentsListResponse(
                 media.getId(),
-                media.getPosterUrl(),
+                media.getThumbnailUrl(),
                 media.getTitle(),
                 media.getPublicStatus(),
                 media.getCreatedDate().toLocalDate()
