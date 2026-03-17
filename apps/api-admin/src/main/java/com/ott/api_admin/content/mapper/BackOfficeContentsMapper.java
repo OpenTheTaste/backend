@@ -24,7 +24,7 @@ public class BackOfficeContentsMapper {
         );
     }
 
-    public ContentsDetailResponse toContentsDetailResponse(Long seriesId, Contents contents, Media media, String uploaderNickname, String seriesTitle, List<MediaTag> mediaTagList) {
+    public ContentsDetailResponse toContentsDetailResponse(Long seriesId, Contents contents, Media media, String uploaderNickname, String seriesTitle, List<MediaTag> mediaTagList, Long bookmarkCount) {
         String categoryName = extractCategoryName(mediaTagList);
         List<String> tagNameList = extractTagNameList(mediaTagList);
 
@@ -43,7 +43,7 @@ public class BackOfficeContentsMapper {
                 categoryName,
                 tagNameList,
                 media.getPublicStatus(),
-                media.getBookmarkCount(),
+                bookmarkCount,
                 media.getCreatedDate().toLocalDate()
         );
     }
