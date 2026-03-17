@@ -19,7 +19,7 @@ public class RabbitTranscodeListener implements MessageListener {
     private final JobOrchestrator jobOrchestrator;
 
     @Override
-    @RabbitListener(queues = RabbitConsumerConfig.QUEUE_NAME)
+    @RabbitListener(id = RabbitConsumerConfig.LISTENER_ID, queues = RabbitConsumerConfig.QUEUE_NAME)
     public void listen(TranscodeMessage message) {
         log.info("작업 요청 수신 - mediaId: {}, originUrl: {}", message.mediaId(), message.originUrl());
 

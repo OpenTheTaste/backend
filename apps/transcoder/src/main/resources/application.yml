@@ -35,6 +35,9 @@ spring:
 transcoder:
   messaging:
     provider: ${TRANSCODER_MESSAGING_PROVIDER}
+    rabbit:
+      idle-exit-enabled: ${TRANSCODER_RABBIT_IDLE_EXIT_ENABLED:false}
+      idle-exit-seconds: ${TRANSCODER_RABBIT_IDLE_EXIT_SECONDS:60}
   ffmpeg:
     engine: ${TRANSCODER_FFMPEG_ENGINE}
     path: ${FFMPEG_PATH}
