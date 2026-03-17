@@ -19,15 +19,15 @@ public class BookmarkShortFormResponse {
     @Schema(type ="String", description = "미디어 설명", example = "오늘은 북마크 API를 작성했다. 참 재미있었다!")
     private String description;
 
-    @Schema(type ="String", description = "썸네일 URL", example = "https://cdn.ott.com/thumbnails/1.jpg")
-    private String thumbnailUrl;
+    @Schema(type ="String", description = "포스터 URL", example = "https://cdn.ott.com/posters/1.jpg")
+    private String posterUrl;
 
     public static BookmarkShortFormResponse from(Bookmark bookmark) {
         return BookmarkShortFormResponse.builder()
                 .mediaId(bookmark.getMedia().getId())
                 .title(bookmark.getMedia().getTitle())
                 .description(bookmark.getMedia().getDescription())
-                .thumbnailUrl(bookmark.getMedia().getThumbnailUrl())
+                .posterUrl(bookmark.getMedia().getPosterUrl())
                 .build();
     }
 }
