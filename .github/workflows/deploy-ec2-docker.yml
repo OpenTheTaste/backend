@@ -89,6 +89,11 @@ jobs:
           SSM_DB_USERNAME_PARAM: /oplust/common/db-username
           SSM_DB_PASSWORD_PARAM: /oplust/common/db-password
           NODE_EXPORTER_TARGET_SSM_PARAM: /oplust/monitoring/targets/node-exporter
+          ECS_CLUSTER_NAME: fluffy-flamingo-5ag1uq
+          ECS_SERVICE_NAME: oplust-transcoder-service
+          TRANSCODER_REPOSITORY: oplust-transcoder
+          TRANSCODER_CONTAINER_NAME: oplust-transcoder
+          SCALER_LAMBDA_NAME: oplust-transcoder-scaler
         run: |
           set -euo pipefail
 
@@ -253,6 +258,217 @@ jobs:
             exit 1
           }
 
+          deploy_transcoder_ecs() {
+            local image_digest
+            image_digest=$(aws ecr describe-images \
+              --region "$AWS_REGION" \
+              --repository-name "$TRANSCODER_REPOSITORY" \
+              --image-ids imageTag="$IMAGE_TAG" \
+              --query 'imageDetails[0].imageDigest' \
+              --output text)
+
+            if [ -z "$image_digest" ] || [ "$image_digest" = "None" ]; then
+              echo "Failed to resolve image digest for ${TRANSCODER_REPOSITORY}:${IMAGE_TAG}" >&2
+              exit 1
+            fi
+
+            local immutable_image_uri
+            immutable_image_uri="${ECR_REGISTRY}/${TRANSCODER_REPOSITORY}@${image_digest}"
+            echo "[transcoder] deploying immutable image: ${immutable_image_uri}"
+
+            local current_task_def_arn
+            current_task_def_arn=$(aws ecs describe-services \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --services "$ECS_SERVICE_NAME" \
+              --query 'services[0].taskDefinition' \
+              --output text)
+
+            if [ -z "$current_task_def_arn" ] || [ "$current_task_def_arn" = "None" ]; then
+              echo "Could not resolve current task definition for service ${ECS_SERVICE_NAME}" >&2
+              exit 1
+            fi
+
+            local td_file
+            local new_td_file
+            td_file=$(mktemp)
+            new_td_file=$(mktemp)
+
+            aws ecs describe-task-definition \
+              --region "$AWS_REGION" \
+              --task-definition "$current_task_def_arn" \
+              --query 'taskDefinition' \
+              --output json > "$td_file"
+
+            local matched_container_count
+            matched_container_count=$(jq --arg CONTAINER "$TRANSCODER_CONTAINER_NAME" \
+              '[.containerDefinitions[] | select(.name == $CONTAINER)] | length' "$td_file")
+
+            if [ "$matched_container_count" -ne 1 ]; then
+              echo "Expected exactly one container named '${TRANSCODER_CONTAINER_NAME}', found: ${matched_container_count}" >&2
+              echo "Available container names:" >&2
+              jq -r '.containerDefinitions[].name' "$td_file" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            jq --arg IMAGE "$immutable_image_uri" --arg CONTAINER "$TRANSCODER_CONTAINER_NAME" '
+              del(
+                .taskDefinitionArn,
+                .revision,
+                .status,
+                .requiresAttributes,
+                .compatibilities,
+                .registeredAt,
+                .registeredBy,
+                .deregisteredAt
+              )
+              | .containerDefinitions |= map(
+                  if .name == $CONTAINER then .image = $IMAGE else . end
+                )
+            ' "$td_file" > "$new_td_file"
+
+            local rendered_image
+            rendered_image=$(jq -r --arg CONTAINER "$TRANSCODER_CONTAINER_NAME" \
+              '.containerDefinitions[] | select(.name == $CONTAINER) | .image' "$new_td_file")
+
+            if [ "$rendered_image" != "$immutable_image_uri" ]; then
+              echo "Task definition rendering failed. Expected image '${immutable_image_uri}', got '${rendered_image}'" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            local new_task_def_arn
+            new_task_def_arn=$(aws ecs register-task-definition \
+              --region "$AWS_REGION" \
+              --cli-input-json "file://${new_td_file}" \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+
+            if [ -z "$new_task_def_arn" ] || [ "$new_task_def_arn" = "None" ]; then
+              echo "Failed to register new transcoder task definition" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            local new_task_def_name
+            new_task_def_name=$(echo "$new_task_def_arn" | awk -F'/' '{print $2}')
+            echo "[transcoder] new task definition: ${new_task_def_name}"
+
+            aws ecs update-service \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --service "$ECS_SERVICE_NAME" \
+              --task-definition "$new_task_def_arn" \
+              --force-new-deployment >/dev/null
+
+            local service_desired_count
+            service_desired_count=$(aws ecs describe-services \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --services "$ECS_SERVICE_NAME" \
+              --query 'services[0].desiredCount' \
+              --output text)
+
+            if [ "${service_desired_count:-0}" -gt 0 ]; then
+              if ! aws ecs wait services-stable \
+                --region "$AWS_REGION" \
+                --cluster "$ECS_CLUSTER_NAME" \
+                --services "$ECS_SERVICE_NAME"; then
+                echo "[transcoder] service did not become stable after deployment" >&2
+                aws ecs describe-services \
+                  --region "$AWS_REGION" \
+                  --cluster "$ECS_CLUSTER_NAME" \
+                  --services "$ECS_SERVICE_NAME" \
+                  --query 'services[0].events[0:10].[createdAt,message]' \
+                  --output table || true
+                rm -f "$td_file" "$new_td_file"
+                exit 1
+              fi
+            fi
+
+            local applied_task_def_arn
+            applied_task_def_arn=$(aws ecs describe-services \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --services "$ECS_SERVICE_NAME" \
+              --query 'services[0].taskDefinition' \
+              --output text)
+
+            if [ "$applied_task_def_arn" != "$new_task_def_arn" ]; then
+              echo "[transcoder] service task definition mismatch. expected '${new_task_def_arn}', got '${applied_task_def_arn}'" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            local current_lambda_vars
+            local lambda_config_json
+            if ! lambda_config_json=$(aws lambda get-function-configuration \
+              --region "$AWS_REGION" \
+              --function-name "$SCALER_LAMBDA_NAME" \
+              --output json); then
+              echo "[transcoder] failed to read scaler lambda configuration: ${SCALER_LAMBDA_NAME}" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+            current_lambda_vars=$(echo "$lambda_config_json" | jq -c '.Environment.Variables // {}')
+
+            local merged_lambda_vars
+            merged_lambda_vars=$(echo "$current_lambda_vars" | jq --arg TD "$new_task_def_name" '. + {ECS_TASK_DEFINITION: $TD}')
+
+            aws lambda update-function-configuration \
+              --region "$AWS_REGION" \
+              --function-name "$SCALER_LAMBDA_NAME" \
+              --environment "{\"Variables\":$(echo "$merged_lambda_vars" | jq -c .)}" >/dev/null
+
+            local lambda_update_status
+            lambda_update_status=""
+            for _ in $(seq 1 60); do
+              lambda_update_status=$(aws lambda get-function-configuration \
+                --region "$AWS_REGION" \
+                --function-name "$SCALER_LAMBDA_NAME" \
+                --query 'LastUpdateStatus' \
+                --output text 2>/dev/null || true)
+
+              case "$lambda_update_status" in
+                Successful)
+                  break
+                  ;;
+                Failed)
+                  echo "[transcoder] scaler lambda update failed" >&2
+                  aws lambda get-function-configuration \
+                    --region "$AWS_REGION" \
+                    --function-name "$SCALER_LAMBDA_NAME" \
+                    --query '{LastUpdateStatus:LastUpdateStatus,LastUpdateStatusReason:LastUpdateStatusReason}' \
+                    --output json || true
+                  rm -f "$td_file" "$new_td_file"
+                  exit 1
+                  ;;
+                InProgress|"")
+                  sleep 2
+                  ;;
+                *)
+                  sleep 2
+                  ;;
+              esac
+            done
+
+            if [ "$lambda_update_status" != "Successful" ]; then
+              echo "[transcoder] scaler lambda update did not reach Successful state (last status: ${lambda_update_status:-unknown})" >&2
+              aws lambda get-function-configuration \
+                --region "$AWS_REGION" \
+                --function-name "$SCALER_LAMBDA_NAME" \
+                --query '{LastUpdateStatus:LastUpdateStatus,LastUpdateStatusReason:LastUpdateStatusReason}' \
+                --output json || true
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            echo "[transcoder] updated scaler lambda ${SCALER_LAMBDA_NAME} ECS_TASK_DEFINITION=${new_task_def_name}"
+
+            rm -f "$td_file" "$new_td_file"
+          }
+
           deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/api-user/env" "user-api"
           deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/api-admin/env" "admin-api"
-          deploy_service "${PROJECT_NAME}-worker-ec2" "${ECR_REGISTRY}/oplust-transcoder:${IMAGE_TAG}" "oplust-transcoder" "/etc/oplust/transcoder.env" "8082" "/oplust/transcoder/env" "transcoder"
+          deploy_transcoder_ecs
