@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS transcode_outbox
 (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY       NOT NULL,
+    id            BIGINT AUTO_INCREMENT                   NOT NULL,
 
     -- 메시지 페이로드
     media_id      BIGINT                                  NOT NULL,

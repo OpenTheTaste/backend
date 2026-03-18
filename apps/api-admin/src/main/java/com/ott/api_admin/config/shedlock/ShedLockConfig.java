@@ -14,10 +14,10 @@ import javax.sql.DataSource;
 public class ShedLockConfig {
 
     @Bean
-    public LockProvider lockProvider(DataSource dataSource) {
+    public LockProvider lockProvider(JdbcTemplate jdbcTemplate) {
         return new JdbcTemplateLockProvider(
             JdbcTemplateLockProvider.Configuration.builder()
-                .withJdbcTemplate(new JdbcTemplate(dataSource))
+                    .withJdbcTemplate(jdbcTemplate)
                 .usingDbTime() // DB 시간을 기준으로 락 시간 계산
                 .build()
         );
