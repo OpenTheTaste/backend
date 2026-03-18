@@ -36,6 +36,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+// 사용자에게 특정 태그에 기반한 추천 콘텐츠를 제공하거나
+// 사용자의 최근 시청 기록(이어보기 목록)을 페이징 처리하여 반환하는 기본적인 플레이리스트 검증
 @ExtendWith(MockitoExtension.class)
 class PlaylistServiceTest {
 
@@ -57,6 +59,7 @@ class PlaylistServiceTest {
     @InjectMocks
     private PlaylistService playlistService;
 
+    // 태그 기반 추천 콘텐츠 조회
     @Test
     void getRecommendContentsByTag_returnsMappedResponses() {
         Long memberId = 1L;
@@ -87,6 +90,8 @@ class PlaylistServiceTest {
         assertThat(result.get(0).getMediaType()).isEqualTo(MediaType.CONTENTS);
     }
 
+    // 존재하지 않는 회원 예외 처리
+    // 잘못된 회원 ID 로 요청이 들어온 경우, USER_NOT_FOUND 라는 비즈니스 예외를 정상적으로 발생시키는지 검증
     @Test
     void getRecommendContentsByTag_throwsWhenMemberMissing() {
         Long memberId = 5L;
@@ -99,6 +104,9 @@ class PlaylistServiceTest {
         verify(tagRepository, never()).findById(any());
     }
 
+    // 시청 기록 재생 목록 조회
+    // 사용자의 최근 시청 기록을 페이지네이션 객체에 맞게 가져오는지 확인
+    // 현재 페이지, 총 페이지수, 그리고 각 영상의 시청 길이 등의 데이터가 응답 객체에 올바르게 매핑되는지
     @Test
     void getWatchHistoryPlaylist_returnsPageResponse() {
         Long memberId = 3L;
@@ -125,7 +133,7 @@ class PlaylistServiceTest {
         var response = playlistService.getWatchHistoryPlaylist(memberId, page);
 
         assertThat(response.getPageInfo().getCurrentPage()).isEqualTo(page);
-        assertThat(response.getPageInfo().getTotalPage()).isEqualTo(1);
+        assertThat(response.getPageInfo().getTotalPage()).isEqualTo(watchHistoryPage.getTotalPages());
         assertThat(response.getDataList()).hasSize(2);
         assertThat(response.getDataList().get(0).getMediaId()).isEqualTo(11L);
         assertThat(response.getDataList().get(1).getDuration()).isEqualTo(360);

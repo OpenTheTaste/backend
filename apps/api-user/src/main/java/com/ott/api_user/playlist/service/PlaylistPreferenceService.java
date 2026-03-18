@@ -1,5 +1,6 @@
 package com.ott.api_user.playlist.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -73,14 +74,14 @@ public class PlaylistPreferenceService {
 
         // [Fallback 처리] 정보가 아예 없는 신규 유저라면? -> 시스템 전체 태그 중 무작위 3개를 던져줌
         if (topTagIds.isEmpty()) {
-            List<Tag> allTags = tagRepository.findAll();
+            List<Tag> allTags = new ArrayList<>(tagRepository.findAll());
             Collections.shuffle(allTags);
             return allTags.stream().limit(3).collect(Collectors.toList());
         }
         
         // 최종적으로 추출된 3개의 ID로 실제 Tag 엔티티들을 DB에서 가져와 반환
         // findAllById (In 절은 순서 보장 x 한번 더 TopTagIds 의 인덱스 순서에 맞게 정렬해주어야함)
-        List<Tag> tags = tagRepository.findAllById(topTagIds);
+        List<Tag> tags = new ArrayList<>(tagRepository.findAllById(topTagIds));
         tags.sort(Comparator.comparing(tag -> topTagIds.indexOf(tag.getId())));
 
         return tags;

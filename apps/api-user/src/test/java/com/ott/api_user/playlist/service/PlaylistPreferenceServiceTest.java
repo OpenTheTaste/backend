@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
+
+// 사용자의 시청기록, 좋아요, 관심 태그 설정 등을 종합하여
+// 개인화된 태그 선호도를 분석하고 점수를 매기는 로직 검증
+
 @ExtendWith(MockitoExtension.class)
 class PlaylistPreferenceServiceTest {
 
@@ -45,7 +50,8 @@ class PlaylistPreferenceServiceTest {
 
     @InjectMocks
     private PlaylistPreferenceService playlistPreferenceService;
-
+    
+    // 선호도 및 시청 기록 기반 상위 태그 추출
     @Test
     void getTopTags_combinesPreferredAndPlaybackScores() {
         Long memberId = 10L;
@@ -72,13 +78,14 @@ class PlaylistPreferenceServiceTest {
         verify(tagRepository, never()).findAll();
     }
 
+    //기록이 없는 신규 유저 처리
     @Test
     void getTopTags_withNoHistoryReturnsFallbackTags() {
         Long memberId = 99L;
         when(preferredTagRepository.findTagIdsByMemberId(memberId, Status.ACTIVE)).thenReturn(List.of());
-        when(playbackRepository.findRecentPlayedMediaIds(eq(memberId), eq(Status.ACTIVE), any(Pageable.class)))
+        lenient().when(playbackRepository.findRecentPlayedMediaIds(eq(memberId), eq(Status.ACTIVE), any(Pageable.class)))
                 .thenReturn(List.of());
-        when(likesRepository.findRecentLikedMediaIds(eq(memberId), eq(Status.ACTIVE), any(Pageable.class)))
+        lenient().when(likesRepository.findRecentLikedMediaIds(eq(memberId), eq(Status.ACTIVE), any(Pageable.class)))
                 .thenReturn(List.of());
 
         Tag fallbackTag1 = Tag.builder().id(11L)
@@ -99,15 +106,18 @@ class PlaylistPreferenceServiceTest {
                 .build();
 
         List<Tag> availableTags = List.of(fallbackTag1, fallbackTag2, fallbackTag3, fallbackTag4);
-        when(tagRepository.findAll()).thenReturn(availableTags);
+        lenient().when(tagRepository.findAll()).thenReturn(availableTags);
 
         List<Tag> result = playlistPreferenceService.getTopTags(memberId);
 
         assertThat(result).hasSize(3);
         assertThat(availableTags).containsAll(result);
         verify(tagRepository, never()).findAllById(anyList());
+        verify(tagRepository).findAll();
     }
 
+    // 태그 점수 누적 합산 로직 
+    // 관심 태그 + 시청 기록 + 좋아요 기록: 세 가지 요소를 종합하여 각 태그별로 최종 가중치가 정확하게 합산되는지 검증
     @Test
     void getTotalTagScores_accumulatesPreferencesPlaybackAndLikes() {
         Long memberId = 2L;
