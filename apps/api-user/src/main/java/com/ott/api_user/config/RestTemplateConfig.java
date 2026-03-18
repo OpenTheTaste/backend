@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class RestTemplateConfig {
 
     private static final int CONNECT_TIMEOUT_MS = 3_000;   // 연결 타임아웃 3초
-    private static final int READ_TIMEOUT_MS    = 5_000;   // 읽기 타임아웃 5초
+    private static final int READ_TIMEOUT_MS    = 15_000;   // 읽기 타임아웃 5초
 
     @Bean
     public RestTemplate restTemplate() {
