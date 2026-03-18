@@ -23,6 +23,8 @@ import com.ott.domain.member.domain.Role;
 import com.ott.domain.ingest_job.domain.IngestJob;
 import com.ott.domain.ingest_job.domain.IngestStatus;
 import com.ott.domain.ingest_job.repository.IngestJobRepository;
+import com.ott.domain.outbox.domain.TranscodeOutbox;
+import com.ott.domain.outbox.repository.TranscodeOutboxRepository;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.domain.short_form.domain.ShortForm;
@@ -47,6 +49,7 @@ public class BackOfficeShortFormWriter {
     private final ContentsRepository contentsRepository;
     private final ShortFormRepository shortFormRepository;
     private final IngestJobRepository ingestJobRepository;
+    private final TranscodeOutboxRepository transcodeOutboxRepository;
     private final UploadHelper uploadHelper;
 
     @Transactional
@@ -196,7 +199,7 @@ public class BackOfficeShortFormWriter {
     }
 
     @Transactional
-    public IngestJobResult createIngestJob(Long shortFormId, String originObjectKey) {
+    public IngestJobResult createIngestJobWithOutbox(Long shortFormId, String originObjectKey) {
         ShortForm shortForm = shortFormRepository.findById(shortFormId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
         Media media = shortForm.getMedia();
@@ -205,14 +208,25 @@ public class BackOfficeShortFormWriter {
             throw new BusinessException(ErrorCode.ALREADY_INGESTED);
         }
 
+        // 1. IngestJob 저장
         IngestJob ingestJob = ingestJobRepository.save(
                 IngestJob.builder()
                         .media(media)
                         .ingestStatus(IngestStatus.PENDING)
                         .build());
 
-        log.info("IngestJob 생성 - shortFormId: {}, mediaId: {}, ingestJobId: {}",
-                shortFormId, media.getId(), ingestJob.getId());
+        // 2. Outbox 저장
+        TranscodeOutbox outbox = TranscodeOutbox.builder()
+                .mediaId(media.getId())
+                .ingestJobId(ingestJob.getId())
+                .originUrl(originObjectKey)
+                .fileSize((long) shortForm.getVideoSize() * 1024)
+                .mediaType(MediaType.SHORT_FORM)
+                .build();
+        transcodeOutboxRepository.save(outbox);
+
+        log.info("IngestJob + Outbox 생성 - shortFormId: {}, mediaId: {}, ingestJobId: {}, outboxId: {}",
+                shortFormId, media.getId(), ingestJob.getId(), outbox.getId());
 
         return new IngestJobResult(
                 media.getId(),
