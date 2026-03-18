@@ -25,11 +25,11 @@ public class ClickEventService {
     private final MemberRepository memberRepository;
     private final ShortFormRepository shortFormRepository;
 
-    public void saveClickEvent(Long memberId, Long shortFormId, ClickType clickType){
+    public void saveClickEvent(Long memberId, Long mediaId, ClickType clickType){
         Member member = memberRepository.findById(memberId)
             .orElseThrow(()-> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        ShortForm shortForm = shortFormRepository.findById(shortFormId)
+        ShortForm shortForm = shortFormRepository.findByMediaId(mediaId)
             .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
 
         

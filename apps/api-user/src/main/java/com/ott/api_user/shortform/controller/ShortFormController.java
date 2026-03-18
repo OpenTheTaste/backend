@@ -44,7 +44,7 @@ public class ShortFormController implements ShortFormApi {
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody ShortFormEventRequest request) {
 
-        clickEventService.saveClickEvent(memberId, request.getShortFormId(), ClickType.SHORT_CLICK);
+        clickEventService.saveClickEvent(memberId, request.getMediaId(), ClickType.SHORT_CLICK);
         return ResponseEntity.noContent().build();
     }
 
@@ -54,7 +54,7 @@ public class ShortFormController implements ShortFormApi {
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody ShortFormEventRequest request) {
 
-        clickEventService.saveClickEvent(memberId, request.getShortFormId(), ClickType.CTA_CLICK);
+        clickEventService.saveClickEvent(memberId, request.getMediaId(), ClickType.CTA_CLICK);
         return ResponseEntity.noContent().build();
     }
 }
