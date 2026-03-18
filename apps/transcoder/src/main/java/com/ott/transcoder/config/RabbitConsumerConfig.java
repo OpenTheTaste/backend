@@ -9,7 +9,6 @@ import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFacto
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.FatalExceptionStrategy;
 import org.springframework.amqp.support.converter.MessageConverter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -84,14 +83,12 @@ public class RabbitConsumerConfig {
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             SimpleRabbitListenerContainerFactoryConfigurer configurer,
             ConnectionFactory connectionFactory,
-            MessageConverter jacksonMessageConverter,
-            @Value("${transcoder.messaging.rabbit.idle-exit-seconds:60}") long idleExitSeconds
+            MessageConverter jacksonMessageConverter
     ) {
 
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         configurer.configure(factory, connectionFactory);
         factory.setMessageConverter(jacksonMessageConverter);
-        factory.setIdleEventInterval(Math.max(1L, idleExitSeconds) * 1000L);
 
         factory.setErrorHandler(errorHandler());
 

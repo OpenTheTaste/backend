@@ -35,9 +35,11 @@ spring:
 transcoder:
   messaging:
     provider: ${TRANSCODER_MESSAGING_PROVIDER}
-    rabbit:
-      idle-exit-enabled: ${TRANSCODER_RABBIT_IDLE_EXIT_ENABLED:false}
-      idle-exit-seconds: ${TRANSCODER_RABBIT_IDLE_EXIT_SECONDS:60}
+  worker:
+    scale-in-protection:
+      enabled: ${TRANSCODER_ASG_PROTECTION_ENABLED:false}
+      asg-name: ${TRANSCODER_ASG_NAME:}
+      instance-id: ${TRANSCODER_INSTANCE_ID:}
   ffmpeg:
     engine: ${TRANSCODER_FFMPEG_ENGINE}
     path: ${FFMPEG_PATH}
