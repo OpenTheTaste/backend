@@ -8,6 +8,7 @@ import com.ott.domain.outbox.repository.TranscodeOutboxRepository;
 import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -24,11 +25,17 @@ public class OutboxPoller {
 
     /**
      * 10초마다 PENDING 상태의 Outbox 메시지를 폴링하여 발행한다.
+     * ShedLock을 사용하여 다중 서버 환경에서 단 한 대만 실행되도록 보장한다.
      *
      * - 발행 성공 → PUBLISHED
      * - 발행 실패 → retryCount++ (maxRetries 초과 시 FAILED)
      */
     @Scheduled(fixedDelay = 10000)
+    @SchedulerLock(
+            name = "OutboxPoller_pollAndPublish",
+            lockAtMostFor = "5m",
+            lockAtLeastFor = "5s"
+    )
     public void pollAndPublish() {
         List<TranscodeOutbox> pendingList =
                 outboxRepository.findTop50ByOutboxStatusOrderByCreatedDateAsc(OutboxStatus.PENDING);
