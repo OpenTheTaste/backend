@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.Objects;
 
@@ -29,6 +30,7 @@ import java.util.Objects;
 @Builder
 @Getter
 @Table(name = "media")
+@SQLRestriction("media_status = 'COMPLETED'")
 public class Media extends BaseEntity {
 
     @Id
