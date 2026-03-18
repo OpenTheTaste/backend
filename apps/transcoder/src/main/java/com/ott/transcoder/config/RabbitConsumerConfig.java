@@ -91,6 +91,7 @@ public class RabbitConsumerConfig {
         factory.setMessageConverter(jacksonMessageConverter);
 
         factory.setErrorHandler(errorHandler());
+        factory.setPrefetchCount(1);
 
         // 일시적 장애(Retryable) 시 3회 재시도 (1s -> 2s -> 4s)
         factory.setAdviceChain(RetryInterceptorBuilder.stateless()
