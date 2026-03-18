@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +25,15 @@ import lombok.NoArgsConstructor;
 @Entity
 @Builder
 @Getter
-@Table(name = "ingest_command")
+@Table(
+    name = "ingest_command",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_ingest_command_job_key",
+            columnNames = {"ingest_job_id", "command_key"}
+        )
+    }
+)
 public class IngestCommand extends BaseEntity {
 
     @Id

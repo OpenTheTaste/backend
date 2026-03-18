@@ -38,7 +38,10 @@ public class IngestJobStatusManager {
     /** CP-3: 메시지 컨슘 → 작업 시작 */
     @Transactional
     public boolean startProcessing(Long ingestJobId) {
-        IngestJob ingestJob = findIngestJob(ingestJobId);
+        // 비관적 락
+        IngestJob ingestJob = ingestJobRepository.findByIdForUpdate(ingestJobId)
+                .orElseThrow(() -> new BusinessException(INGEST_JOB_NOT_FOUND));
+
         if (ingestJob.getIngestStatus().equals(IngestStatus.FAILED) || ingestJob.getIngestStatus().equals(IngestStatus.SUCCESS)) {
             return false;
         }
@@ -69,7 +72,6 @@ public class IngestJobStatusManager {
     @Transactional
     public void completeTranscodeCommand(Long ingestJobId, Command command, String outputUrl) {
         // 1. IngestCommand: PENDING → COMPLETED + outputUrl
-        // TODO: IngestJobId & CommandKey Unique Key 도입 필요
         completeCommandInternal(ingestJobId, command, outputUrl);
 
         // 2. 최초 트랜스코딩 성공 → 미디어 활성화
