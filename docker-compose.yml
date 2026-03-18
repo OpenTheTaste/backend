@@ -51,6 +51,7 @@ services:
       CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64}
       AI_BASE_URL: ${AI_BASE_URL}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      JDK_JAVA_OPTIONS: "-Djava.net.preferIPv4Stack=true"
     depends_on:
       mysql:
         condition: service_healthy
