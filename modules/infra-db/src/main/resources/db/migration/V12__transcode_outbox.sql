@@ -24,7 +24,20 @@ CREATE TABLE IF NOT EXISTS transcode_outbox
     CONSTRAINT pk_transcode_outbox PRIMARY KEY (id)
 ) engine = InnoDB;
 
+CREATE TABLE IF NOT EXISTS shedlock
+(
+    name       VARCHAR(64)  NOT NULL,
+    lock_until TIMESTAMP(3) NOT NULL,
+    locked_at  TIMESTAMP(3) NOT NULL,
+    locked_by  VARCHAR(255) NOT NULL,
+    CONSTRAINT pk_shedlock PRIMARY KEY (name)
+);
+
+
 ALTER TABLE transcode_outbox
     ADD CONSTRAINT fk_transcode_outbox_to_ingest_job
         FOREIGN KEY (ingest_job_id)
             REFERENCES ingest_job (id);
+
+CREATE INDEX idx_outbox_status_created_date
+    ON transcode_outbox (outbox_status, created_date);

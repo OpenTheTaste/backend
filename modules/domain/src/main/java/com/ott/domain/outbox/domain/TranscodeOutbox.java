@@ -9,7 +9,13 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Getter
-@Table(name = "transcode_outbox")
+@Table(
+    name = "transcode_outbox",
+    indexes = {
+        @Index(name = "idx_outbox_status_created_date",
+                columnList = "outbox_status, created_date")
+    }
+)
 public class TranscodeOutbox extends BaseEntity {
 
     @Id
