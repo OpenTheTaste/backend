@@ -179,6 +179,7 @@ public class MoodRefreshService {
 
         // 태그가 누락된 영상이 하나라도 있다면 환기 불가로 간주
         if (primaryTags.size() < mediaIds.size()) {
+            log.info("[Mood Refresh]: 해당 영상에는 태그가 없어 누락으로 간주합니다.");
             return null;
         }
 
@@ -187,6 +188,8 @@ public class MoodRefreshService {
                 .map(tag -> tag.getMoodTag().getMoodCategory().getId()) // 카테고리 ID 추출
                 .distinct() // 중복 제거
                 .toList();
+
+        log.info("🚨 [Mood Refresh Debug] 미디어 IDs: {}, 추출된 카테고리 IDs: {}", mediaIds, distinctCategoryIds);
 
         // 1개면 모두 같은 감정 그룹! 해당 카테고리 ID를 반환
         if (distinctCategoryIds.size() == 1) {
