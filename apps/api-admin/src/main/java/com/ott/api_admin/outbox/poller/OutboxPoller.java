@@ -57,8 +57,8 @@ public class OutboxPoller {
             } catch (Exception e) {
                 outboxWriter.markAsFailed(transcodeOutbox.getId(), e.getMessage());
 
-                log.warn("Outbox 발행 실패 - outboxId: {}, retryCount: {}/{}, error: {}",
-                        transcodeOutbox.getId(), transcodeOutbox.getRetryCount(), transcodeOutbox.getMaxRetries(), e.getMessage());
+                log.warn("Outbox 발행 실패 - outboxId: {}, error: {}",
+                        transcodeOutbox.getId(), e.getMessage());
             }
         }
     }

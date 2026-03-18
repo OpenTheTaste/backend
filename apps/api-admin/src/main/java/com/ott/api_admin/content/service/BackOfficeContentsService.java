@@ -12,7 +12,6 @@ import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.common.PublicStatus;
-import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
