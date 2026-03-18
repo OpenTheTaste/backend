@@ -44,7 +44,8 @@ public interface WatchHistoryRepository extends JpaRepository<WatchHistory, Long
                 last_watched_at = VALUES(last_watched_at),
                 re_watch_count = re_watch_count + 1,
                 modified_date = VALUES(modified_date),
-                status = 'ACTIVE'
+                status = 'ACTIVE',
+                is_used_for_ml = 0;
             """, nativeQuery = true)
     void upsertWatchHistory(
         @Param("memberId") Long memberId,
