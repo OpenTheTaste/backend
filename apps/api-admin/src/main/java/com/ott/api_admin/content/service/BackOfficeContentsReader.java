@@ -66,6 +66,7 @@ public class BackOfficeContentsReader {
 
         Media media = contents.getMedia();
         String uploaderNickname = media.getUploader().getNickname();
+        Long bookmarkCount = media.getBookmarkCount();
 
         Long originMediaId = mediaId;
         String seriesTitle = null;
@@ -75,11 +76,12 @@ public class BackOfficeContentsReader {
             originMediaId = originMedia.getId();
             seriesTitle = originMedia.getTitle();
             seriesId = contents.getSeries().getId();
+            bookmarkCount = originMedia.getBookmarkCount();
         }
 
         List<MediaTag> mediaTagList = mediaTagRepository.findWithTagAndCategoryByMediaId(originMediaId);
 
-        return backOfficeContentsMapper.toContentsDetailResponse(seriesId, contents, media, uploaderNickname, seriesTitle, mediaTagList);
+        return backOfficeContentsMapper.toContentsDetailResponse(seriesId, contents, media, uploaderNickname, seriesTitle, mediaTagList, bookmarkCount);
     }
 
     @Transactional(readOnly = true)
