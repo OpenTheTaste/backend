@@ -74,17 +74,7 @@ public class BackOfficeContentsService {
         // Phase 3: IngestJob 생성 (쓰기 트랜잭션)
         IngestJobResult result = writer.createIngestJobWithOutbox(contentsId, objectKey);
 
-        // Phase 4: 메시지 발행 (트랜잭션 밖)
-        transcodePublisher.publish(new TranscodeMessage(
-                result.mediaId(),
-                result.ingestJobId(),
-                result.originObjectKey(), 
-                result.fileSize(),
-                result.mediaType()
-                )
-        );
-
-        log.info("업로드 완료 + 트랜스코딩 요청 - contentsId: {}, mediaId: {}, ingestJobId: {}",
+        log.info("outbox 저장 완료 - contentsId: {}, mediaId: {}, ingestJobId: {}",
                 contentsId, result.mediaId(), result.ingestJobId());
     }
 }
