@@ -11,7 +11,8 @@ public enum ExtensionEnum {
     MP4("mp4", "video/mp4", Category.VIDEO),
     MOV("mov", "video/quicktime", Category.VIDEO),
     WEBM("webm", "video/webm", Category.VIDEO),
-    M4V("m4v", "video/x-m4v", Category.VIDEO);
+    M4V("m4v", "video/x-m4v", Category.VIDEO),
+    MKV("mkv", "video/x-matroska", Category.VIDEO);
 
     private final String extension;
     private final String contentType;

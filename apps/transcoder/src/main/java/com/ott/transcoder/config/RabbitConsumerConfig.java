@@ -28,6 +28,7 @@ import java.util.Map;
 public class RabbitConsumerConfig {
 
     public static final String QUEUE_NAME = "transcode.queue";
+    public static final String LISTENER_ID = "transcode-consumer";
 
     public static final String DEAD_LETTER_EXCHANGE = "transcode.dead.exchange";
     public static final String DEAD_LETTER_QUEUE = "transcode.dead.queue";

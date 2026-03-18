@@ -34,18 +34,18 @@ scrape_configs:
   - job_name: "transcoder"
     metrics_path: /actuator/prometheus
     static_configs:
-      - targets: ["__TRANSCODER_TARGET__"]
+      - targets: [__TRANSCODER_TARGETS__]
         labels:
           app: "transcoder"
           application: "transcoder"
           env: "prod"
     relabel_configs:
       - target_label: instance
-        replacement: "transcoder"
+        source_labels: [__address__]
 
   - job_name: "node-exporter"
     static_configs:
-      - targets: ["__NODE_EXPORTER_TARGET__"]
+      - targets: [__NODE_EXPORTER_TARGETS__]
         labels:
           app: "node-exporter"
           application: "node-exporter"
