@@ -48,6 +48,7 @@ public class ProcessBuilderFfmpegExecutor implements FfmpegExecutor {
             // TODO: FFmpeg Filter Chain 구성 로직 추가 필요
             List<String> command = List.of(
                     ffmpegPath, "-i", inputFile.toString(),
+                    "-threads", "3",
                     "-vf", "scale=-2:" + profile.height(),
                     "-c:v", profile.videoCodec(), "-preset", profile.preset(),
                     "-c:a", profile.audioCodec(), "-b:a", profile.audioBitrate(),
