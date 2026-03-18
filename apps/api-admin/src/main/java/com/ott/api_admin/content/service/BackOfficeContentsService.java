@@ -62,8 +62,8 @@ public class BackOfficeContentsService {
     // ── complete ──
 
     public void completeContentsOriginUpload(
-            Long contentsId, String objectKey, String uploadId,
-            List<UploadHelper.MultipartPartETag> parts) {
+            Long contentsId, String objectKey, String uploadId, List<UploadHelper.MultipartPartETag> parts
+    ) {
 
         // Phase 1: 검증 + 정보 조회 (readOnly 트랜잭션)
         int totalPartCount = reader.getContentsUploadInfo(contentsId, objectKey);
@@ -72,7 +72,7 @@ public class BackOfficeContentsService {
         uploadHelper.completeMultipartUpload(objectKey, uploadId, totalPartCount, parts);
 
         // Phase 3: IngestJob 생성 (쓰기 트랜잭션)
-        IngestJobResult result = writer.createIngestJob(contentsId, objectKey);
+        IngestJobResult result = writer.createIngestJobWithOutbox(contentsId, objectKey);
 
         // Phase 4: 메시지 발행 (트랜잭션 밖)
         transcodePublisher.publish(new TranscodeMessage(
