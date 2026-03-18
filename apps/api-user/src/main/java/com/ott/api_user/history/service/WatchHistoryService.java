@@ -20,10 +20,12 @@ import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
 
 @Service
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 public class WatchHistoryService {
@@ -36,8 +38,11 @@ public class WatchHistoryService {
         Contents contents = contentsRepository.findByMediaIdAndStatusAndMedia_PublicStatus(mediaId, Status.ACTIVE, PublicStatus.PUBLIC)
                 .orElseThrow(()-> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         
-                
+
+        
         watchHistoryRepository.upsertWatchHistory(memberId, contents.getId());
+
+        log.info("이벤트 발송 직전");
         
         eventPublisher.publishEvent(new WatchHistoryCreatedEvent(memberId));
 
