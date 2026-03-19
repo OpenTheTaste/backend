@@ -3,6 +3,7 @@ package com.ott.domain.short_form.repository;
 import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.QMedia;
 import com.ott.domain.short_form.domain.ShortForm;
+import com.ott.domain.media.domain.MediaStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
@@ -39,7 +40,9 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
                 .leftJoin(contents.media, contentsMedia).fetchJoin()
                 .leftJoin(shortForm.series, series).fetchJoin()
                 .leftJoin(series.media, seriesMedia).fetchJoin()
-                .where(media.id.eq(mediaId))
+                .where(
+                        media.id.eq(mediaId),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED))
                 .fetchOne();
 
         return Optional.ofNullable(result);
@@ -58,7 +61,9 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
                 .leftJoin(contents.media, contentsMedia).fetchJoin()
                 .leftJoin(shortForm.series, series).fetchJoin()
                 .leftJoin(series.media, seriesMedia).fetchJoin()
-                .where(shortForm.id.eq(shortFormId))
+                .where(
+                        shortForm.id.eq(shortFormId),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED))
                 .fetchOne();
 
         return Optional.ofNullable(result);
@@ -87,7 +92,8 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
             return queryFactory.selectFrom(shortForm)
                     .leftJoin(shortForm.series, series)
                     .leftJoin(shortForm.contents, contents)
-                    .where(shortForm.status.eq(Status.ACTIVE)) // 활성 상태의 숏폼만
+                    .where(shortForm.status.eq(Status.ACTIVE),
+                            shortForm.media.mediaStatus.eq(MediaStatus.COMPLETED)) // 활성 상태의 숏폼만
                     // 무한 스와이프를 위해 DB에서 정렬 후 자름
                     .orderBy(originBookmarkCount.desc().nullsLast(), shortForm.createdDate.desc(), shortForm.id.desc())
                     .limit(limit)
@@ -116,7 +122,8 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
                         shortForm.series.isNotNull().and(mediaTag.media.id.eq(series.media.id))
                         .or(shortForm.series.isNull().and(mediaTag.media.id.eq(contents.media.id)))
                 )
-                .where(shortForm.status.eq(Status.ACTIVE)) // 활성 상태의 숏폼만
+                .where(shortForm.status.eq(Status.ACTIVE),
+                        shortForm.media.mediaStatus.eq(MediaStatus.COMPLETED)) // 활성 상태의 숏폼만
                 .groupBy(shortForm.id)
                 .orderBy(scoreExpression.sum().desc(), shortForm.createdDate.desc(), shortForm.id.desc())
                 .limit(limit)
@@ -135,7 +142,8 @@ public class ShortFormRepositoryImpl implements ShortFormRepositoryCustom {
         return queryFactory.selectFrom(shortForm)
                 .where(
                         excludeCondition,
-                        shortForm.status.eq(Status.ACTIVE) // 활성 상태의 숏폼만
+                        shortForm.status.eq(Status.ACTIVE),
+                        shortForm.media.mediaStatus.eq(MediaStatus.COMPLETED)// 활성 상태의 숏폼만
                 )
                 .orderBy(shortForm.createdDate.desc(), shortForm.id.desc()) // 무조건 최신 업로드 순
                 .limit(limit)
