@@ -2,6 +2,7 @@ package com.ott.transcoder.command;
 
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
+import com.ott.domain.common.MediaType;
 import com.ott.domain.ingest_command.domain.CommandStatus;
 import com.ott.domain.ingest_command.domain.IngestCommand;
 import com.ott.domain.ingest_command.repository.IngestCommandRepository;
@@ -35,7 +36,7 @@ public class CommandExtractor {
                 .orElseThrow(() -> new BusinessException(ErrorCode.INGEST_JOB_NOT_FOUND));
 
         // 1. 후보 커맨드 추출
-        List<Command> candidateList = buildCandidateList(message, probeResult);
+        List<Command> candidateList = buildCandidateList(message, probeResult, ingestJob);
 
         // 2. 기존 커맨드 한 번에 조회
         List<IngestCommand> existingCommandList = ingestCommandRepository
@@ -74,7 +75,7 @@ public class CommandExtractor {
         return pendingList;
     }
 
-    private List<Command> buildCandidateList(TranscodeMessage message, ProbeResult probeResult) {
+    private List<Command> buildCandidateList(TranscodeMessage message, ProbeResult probeResult, IngestJob ingestJob) {
         List<Command> list = new ArrayList<>();
         for (Resolution resolution : Resolution.values()) {
             if (!probeResult.isUpscaleFor(resolution.getHeight())) {
@@ -86,8 +87,10 @@ public class CommandExtractor {
             list.add(new TranscodeCommand(Resolution.P360));
         }
 
-        // TODO: 추가 커맨드 추출
-
+         // 숏폼일 경우 커맨드 추출 제외 -> 숏폼은 썸네일 없음 && null인 경우
+        if (message.mediaType() != MediaType.SHORT_FORM && ingestJob.getMedia().getThumbnailUrl() == null) {
+            list.add(new ThumbnailCommand());
+        }
 
         return list;
     }

@@ -59,7 +59,7 @@ public class JobOrchestrator {
         Long mediaId = message.mediaId();
         Long ingestJobId = message.ingestJobId();
         Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
-        // CP-3: 작업 시작
+        // CP-3: 작업 시작 processing 중복 최소화
         if (!statusManager.startProcessing(ingestJobId)) {
             log.info("종료 상태 IngestJob 재수신 - ingestJobId: {} (스킵)", ingestJobId);
             return;

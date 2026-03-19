@@ -10,6 +10,7 @@ import com.ott.domain.ingest_job.domain.IngestStatus;
 import com.ott.domain.ingest_job.repository.IngestJobRepository;
 import com.ott.domain.media.domain.Media;
 import com.ott.domain.media.domain.MediaStatus;
+import com.ott.infra.s3.service.S3PresignService;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.ffmpeg.Resolution;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class IngestJobStatusManager {
 
     private final IngestJobRepository ingestJobRepository;
     private final IngestCommandRepository ingestCommandRepository;
+    private final S3PresignService s3PresignService;
 
     /** CP-3: 메시지 컨슘 → 작업 시작 */
     @Transactional
@@ -89,8 +91,19 @@ public class IngestJobStatusManager {
 
     /** CP-5: 비-트랜스코드 커맨드 완료 (THUMBNAIL 등) */
     @Transactional
-    public void completeCommand(Long ingestJobId, Command command, String outputUrl) {
-        completeCommandInternal(ingestJobId, command, outputUrl);
+    public void completeCommand(Long ingestJobId, Command command, String outputKey) {
+        completeCommandInternal(ingestJobId, command, outputKey);
+
+        // 썸네일 커맨드 완료 시 Media.thumbnailUrl에 public URL 반영
+        if (command.getType() == CommandType.THUMBNAIL) {
+            IngestJob ingestJob = findIngestJob(ingestJobId);
+            Media media = ingestJob.getMedia();
+            String thumbnailUrl = s3PresignService.toObjectUrl(outputKey);
+            media.updateThumbnailUrl(thumbnailUrl);
+
+            log.info("미디어 썸네일 URL 반영 - ingestJobId: {}, mediaId: {}, thumbnailUrl: {}",
+                    ingestJobId, media.getId(), thumbnailUrl);
+        }
     }
 
     private void completeCommandInternal(Long ingestJobId, Command command, String outputUrl) {

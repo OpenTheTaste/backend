@@ -103,4 +103,8 @@ public class Media extends BaseEntity {
             this.likesCount--;
         }
     }
+
+    public void updateThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
 }
