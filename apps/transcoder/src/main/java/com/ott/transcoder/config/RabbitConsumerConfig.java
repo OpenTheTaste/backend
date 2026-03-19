@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.ErrorHandler;
 
 import java.util.Map;
@@ -34,6 +35,9 @@ public class RabbitConsumerConfig {
     public static final String DEAD_LETTER_QUEUE = "transcode.dead.queue";
     public static final String DEAD_LETTER_ROUTING_KEY = "transcode.dead.key";
 
+    @Value("${transcoder.messaging.rabbit.consumer-timeout-ms:14400000}")
+    private long consumerTimeoutMs;
+
     @Bean
     public DirectExchange transcodeExchange() {
         return ExchangeBuilder.directExchange(TranscodeConstants.EXCHANGE_NAME).durable(true).build();
@@ -45,6 +49,7 @@ public class RabbitConsumerConfig {
     @Bean
     public Queue transcodeQueue() {
         return QueueBuilder.durable(QUEUE_NAME)
+                .withArgument("x-consumer-timeout", consumerTimeoutMs)
                 .deadLetterExchange(DEAD_LETTER_EXCHANGE)
                 .deadLetterRoutingKey(DEAD_LETTER_ROUTING_KEY)
                 .build();
