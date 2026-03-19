@@ -49,19 +49,20 @@ class BackOfficeShortFormServiceTest {
 
         when(reader.getShortFormUploadInfo(shortFormId, objectKey, null)).thenReturn(5);
         IngestJobResult ingestJobResult = new IngestJobResult(33L, 44L, objectKey, 5000L, MediaType.SHORT_FORM);
-        when(writer.createIngestJob(shortFormId, objectKey)).thenReturn(ingestJobResult);
-
+        when(writer.createIngestJobWithOutbox(shortFormId, objectKey)).thenReturn(ingestJobResult);
+        
         shortFormService.completeShortFormOriginUpload(shortFormId, objectKey, uploadId, List.of(part), null);
 
-        InOrder order = inOrder(reader, uploadHelper, writer, transcodePublisher);
+        InOrder order = inOrder(reader, uploadHelper, writer);
         order.verify(reader).getShortFormUploadInfo(shortFormId, objectKey, null);
         order.verify(uploadHelper).completeMultipartUpload(objectKey, uploadId, 5, List.of(part));
-        order.verify(writer).createIngestJob(shortFormId, objectKey);
+        order.verify(writer).createIngestJobWithOutbox(shortFormId, objectKey);
 
-        ArgumentCaptor<TranscodeMessage> messageCaptor = ArgumentCaptor.forClass(TranscodeMessage.class);
-        order.verify(transcodePublisher).publish(messageCaptor.capture());
-        TranscodeMessage message = messageCaptor.getValue();
-        assertThat(message.mediaId()).isEqualTo(ingestJobResult.mediaId());
-        assertThat(message.ingestJobId()).isEqualTo(ingestJobResult.ingestJobId());
+
+        // ArgumentCaptor<TranscodeMessage> messageCaptor = ArgumentCaptor.forClass(TranscodeMessage.class);
+        // order.verify(transcodePublisher).publish(messageCaptor.capture());
+        // TranscodeMessage message = messageCaptor.getValue();
+        // assertThat(message.mediaId()).isEqualTo(ingestJobResult.mediaId());
+        // assertThat(message.ingestJobId()).isEqualTo(ingestJobResult.ingestJobId());
     }
 }

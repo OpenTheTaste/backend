@@ -46,20 +46,23 @@ class BackOfficeContentsServiceTest {
 
         when(reader.getContentsUploadInfo(contentsId, objectKey)).thenReturn(4);
         IngestJobResult ingestJobResult = new IngestJobResult(101L, 202L, objectKey, 4000L, MediaType.CONTENTS);
-        when(writer.createIngestJob(contentsId, objectKey)).thenReturn(ingestJobResult);
+        when(writer.createIngestJobWithOutbox(contentsId, objectKey)).thenReturn(ingestJobResult);
+
 
         contentsService.completeContentsOriginUpload(contentsId, objectKey, uploadId, List.of(part));
 
-        InOrder sequential = inOrder(reader, uploadHelper, writer, transcodePublisher);
+        InOrder sequential = inOrder(reader, uploadHelper, writer);
         sequential.verify(reader).getContentsUploadInfo(contentsId, objectKey);
         sequential.verify(uploadHelper).completeMultipartUpload(objectKey, uploadId, 4, List.of(part));
-        sequential.verify(writer).createIngestJob(contentsId, objectKey);
+        sequential.verify(writer).createIngestJobWithOutbox(contentsId, objectKey);
 
-        ArgumentCaptor<TranscodeMessage> messageCaptor = ArgumentCaptor.forClass(TranscodeMessage.class);
-        sequential.verify(transcodePublisher).publish(messageCaptor.capture());
-        TranscodeMessage sentMessage = messageCaptor.getValue();
-        assertThat(sentMessage.mediaId()).isEqualTo(ingestJobResult.mediaId());
-        assertThat(sentMessage.ingestJobId()).isEqualTo(ingestJobResult.ingestJobId());
-        assertThat(sentMessage.originUrl()).isEqualTo(objectKey);
+        
+
+        // ArgumentCaptor<TranscodeMessage> messageCaptor = ArgumentCaptor.forClass(TranscodeMessage.class);
+        // sequential.verify(transcodePublisher).publish(messageCaptor.capture());
+        // TranscodeMessage sentMessage = messageCaptor.getValue();
+        // assertThat(sentMessage.mediaId()).isEqualTo(ingestJobResult.mediaId());
+        // assertThat(sentMessage.ingestJobId()).isEqualTo(ingestJobResult.ingestJobId());
+        // assertThat(sentMessage.originUrl()).isEqualTo(objectKey);
     }
 }
