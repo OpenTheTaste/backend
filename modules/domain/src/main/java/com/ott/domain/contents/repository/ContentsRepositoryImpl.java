@@ -2,6 +2,7 @@ package com.ott.domain.contents.repository;
 
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.domain.QContents;
+import com.ott.domain.media.domain.MediaStatus;
 import com.ott.domain.media.domain.QMedia;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -25,7 +26,9 @@ public class ContentsRepositoryImpl implements ContentsRepositoryCustom {
         Contents result = queryFactory
                 .selectFrom(contents)
                 .join(contents.media, media).fetchJoin()
-                .where(contents.id.eq(contentsId))
+                .where(
+                        contents.id.eq(contentsId),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED))
                 .fetchOne();
 
         return Optional.ofNullable(result);
@@ -80,7 +83,10 @@ public class ContentsRepositoryImpl implements ContentsRepositoryCustom {
                 .join(media.uploader, member).fetchJoin()
                 .leftJoin(contents.series, series).fetchJoin()
                 .leftJoin(series.media, seriesMedia).fetchJoin()
-                .where(media.id.eq(mediaId))
+                .where(
+                        media.id.eq(mediaId),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED)
+                )
                 .fetchOne();
 
         return Optional.ofNullable(result);
