@@ -4,6 +4,7 @@ import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.Media;
+import com.ott.domain.media.domain.MediaStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
@@ -40,6 +41,7 @@ public class MediaMetricsRepositoryImpl implements MediaMetricsRepositoryCustom 
                 .where(
                         media.status.eq(Status.ACTIVE),
                         media.publicStatus.eq(PublicStatus.PUBLIC),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED), // 유저에게 보여주는 추천 쿼리
                         media.mediaType.eq(MediaType.SERIES)
                                 .or(media.mediaType.eq(MediaType.CONTENTS)
                                         .and(JPAExpressions.selectOne()
