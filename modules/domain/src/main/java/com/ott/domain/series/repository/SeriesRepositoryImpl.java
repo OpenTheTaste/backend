@@ -1,6 +1,7 @@
 package com.ott.domain.series.repository;
 
 import com.ott.domain.series.domain.Series;
+import com.ott.domain.media.domain.MediaStatus;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -39,7 +40,9 @@ public class SeriesRepositoryImpl implements SeriesRepositoryCustom {
                 .selectFrom(series)
                 .join(series.media, media).fetchJoin()
                 .join(media.uploader, member).fetchJoin()
-                .where(media.id.eq(mediaId))
+                .where(
+                        media.id.eq(mediaId),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED))
                 .fetchOne();
 
         return Optional.ofNullable(result);
@@ -50,7 +53,10 @@ public class SeriesRepositoryImpl implements SeriesRepositoryCustom {
         List<Series> seriesList = queryFactory
                 .selectFrom(series)
                 .join(series.media, media).fetchJoin()
-                .where(titleContains(searchWord))
+                .where(
+                        titleContains(searchWord),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED)
+                )
                 .orderBy(series.createdDate.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -60,7 +66,9 @@ public class SeriesRepositoryImpl implements SeriesRepositoryCustom {
                 .select(series.count())
                 .from(series)
                 .join(series.media, media)
-                .where(titleContains(searchWord));
+                .where(titleContains(searchWord),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED)
+                );
 
         return PageableExecutionUtils.getPage(seriesList, pageable, countQuery::fetchOne);
     }
@@ -69,7 +77,9 @@ public class SeriesRepositoryImpl implements SeriesRepositoryCustom {
     public List<Series> findAllByMediaIdIn(List<Long> mediaIdList) {
         return queryFactory
                 .selectFrom(series)
-                .where(series.media.id.in(mediaIdList))
+                .where(
+                        series.media.id.in(mediaIdList),
+                        media.mediaStatus.eq(MediaStatus.COMPLETED))
                 .fetch();
     }
 
