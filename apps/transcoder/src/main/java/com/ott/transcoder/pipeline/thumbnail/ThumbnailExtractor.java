@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * 영상에서 대표 썸네일 1장을 추출
@@ -152,7 +153,7 @@ public class ThumbnailExtractor {
                 "-ss", String.format("%.3f", seekSeconds),
                 "-i", inputFile.toString(),
                 "-vframes", "1",
-                "-vf", "signalstats",
+                "-vf", "signalstats,metadata=print:file=-",  // 이슈 1 수정 포함
                 "-f", "null",
                 "-"
         );
@@ -162,19 +163,31 @@ public class ThumbnailExtractor {
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
-            String output;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                output = reader.lines().collect(java.util.stream.Collectors.joining("\n"));
-            }
+            // stdout 소비를 별도 스레드로 분리 → waitFor 타임아웃이 실제로 작동
+            StringBuilder output = new StringBuilder();
+            Thread readerThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        output.append(line).append("\n");
+                    }
+                } catch (IOException ignored) {}
+            });
+            readerThread.setDaemon(true);
+            readerThread.start();
 
             boolean finished = process.waitFor(1, TimeUnit.MINUTES);
             if (!finished) {
                 process.destroyForcibly();
+                readerThread.interrupt();
                 log.warn("밝기 측정 타임아웃 - seekSeconds: {}", seekSeconds);
                 return 0;
             }
 
-            Matcher matcher = YAVG_PATTERN.matcher(output);
+            readerThread.join(TimeUnit.SECONDS.toMillis(5));// 읽기 완료 대기
+
+            Matcher matcher = YAVG_PATTERN.matcher(output.toString());
             if (matcher.find()) {
                 return Double.parseDouble(matcher.group(1));
             }
@@ -194,12 +207,15 @@ public class ThumbnailExtractor {
             pb.redirectErrorStream(true);
             Process process = pb.start();
 
-            // 출력 소비 (블로킹 방지)
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                while (reader.readLine() != null) {
-                    // consume
-                }
-            }
+            // stdout 소비 별도 스레드
+            Thread readerThread = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream()))) {
+                    while (reader.readLine() != null) { /* consume */ }
+                } catch (IOException ignored) {}
+            });
+            readerThread.setDaemon(true);
+            readerThread.start();
 
             boolean finished = process.waitFor(2, TimeUnit.MINUTES);
             if (!finished) {
@@ -218,13 +234,13 @@ public class ThumbnailExtractor {
     }
 
     private void cleanupCandidates(Path thumbnailDir) {
-        try {
-            Files.list(thumbnailDir)
-                    .filter(p -> p.getFileName().toString().startsWith("candidate_"))
+        try (Stream<Path> stream = Files.list(thumbnailDir)) {
+            stream.filter(p -> p.getFileName().toString().startsWith("candidate_"))
                     .forEach(p -> {
-                        try { Files.deleteIfExists(p); } catch (IOException ignored) {}
+                        try {
+                            Files.deleteIfExists(p);
+                        } catch (IOException ignored) {}
                     });
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
     }
 }
