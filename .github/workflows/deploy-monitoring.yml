@@ -116,10 +116,30 @@ jobs:
             exit 1
           fi
 
+          normalize_targets() {
+            # Accept comma/newline/space separated values and render a YAML inline list payload:
+            # "host1:port","host2:port"
+            printf '%s' "$1" \
+              | tr ',\r\n\t' '    ' \
+              | xargs -n1 \
+              | sed '/^$/d' \
+              | sort -u \
+              | awk '{printf "\"%s\",", $0}' \
+              | sed 's/,$//'
+          }
+
+          TRANSCODER_TARGETS_YAML=$(normalize_targets "$TRANSCODER_TARGET")
+          NODE_EXPORTER_TARGETS_YAML=$(normalize_targets "$NODE_EXPORTER_TARGET")
+
+          if [ -z "$TRANSCODER_TARGETS_YAML" ] || [ -z "$NODE_EXPORTER_TARGETS_YAML" ]; then
+            echo "Rendered target list is empty. Check SSM parameter values." >&2
+            exit 1
+          fi
+
           echo "USER_API_TARGET=$USER_API_TARGET" >> "$GITHUB_ENV"
           echo "ADMIN_API_TARGET=$ADMIN_API_TARGET" >> "$GITHUB_ENV"
-          echo "TRANSCODER_TARGET=$TRANSCODER_TARGET" >> "$GITHUB_ENV"
-          echo "NODE_EXPORTER_TARGET=$NODE_EXPORTER_TARGET" >> "$GITHUB_ENV"
+          echo "TRANSCODER_TARGETS_YAML=$TRANSCODER_TARGETS_YAML" >> "$GITHUB_ENV"
+          echo "NODE_EXPORTER_TARGETS_YAML=$NODE_EXPORTER_TARGETS_YAML" >> "$GITHUB_ENV"
           echo "MACHINE_NODE_EXPORTER_TARGET=$MACHINE_NODE_EXPORTER_TARGET" >> "$GITHUB_ENV"
 
       - name: Render prod Prometheus config
@@ -129,8 +149,8 @@ jobs:
           sed \
             -e "s|__USER_API_TARGET__|${USER_API_TARGET}|g" \
             -e "s|__ADMIN_API_TARGET__|${ADMIN_API_TARGET}|g" \
-            -e "s|__TRANSCODER_TARGET__|${TRANSCODER_TARGET}|g" \
-            -e "s|__NODE_EXPORTER_TARGET__|${NODE_EXPORTER_TARGET}|g" \
+            -e "s|__TRANSCODER_TARGETS__|${TRANSCODER_TARGETS_YAML}|g" \
+            -e "s|__NODE_EXPORTER_TARGETS__|${NODE_EXPORTER_TARGETS_YAML}|g" \
             -e "s|__MACHINE_NODE_EXPORTER_TARGET__|${MACHINE_NODE_EXPORTER_TARGET}|g" \
             apps/monitoring/prometheus/prometheus.prod.yml.tpl > apps/monitoring/prometheus/prometheus.prod.yml
 
@@ -196,8 +216,9 @@ jobs:
             --arg c8 "echo '$DASHBOARDS_JSON_TGZ_B64' | base64 -d | sudo tar -xzf - -C ${MONITORING_ROOT}/grafana/provisioning/dashboards" \
             --arg c9 "printf '%s\n' 'GF_SECURITY_ADMIN_USER=admin' 'GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}' | sudo tee ${MONITORING_ROOT}/.env >/dev/null" \
             --arg c10 "if sudo docker compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker compose'; elif sudo docker-compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker-compose'; else if command -v dnf >/dev/null 2>&1; then sudo dnf install -y docker-compose-plugin || true; fi; if command -v yum >/dev/null 2>&1; then sudo yum install -y docker-compose-plugin || true; fi; if sudo docker compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker compose'; elif sudo docker-compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker-compose'; else sudo mkdir -p /usr/local/lib/docker/cli-plugins; sudo curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose; sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose; if sudo docker compose version >/dev/null 2>&1; then COMPOSE_CMD='sudo docker compose'; else echo 'Docker Compose not found' >&2; exit 1; fi; fi; fi" \
-            --arg c11 "cd ${MONITORING_ROOT} && \$COMPOSE_CMD -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d" \
-            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c6a,$c7,$c8,$c9,$c10,$c11]}')
+            --arg c11 "if ! sudo docker network inspect backend_default >/dev/null 2>&1; then sudo docker network create backend_default; fi" \
+            --arg c12 "cd ${MONITORING_ROOT} && \$COMPOSE_CMD -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d" \
+            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c6a,$c7,$c8,$c9,$c10,$c11,$c12]}')
 
           CMD_ID=$(aws ssm send-command \
             --region "$AWS_REGION" \

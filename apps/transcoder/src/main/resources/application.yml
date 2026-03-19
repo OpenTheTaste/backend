@@ -35,6 +35,13 @@ spring:
 transcoder:
   messaging:
     provider: ${TRANSCODER_MESSAGING_PROVIDER}
+    rabbit:
+      consumer-timeout-ms: ${TRANSCODER_RABBIT_CONSUMER_TIMEOUT_MS:14400000}
+  worker:
+    scale-in-protection:
+      enabled: ${TRANSCODER_ASG_PROTECTION_ENABLED:false}
+      asg-name: ${TRANSCODER_ASG_NAME:}
+      instance-id: ${TRANSCODER_INSTANCE_ID:}
   ffmpeg:
     engine: ${TRANSCODER_FFMPEG_ENGINE}
     path: ${FFMPEG_PATH}
