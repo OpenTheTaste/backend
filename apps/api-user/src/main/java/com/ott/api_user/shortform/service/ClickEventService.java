@@ -31,7 +31,6 @@ public class ClickEventService {
 
         ShortForm shortForm = shortFormRepository.findByMediaId(mediaId)
             .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
-
         
         ClickEvent event = ClickEvent.builder()
             .member(member)
