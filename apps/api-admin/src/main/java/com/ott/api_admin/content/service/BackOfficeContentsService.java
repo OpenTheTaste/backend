@@ -12,7 +12,6 @@ import com.ott.api_admin.upload.dto.response.MultipartUploadPartUrlResponse;
 import com.ott.api_admin.upload.support.UploadHelper;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.common.PublicStatus;
-import com.ott.infra.mq.TranscodeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,8 +61,8 @@ public class BackOfficeContentsService {
     // ── complete ──
 
     public void completeContentsOriginUpload(
-            Long contentsId, String objectKey, String uploadId,
-            List<UploadHelper.MultipartPartETag> parts) {
+            Long contentsId, String objectKey, String uploadId, List<UploadHelper.MultipartPartETag> parts
+    ) {
 
         // Phase 1: 검증 + 정보 조회 (readOnly 트랜잭션)
         int totalPartCount = reader.getContentsUploadInfo(contentsId, objectKey);
@@ -72,19 +71,9 @@ public class BackOfficeContentsService {
         uploadHelper.completeMultipartUpload(objectKey, uploadId, totalPartCount, parts);
 
         // Phase 3: IngestJob 생성 (쓰기 트랜잭션)
-        IngestJobResult result = writer.createIngestJob(contentsId, objectKey);
+        IngestJobResult result = writer.createIngestJobWithOutbox(contentsId, objectKey);
 
-        // Phase 4: 메시지 발행 (트랜잭션 밖)
-        transcodePublisher.publish(new TranscodeMessage(
-                result.mediaId(),
-                result.ingestJobId(),
-                result.originObjectKey(), 
-                result.fileSize(),
-                result.mediaType()
-                )
-        );
-
-        log.info("업로드 완료 + 트랜스코딩 요청 - contentsId: {}, mediaId: {}, ingestJobId: {}",
+        log.info("outbox 저장 완료 - contentsId: {}, mediaId: {}, ingestJobId: {}",
                 contentsId, result.mediaId(), result.ingestJobId());
     }
 }

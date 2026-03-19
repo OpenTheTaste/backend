@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.ErrorHandler;
 
 import java.util.Map;
@@ -28,10 +29,14 @@ import java.util.Map;
 public class RabbitConsumerConfig {
 
     public static final String QUEUE_NAME = "transcode.queue";
+    public static final String LISTENER_ID = "transcode-consumer";
 
     public static final String DEAD_LETTER_EXCHANGE = "transcode.dead.exchange";
     public static final String DEAD_LETTER_QUEUE = "transcode.dead.queue";
     public static final String DEAD_LETTER_ROUTING_KEY = "transcode.dead.key";
+
+    @Value("${transcoder.messaging.rabbit.consumer-timeout-ms:14400000}")
+    private long consumerTimeoutMs;
 
     @Bean
     public DirectExchange transcodeExchange() {
@@ -44,6 +49,7 @@ public class RabbitConsumerConfig {
     @Bean
     public Queue transcodeQueue() {
         return QueueBuilder.durable(QUEUE_NAME)
+                .withArgument("x-consumer-timeout", consumerTimeoutMs)
                 .deadLetterExchange(DEAD_LETTER_EXCHANGE)
                 .deadLetterRoutingKey(DEAD_LETTER_ROUTING_KEY)
                 .build();
@@ -90,6 +96,7 @@ public class RabbitConsumerConfig {
         factory.setMessageConverter(jacksonMessageConverter);
 
         factory.setErrorHandler(errorHandler());
+        factory.setPrefetchCount(1);
 
         // 일시적 장애(Retryable) 시 3회 재시도 (1s -> 2s -> 4s)
         factory.setAdviceChain(RetryInterceptorBuilder.stateless()

@@ -29,7 +29,7 @@ public class ClickEventService {
         Member member = memberRepository.findById(memberId)
             .orElseThrow(()-> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        ShortForm shortForm = shortFormRepository.findById(mediaId)
+        ShortForm shortForm = shortFormRepository.findByMediaId(mediaId)
             .orElseThrow(() -> new BusinessException(ErrorCode.SHORT_FORM_NOT_FOUND));
 
         

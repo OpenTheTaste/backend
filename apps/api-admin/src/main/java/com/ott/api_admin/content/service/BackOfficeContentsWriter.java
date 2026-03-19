@@ -22,6 +22,8 @@ import com.ott.domain.media.domain.MediaStatus;
 import com.ott.domain.media.repository.MediaRepository;
 import com.ott.domain.media_tag.repository.MediaTagRepository;
 import com.ott.domain.member.domain.Member;
+import com.ott.domain.outbox.domain.TranscodeOutbox;
+import com.ott.domain.outbox.repository.TranscodeOutboxRepository;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,13 +38,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class BackOfficeContentsWriter {
 
     private final BackOfficeContentsMapper backOfficeContentsMapper;
+
     private final MediaRepository mediaRepository;
     private final MediaTagRepository mediaTagRepository;
     private final ContentsRepository contentsRepository;
     private final SeriesRepository seriesRepository;
     private final IngestJobRepository ingestJobRepository;
+    private final TranscodeOutboxRepository transcodeOutboxRepository;
+
     private final UploadHelper uploadHelper;
     private final MediaTagLinker mediaTagLinker;
+
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -134,7 +140,7 @@ public class BackOfficeContentsWriter {
     }
 
     @Transactional
-    public IngestJobResult createIngestJob(Long contentsId, String originObjectKey) {
+    public IngestJobResult createIngestJobWithOutbox(Long contentsId, String originObjectKey) {
         Contents contents = contentsRepository.findById(contentsId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
         Media media = contents.getMedia();
@@ -143,20 +149,29 @@ public class BackOfficeContentsWriter {
             throw new BusinessException(ErrorCode.ALREADY_INGESTED);
         }
 
+        // 1. IngestJob 저장
         IngestJob ingestJob = ingestJobRepository.save(
                 IngestJob.builder()
                         .media(media)
                         .ingestStatus(IngestStatus.PENDING)
                         .build());
 
-        log.info("IngestJob 생성 - contentsId: {}, mediaId: {}, ingestJobId: {}",
-                contentsId, media.getId(), ingestJob.getId());
+        // 2. Outbox 저장
+        TranscodeOutbox outbox = TranscodeOutbox.builder()
+                .mediaId(media.getId())
+                .ingestJobId(ingestJob.getId())
+                .originUrl(originObjectKey)
+                .fileSize((long) contents.getVideoSize() * 1024)
+                .mediaType(MediaType.CONTENTS)
+                .build();
+        transcodeOutboxRepository.save(outbox);
+
+        log.info("IngestJob + Outbox 생성 - contentsId: {}, mediaId: {}, ingestJobId: {}, outboxId: {}",
+                contentsId, media.getId(), ingestJob.getId(), outbox.getId());
 
         return new IngestJobResult(
-                media.getId(),
-                ingestJob.getId(),
-                originObjectKey,
-                (long) contents.getVideoSize() * 1024,
+                media.getId(), ingestJob.getId(),
+                originObjectKey, (long) contents.getVideoSize() * 1024,
                 MediaType.CONTENTS);
     }
 

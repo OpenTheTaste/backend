@@ -10,6 +10,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -17,13 +19,19 @@ import org.springframework.stereotype.Component;
 public class RabbitTranscodeListener implements MessageListener {
 
     private final JobOrchestrator jobOrchestrator;
+    private final Optional<AsgScaleInProtectionManager> scaleInProtectionManager;
 
     @Override
-    @RabbitListener(queues = RabbitConsumerConfig.QUEUE_NAME)
+    @RabbitListener(id = RabbitConsumerConfig.LISTENER_ID, queues = RabbitConsumerConfig.QUEUE_NAME)
     public void listen(TranscodeMessage message) {
         log.info("작업 요청 수신 - mediaId: {}, originUrl: {}", message.mediaId(), message.originUrl());
 
-        jobOrchestrator.handle(message);
+        scaleInProtectionManager.ifPresent(AsgScaleInProtectionManager::markBusy);
+        try {
+            jobOrchestrator.handle(message);
+        } finally {
+            scaleInProtectionManager.ifPresent(AsgScaleInProtectionManager::markIdle);
+        }
 
         log.info("작업 요청 처리 완료 - mediaId: {}, originUrl: {}", message.mediaId(), message.originUrl());
     }

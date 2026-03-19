@@ -72,7 +72,8 @@ public class BackOfficeShortFormService {
 
     public void completeShortFormOriginUpload(
             Long shortFormId, String objectKey, String uploadId,
-            List<UploadHelper.MultipartPartETag> parts, Authentication authentication) {
+            List<UploadHelper.MultipartPartETag> parts, Authentication authentication
+    ) {
 
         // Phase 1: 검증 + 권한 체크 + 정보 조회 (readOnly 트랜잭션)
         int totalPartCount = reader.getShortFormUploadInfo(shortFormId, objectKey, authentication);
@@ -80,20 +81,10 @@ public class BackOfficeShortFormService {
         // Phase 2: S3 멀티파트 완료 (트랜잭션 밖 — 외부 호출)
         uploadHelper.completeMultipartUpload(objectKey, uploadId, totalPartCount, parts);
 
-        // Phase 3: IngestJob 생성 (쓰기 트랜잭션)
-        IngestJobResult result = writer.createIngestJob(shortFormId, objectKey);
+        // Phase 3: IngestJob + Outbox 생성 (쓰기 트랜잭션)
+        IngestJobResult result = writer.createIngestJobWithOutbox(shortFormId, objectKey);
 
-        // Phase 4: 메시지 발행 (트랜잭션 밖)
-        transcodePublisher.publish(new TranscodeMessage(
-                result.mediaId(),
-                result.ingestJobId(),
-                result.originObjectKey(),
-                result.fileSize(),
-                result.mediaType()
-                )
-        );
-
-        log.info("업로드 완료 + 트랜스코딩 요청 - shortFormId: {}, mediaId: {}, ingestJobId: {}",
+        log.info("Outbox 저장 완료 - shortFormId: {}, mediaId: {}, ingestJobId: {}",
                 shortFormId, result.mediaId(), result.ingestJobId());
     }
 }
