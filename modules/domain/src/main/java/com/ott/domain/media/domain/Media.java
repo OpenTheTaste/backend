@@ -30,7 +30,6 @@ import java.util.Objects;
 @Builder
 @Getter
 @Table(name = "media")
-@SQLRestriction("media_status = 'COMPLETED'")
 public class Media extends BaseEntity {
 
     @Id
