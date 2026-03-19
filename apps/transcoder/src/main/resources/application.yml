@@ -48,6 +48,10 @@ transcoder:
   ffprobe:
     engine: ${TRANSCODER_FFPROBE_ENGINE}
     path: ${FFPROBE_PATH}
+  thumbnail:
+    brightness-threshold: ${TRANSCODER_THUMBNAIL_BRIGHTNESS_THRESHOLD:30}
+    height: ${TRANSCODER_THUMBNAIL_HEIGHT:720}
+    quality: ${TRANSCODER_THUMBNAIL_QUALITY:2}
 
 storage:
   provider: ${STORAGE_PROVIDER}
@@ -58,6 +62,8 @@ storage:
 
 aws:
   region: ${AWS_REGION:ap-northeast-2}
+  s3:
+    public-base-url: ${AWS_S3_PUBLIC_BASE_URL:}  #https://cdn.openthetaste.cloud
 
 management:
   endpoints:
