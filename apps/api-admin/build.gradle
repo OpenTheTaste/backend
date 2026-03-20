@@ -1,4 +1,5 @@
 apply plugin: 'org.springframework.boot'
+apply plugin: 'jacoco'
 
 dependencies {
 	implementation project(':modules:domain')
@@ -25,4 +26,28 @@ dependencies {
 	// ShedLock
 	implementation 'net.javacrumbs.shedlock:shedlock-spring:5.10.0'
 	implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.10.0'
+}
+
+jacoco {
+	toolVersion = '0.8.10'
+}
+
+
+test {
+	useJUnitPlatform()
+	ignoreFailures = true
+	finalizedBy(jacocoTestReport)
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		html.required = true
+		xml.required = true
+	}
+	sourceDirectories.setFrom(files(sourceSets.main.allSource.srcDirs))
+	classDirectories.setFrom(fileTree("$buildDir/classes/java/main") {
+		exclude '**/generated/**'
+	})
+	executionData.setFrom(files("$buildDir/jacoco/test.exec"))
 }

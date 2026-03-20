@@ -179,7 +179,7 @@ public class MoodRefreshService {
 
         // 태그가 누락된 영상이 하나라도 있다면 환기 불가로 간주
         if (primaryTags.size() < mediaIds.size()) {
-            log.info("[Mood Refresh]: 해당 영상에는 태그가 없어 누락으로 간주합니다.");
+            log.info("🚨 [Mood Refresh]: 해당 영상에는 태그가 없어 누락으로 간주합니다.미디어 IDs: {}", mediaIds);
             return null;
         }
 
