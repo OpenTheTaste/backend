@@ -333,7 +333,7 @@ curl http://localhost:8000/health           # machine (AI)
 ---
 
 > 📎 아키텍처 상세 설계, 기술 도입 배경, 트러블슈팅 등 자세한 내용은 [Wiki](https://github.com/OpenTheTaste/backend/wiki)를 참고해주세요.
-<details>
+
 <summary>📚 Wiki 목차 보기</summary>
 
 ### 1. 🎥 영상 처리
@@ -365,6 +365,6 @@ curl http://localhost:8000/health           # machine (AI)
 ### 5. 🧪 성능 테스트
 * [🧪 k6 부하 테스트 — 플레이리스트 API](🧪-k6-부하-테스트)
 
-</details>
+
 
 *Last updated: 2026.03*
