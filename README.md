@@ -37,51 +37,7 @@
 
 ### 3.1 전체 인프라 아키텍처
 
-```mermaid
-flowchart LR
-  user["일반 사용자\n(Client)"]
-  admin["관리자\n(Client)"]
-
-  subgraph vpc["VPC 10.0.0.0/20 · ap-northeast-2"]
-    direction LR
-    subgraph public["Public Subnets x2 (ALB 전용)"]
-      alb["ALB :80\n- default → user-api (8080)\n- /admin/* → admin-api (8081)"]
-    end
-    subgraph private_app["Private App Subnet x1 (EC2 3대)"]
-      user_api["EC2 user-api :8080\n일반 기능 / 조회 API"]
-      admin_api["EC2 admin-api :8081\nPresigned URL 발급\n(업로드 전용 관리)"]
-      worker["EC2 worker\nRabbitMQ Consumer\nTranscoding Server"]
-      rabbitmq["RabbitMQ\ntranscode.exchange"]
-    end
-    subgraph private_db["Private DB Subnets x2 (RDS Subnet Group)"]
-      rds["RDS MySQL 8.0\nPrivate / No Public Access"]
-    end
-    subgraph endpoints["VPC Endpoints (No NAT)"]
-      s3_ep["Gateway Endpoint S3"]
-      ssm_ep["Interface Endpoint SSM"]
-    end
-  end
-
-  subgraph aws["AWS Managed Services"]
-    s3_content["S3 Content Bucket\n원본 & 트랜스코딩 저장"]
-    cf["CloudFront CDN\nHLS 스트리밍 배포"]
-  end
-
-  user -->|"일반 API 요청"| alb
-  admin -->|"관리자 API 요청"| alb
-  alb -->|"default"| user_api
-  alb -->|"/admin/*"| admin_api
-  user_api --> rds
-  admin_api --> rds
-  worker --> rds
-  admin_api -. "Presigned URL 발급" .-> admin
-  admin -. "직접 업로드 (PUT)" .-> s3_content
-  admin_api -->|"TranscodeMessage 발행"| rabbitmq
-  worker -->|"메시지 폴링"| rabbitmq
-  worker -->|"원본 다운로드 / 결과 업로드"| s3_ep --> s3_content
-  s3_content --> cf
-  user_api -. "HLS 스트리밍" .-> cf
-```
+<img width="3292" height="1886" alt="image" src="https://github.com/user-attachments/assets/4389ac6d-fee9-4389-a2ff-f93759486cc5" />
 
 **설계 핵심 포인트**
 
@@ -377,4 +333,38 @@ curl http://localhost:8000/health           # machine (AI)
 ---
 
 > 📎 아키텍처 상세 설계, 기술 도입 배경, 트러블슈팅 등 자세한 내용은 [Wiki](https://github.com/OpenTheTaste/backend/wiki)를 참고해주세요.
+<details>
+<summary>📚 Wiki 목차 보기</summary>
+
+### 1. 🎥 영상 처리
+* [🎥 트랜스코딩 구조](🎥-트랜스코딩-구조)
+* [🎥 트랜스코딩 프로세스](🎥-트랜스코딩-프로세스)
+* [🎥 트랜스코딩 상태 관리](🎥-트랜스코딩-상태-관리)
+* [🎥 트랜스코딩 예외 처리](🎥-트랜스코딩-예외-처리)
+* [🎥 영상 업로드](🎥-영상-업로드)
+
+### 2. 💾 데이터베이스
+* [💾 데이터베이스 모델](💾-데이터베이스-모델)
+
+### 3. ☁️ 인프라 및 아키텍처
+* [☁️ 인프라 구조](☁️-인프라-구조)
+* [☁️ CDN 구성](☁️-CDN-구성)
+* [☁️ 트랜스코딩 서버 구성](☁️-트랜스코딩-서버-구성)
+* [☁️ S3 관리 전략](☁️-S3-관리-전략)
+* [📂 멀티모듈 & 소프트웨어 아키텍처](📂-멀티모듈-&-소프트웨어-아키텍처)
+
+### 4. 💡 기술 도입 및 상세
+* [🐇 RabbitMQ 사용 이유](🐇-RabbitMQ-사용-이유)
+* [🔥 소셜 로그인 & JWT 도입 이유](🔥-소셜-로그인-&-JWT-도입-이유)
+* [🚨 아웃박스 스케줄러 다중 서버 중복 실행 방지](🚨-아웃박스-스케줄러-다중-서버-중복...)
+* [🪄 사용자 커스텀 추천 (feat. 레이더 차트)](🪄-사용자-커스텀-추천-(feat.-레이더-차...))
+* [🎯 플레이리스트 전략 패턴](🎯-플레이리스트-전략-패턴)
+* [📱 숏폼 피드 알고리즘](📱-숏폼-피드-알고리즘)
+* [🤖 AI 태깅 & 분위기 환기 시스템](🤖-AI-태깅-&-분위기-환기-시스템)
+
+### 5. 🧪 성능 테스트
+* [🧪 k6 부하 테스트 — 플레이리스트 API](🧪-k6-부하-테스트)
+
+</details>
+
 *Last updated: 2026.03*
