@@ -28,6 +28,7 @@ public class MediaMetricsJdbcRepository {
                 FROM media
                 WHERE status = 'ACTIVE'
                 AND public_status = 'PUBLIC'
+                AND media_status = 'COMPLETED'
                 """;
         return jdbcTemplate.query(sql, SCORE_MAPPER);
     }
@@ -50,6 +51,7 @@ public class MediaMetricsJdbcRepository {
                     WHERE c.series_id IS NULL
                       AND c.duration > 0
                       AND p.status = 'ACTIVE'
+                      AND media_status = 'COMPLETED'
                     GROUP BY c.media_id
 
                     UNION ALL
@@ -93,6 +95,7 @@ public class MediaMetricsJdbcRepository {
                     WHERE c.series_id IS NULL
                       AND wh.status = 'ACTIVE'
                       AND m.status = 'ACTIVE'
+                      AND media_status = 'COMPLETED'
                       AND m.public_status = 'PUBLIC'
                     GROUP BY c.media_id, m.bookmark_count
 
@@ -107,6 +110,7 @@ public class MediaMetricsJdbcRepository {
                     WHERE wh.status = 'ACTIVE'
                       AND m.status = 'ACTIVE'
                       AND m.public_status = 'PUBLIC'
+                      AND media_status = 'COMPLETED'
                     GROUP BY s.media_id, m.bookmark_count
                 ) raw_data
                 """;
@@ -121,6 +125,7 @@ public class MediaMetricsJdbcRepository {
                 FROM media
                 WHERE status = 'ACTIVE'
                 AND public_status = 'PUBLIC'
+                AND media_status = 'COMPLETED'
                 """;
         return jdbcTemplate.query(sql, SCORE_MAPPER);
     }
@@ -141,6 +146,7 @@ public class MediaMetricsJdbcRepository {
                     JOIN contents c ON wh.contents_id = c.id
                     WHERE c.series_id IS NULL
                       AND wh.status = 'ACTIVE'
+                      AND media_status = 'COMPLETED'
                     GROUP BY c.media_id
 
                     UNION ALL

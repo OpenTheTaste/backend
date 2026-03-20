@@ -10,6 +10,7 @@ import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
 import com.ott.domain.common.MediaType;
+import com.ott.domain.media.domain.MediaStatus;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
@@ -191,7 +192,7 @@ public class PlaylistStrategyService {
     private Long getFirstEpisodeMediaId(Long seriesId) {
         Pageable limitOne = PageRequest.of(0, 1);
         Page<Contents> firstContentPage = contentsRepository
-                .findBySeries_Media_IdAndStatusAndMedia_PublicStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, limitOne);
+                .findBySeries_Media_IdAndStatusAndMedia_PublicStatusAndMedia_MediaStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, MediaStatus.COMPLETED, limitOne);
 
         if (firstContentPage.isEmpty()) {
             // 시리즈 껍데기만 있고 콘텐츠가 아직 안 올라온 예외 상황 방어

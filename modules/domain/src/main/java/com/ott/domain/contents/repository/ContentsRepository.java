@@ -12,17 +12,20 @@ import org.springframework.data.repository.query.Param;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
+import com.ott.domain.media.domain.MediaStatus;
 
 
 public interface ContentsRepository extends JpaRepository<Contents, Long>, ContentsRepositoryCustom {
 
         @EntityGraph(attributePaths = { "media" })
-        Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(Long seriesId, Status status,
-                        PublicStatus publicStatus, Pageable pageable);
+        Page<Contents> findBySeriesIdAndStatusAndMedia_PublicStatusAndMedia_MediaStatusOrderByIdAsc(
+                        Long seriesId, Status status, PublicStatus publicStatus, MediaStatus mediaStatus,
+                        Pageable pageable);
 
         @EntityGraph(attributePaths = { "media" })
-        Page<Contents> findBySeries_Media_IdAndStatusAndMedia_PublicStatusOrderByIdAsc(
-                        Long seriesMediaId, Status status, PublicStatus publicStatus, Pageable pageable);
+        Page<Contents> findBySeries_Media_IdAndStatusAndMedia_PublicStatusAndMedia_MediaStatusOrderByIdAsc(
+                        Long seriesMediaId, Status status, PublicStatus publicStatus, MediaStatus mediaStatus,
+                        Pageable pageable);
 
         // 좋아요 처리 시 series 소속 여부 확인용
         @EntityGraph(attributePaths = {"series", "series.media"})
@@ -40,6 +43,7 @@ public interface ContentsRepository extends JpaRepository<Contents, Long>, Conte
                 WHERE m.id = :mediaId
                 AND c.status = :status
                 AND m.publicStatus = :publicStatus
+                AND m.mediaStatus = com.ott.domain.media.domain.MediaStatus.COMPLETED
                 """)
         Optional<Contents> findByMediaIdAndStatusAndMedia_PublicStatus(
                 @Param("mediaId") Long mediaId,

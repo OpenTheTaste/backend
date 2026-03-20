@@ -4,6 +4,7 @@ import com.ott.domain.common.MediaType;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.media.domain.Media;
+import com.ott.domain.media.domain.MediaStatus;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
@@ -44,7 +45,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
 
         
         // ============================================================
-        // 백오피스 관련 쿼라
+        // 백오피스 관련 쿼리
         // ============================================================
 
         @Override
@@ -54,7 +55,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .selectFrom(media)
                                 .where(
                                                 mediaTypeEq(mediaType),
-                                                titleContains(searchWord))
+                                                titleContains(searchWord),
+                                                mediaStatusEq(MediaStatus.COMPLETED))
                                 .orderBy(media.createdDate.desc())
                                 .offset(pageable.getOffset())
                                 .limit(pageable.getPageSize())
@@ -65,7 +67,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .from(media)
                                 .where(
                                                 mediaTypeEq(mediaType),
-                                                titleContains(searchWord));
+                                                titleContains(searchWord),
+                                                mediaStatusEq(MediaStatus.COMPLETED));
 
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
         }
@@ -78,7 +81,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .where(
                                                 mediaTypeEq(mediaType),
                                                 titleContains(searchWord),
-                                                publicStatusEq(publicStatus))
+                                                publicStatusEq(publicStatus),
+                                                mediaStatusEq(MediaStatus.COMPLETED))
                                 .orderBy(media.createdDate.desc())
                                 .offset(pageable.getOffset())
                                 .limit(pageable.getPageSize())
@@ -90,7 +94,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .where(
                                                 mediaTypeEq(mediaType),
                                                 titleContains(searchWord),
-                                                publicStatusEq(publicStatus));
+                                                publicStatusEq(publicStatus),
+                                                mediaStatusEq(MediaStatus.COMPLETED));
 
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
         }
@@ -104,7 +109,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                                 mediaTypeEq(mediaType),
                                                 titleContains(searchWord),
                                                 publicStatusEq(publicStatus),
-                                                uploaderIdEq(uploaderId))
+                                                uploaderIdEq(uploaderId),
+                                                mediaStatusEq(MediaStatus.COMPLETED))
                                 .orderBy(media.createdDate.desc())
                                 .offset(pageable.getOffset())
                                 .limit(pageable.getPageSize())
@@ -117,7 +123,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                                 mediaTypeEq(mediaType),
                                                 titleContains(searchWord),
                                                 publicStatusEq(publicStatus),
-                                                uploaderIdEq(uploaderId));
+                                                uploaderIdEq(uploaderId),
+                                                mediaStatusEq(MediaStatus.COMPLETED));
 
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
         }
@@ -137,7 +144,8 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 .selectFrom(media)
                                 .where(
                                                 condition,
-                                                titleContains(searchWord))
+                                                titleContains(searchWord),
+                                                mediaStatusEq(MediaStatus.COMPLETED))
                                 .orderBy(media.createdDate.desc())
                                 .offset(pageable.getOffset())
                                 .limit(pageable.getPageSize())
@@ -146,7 +154,10 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 JPAQuery<Long> countQuery = queryFactory
                                 .select(media.count())
                                 .from(media)
-                                .where(condition, titleContains(searchWord));
+                                .where(
+                                                condition,
+                                                titleContains(searchWord),
+                                                mediaStatusEq(MediaStatus.COMPLETED));
 
                 return PageableExecutionUtils.getPage(mediaList, pageable, countQuery::fetchOne);
         }
@@ -165,6 +176,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                 media.status.eq(Status.ACTIVE),
                                 media.publicStatus.eq(PublicStatus.PUBLIC),
                                 mediaTag.tag.id.eq(tagId),
+                                mediaStatusEq(MediaStatus.COMPLETED),
                                 excludeMediaId != null ? media.id.ne(excludeMediaId) : null)
                         .orderBy(media.id.desc())
                         .limit(limit)
@@ -194,6 +206,7 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                         .where(
                                 media.status.eq(ACTIVE),
                                 media.publicStatus.eq(PUBLIC),
+                                mediaStatusEq(MediaStatus.COMPLETED),
                                 // 시리즈 자체 OR 단편 콘텐츠 (시리즈 에피소드 제외)
                                 media.mediaType.eq(SERIES)
                                         .or(media.mediaType.eq(CONTENTS).and(contents.id.isNotNull()))
@@ -495,9 +508,10 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
         }
 
         private BooleanExpression isActiveAndPublic() {
-                // Status.ACTIVE와 PublicStatus.PUBLIC 조건을 결합
+                // Status.ACTIVE와 PublicStatus.PUBLIC 조건을 결합 + Status.COMPLETED
                 return media.status.eq(Status.ACTIVE)
-                                .and(media.publicStatus.eq(PublicStatus.PUBLIC));
+                                .and(media.publicStatus.eq(PublicStatus.PUBLIC)
+                                        .and(media.mediaStatus.eq(MediaStatus.COMPLETED)));
         }
 
         private BooleanExpression excludeId(Long excludeMediaId) {
@@ -514,4 +528,10 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                                                 .and(contents.series.isNotNull()))
                                         .notExists()));
        }
+
+        private BooleanExpression mediaStatusEq(MediaStatus mediaStatus) {
+                if (mediaStatus != null)
+                        return media.mediaStatus.eq(mediaStatus);
+                return null;
+        }
 }

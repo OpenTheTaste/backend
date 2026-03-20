@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.ott.domain.media.domain.MediaStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,21 +17,17 @@ import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.common.web.response.PageInfo;
 import com.ott.common.web.response.PageResponse;
-import com.ott.domain.bookmark.domain.Bookmark;
 import com.ott.domain.bookmark.repository.BookmarkRepository;
 import com.ott.domain.category.repository.CategoryRepository;
 import com.ott.domain.common.PublicStatus;
 import com.ott.domain.common.Status;
 import com.ott.domain.contents.domain.Contents;
 import com.ott.domain.contents.repository.ContentsRepository;
-import com.ott.domain.likes.domain.Likes;
 import com.ott.domain.likes.repository.LikesRepository;
-import com.ott.domain.playback.domain.Playback;
 import com.ott.domain.playback.repository.PlaybackRepository;
 import com.ott.domain.series.domain.Series;
 import com.ott.domain.series.repository.SeriesRepository;
 import com.ott.domain.tag.repository.TagRepository;
-import com.ott.domain.watch_history.domain.WatchHistory;
 import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -82,7 +79,7 @@ public class SeriesService {
 
                
                 Page<Contents> contentsPage = contentsRepository
-                                .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(targetSeriesId, Status.ACTIVE, PublicStatus.PUBLIC, pageable);               
+                                .findBySeriesIdAndStatusAndMedia_PublicStatusAndMedia_MediaStatusOrderByIdAsc(targetSeriesId, Status.ACTIVE, PublicStatus.PUBLIC, MediaStatus.COMPLETED, pageable);
                 
               
                 // 시리즈의 에피소드들의 mediaId 추출 
@@ -133,7 +130,7 @@ public class SeriesService {
         private Long getFirstEpisodeMediaId(Long seriesId) {
                 Pageable limitOne = PageRequest.of(0, 1);
                 Page<Contents> firstContentPage = contentsRepository
-                        .findBySeriesIdAndStatusAndMedia_PublicStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, limitOne);
+                        .findBySeriesIdAndStatusAndMedia_PublicStatusAndMedia_MediaStatusOrderByIdAsc(seriesId, Status.ACTIVE, PublicStatus.PUBLIC, MediaStatus.COMPLETED, limitOne);
 
                 if (firstContentPage.isEmpty()) {
                         throw new BusinessException(ErrorCode.EPISODE_NOT_REGISTERED);} // 1화조차 없는 경우 
