@@ -337,33 +337,35 @@ curl http://localhost:8000/health           # machine (AI)
 <summary>📚 Wiki 목차 보기</summary>
 
 ### 1. 🎥 영상 처리
-* [🎥 트랜스코딩 구조](🎥-트랜스코딩-구조)
-* [🎥 트랜스코딩 프로세스](🎥-트랜스코딩-프로세스)
-* [🎥 트랜스코딩 상태 관리](🎥-트랜스코딩-상태-관리)
-* [🎥 트랜스코딩 예외 처리](🎥-트랜스코딩-예외-처리)
-* [🎥 영상 업로드](🎥-영상-업로드)
+* [🎥 트랜스코딩 구조](https://github.com/OpenTheTaste/backend/wiki/🎥-트랜스코딩-구조)
+* [🎥 트랜스코딩 프로세스](https://github.com/OpenTheTaste/backend/wiki/🎥-트랜스코딩-프로세스)
+* [🎥 트랜스코딩 상태 관리](https://github.com/OpenTheTaste/backend/wiki/🎥-트랜스코딩-상태-관리)
+* [🎥 트랜스코딩 예외 처리](https://github.com/OpenTheTaste/backend/wiki/🎥-트랜스코딩-예외-처리)
+* [🎥 영상 업로드](https://github.com/OpenTheTaste/backend/wiki/🎥-영상-업로드)
 
 ### 2. 💾 데이터베이스
-* [💾 데이터베이스 모델](💾-데이터베이스-모델)
+* [💾 데이터베이스 모델](https://github.com/OpenTheTaste/backend/wiki/💾-데이터베이스-모델)
 
 ### 3. ☁️ 인프라 및 아키텍처
-* [☁️ 인프라 구조](☁️-인프라-구조)
-* [☁️ CDN 구성](☁️-CDN-구성)
-* [☁️ 트랜스코딩 서버 구성](☁️-트랜스코딩-서버-구성)
-* [☁️ S3 관리 전략](☁️-S3-관리-전략)
-* [📂 멀티모듈 & 소프트웨어 아키텍처](📂-멀티모듈-&-소프트웨어-아키텍처)
+* [☁️ 인프라 구조](https://github.com/OpenTheTaste/backend/wiki/☁️-인프라-구조)
+* [☁️ CDN 구성](https://github.com/OpenTheTaste/backend/wiki/☁️-CDN-구성)
+* [☁️ 트랜스코딩 서버 구성](https://github.com/OpenTheTaste/backend/wiki/☁️-트랜스코딩-서버-구성)
+* [☁️ S3 관리 전략](https://github.com/OpenTheTaste/backend/wiki/☁️-S3-관리-전략)
+* [📂 멀티모듈 & 소프트웨어 아키텍처](https://github.com/OpenTheTaste/backend/wiki/📂-멀티모듈-&-소프트웨어-아키텍처)
 
 ### 4. 💡 기술 도입 및 상세
-* [🐇 RabbitMQ 사용 이유](🐇-RabbitMQ-사용-이유)
-* [🔥 소셜 로그인 & JWT 도입 이유](🔥-소셜-로그인-&-JWT-도입-이유)
-* [🚨 아웃박스 스케줄러 다중 서버 중복 실행 방지](🚨-아웃박스-스케줄러-다중-서버-중복...)
-* [🪄 사용자 커스텀 추천 (feat. 레이더 차트)](🪄-사용자-커스텀-추천-(feat.-레이더-차...))
-* [🎯 플레이리스트 전략 패턴](🎯-플레이리스트-전략-패턴)
-* [📱 숏폼 피드 알고리즘](📱-숏폼-피드-알고리즘)
-* [🤖 AI 태깅 & 분위기 환기 시스템](🤖-AI-태깅-&-분위기-환기-시스템)
+* [🐇 RabbitMQ 사용 이유](https://github.com/OpenTheTaste/backend/wiki/🐇-RabbitMQ-사용-이유)
+* [🔥 소셜 로그인 & JWT 도입 이유](https://github.com/OpenTheTaste/backend/wiki/🔥-소셜-로그인-&-JWT-도입-이유)
+* [🚨 아웃박스 스케줄러 다중 서버 중복 실행 방지](https://github.com/OpenTheTaste/backend/wiki/🚨-아웃박스-스케줄러-다중-서버-중복-실행-방지)
+* [🪄 사용자 커스텀 추천 (feat. 레이더 차트)](https://github.com/OpenTheTaste/backend/wiki/🪄-사용자-커스텀-추천-(feat.-레이더-차트))
+* [🎯 플레이리스트 전략 패턴](https://github.com/OpenTheTaste/backend/wiki/🎯-플레이리스트-전략-패턴)
+* [📱 숏폼 피드 알고리즘](https://github.com/OpenTheTaste/backend/wiki/📱-숏폼-피드-알고리즘)
+* [🤖 AI 태깅 & 분위기 환기 시스템](https://github.com/OpenTheTaste/backend/wiki/🤖-AI-태깅-&-분위기-환기-시스템)
 
 ### 5. 🧪 성능 테스트
-* [🧪 k6 부하 테스트 — 플레이리스트 API](🧪-k6-부하-테스트)
+* [🧪 k6 부하 테스트 — 플레이리스트 API](https://github.com/OpenTheTaste/backend/wiki/🧪-k6-부하-테스트)
+
+</details>
 
 </details>
 
