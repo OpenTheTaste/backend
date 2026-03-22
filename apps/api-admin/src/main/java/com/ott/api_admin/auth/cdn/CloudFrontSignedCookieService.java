@@ -68,9 +68,13 @@ public class CloudFrontSignedCookieService {
                 throw new BusinessException(ErrorCode.CLOUDFRONT_POLICY_SIGN_FAILED);
             }
 
-            cookieUtil.addCookie(response, POLICY_COOKIE, cloudFrontBase64(policy.getBytes(StandardCharsets.UTF_8)), ttlMillis);
-            cookieUtil.addCookie(response, SIGNATURE_COOKIE, cloudFrontBase64(signatureBytes), ttlMillis);
-            cookieUtil.addCookie(response, KEY_PAIR_ID_COOKIE, keyPairId, ttlMillis);
+            // 로컬 테스트 시 아래껄로 변경!!!
+            cookieUtil.addCookie(response, POLICY_COOKIE, cloudFrontBase64(policy.getBytes(StandardCharsets.UTF_8)), ttlMillis, "openthetaste.cloud");
+            cookieUtil.addCookie(response, SIGNATURE_COOKIE, cloudFrontBase64(signatureBytes), ttlMillis, "openthetaste.cloud");
+            cookieUtil.addCookie(response, KEY_PAIR_ID_COOKIE, keyPairId, ttlMillis, "openthetaste.cloud");
+//            cookieUtil.addCookie(response, POLICY_COOKIE, cloudFrontBase64(policy.getBytes(StandardCharsets.UTF_8)), ttlMillis);
+//            cookieUtil.addCookie(response, SIGNATURE_COOKIE, cloudFrontBase64(signatureBytes), ttlMillis);
+//            cookieUtil.addCookie(response, KEY_PAIR_ID_COOKIE, keyPairId, ttlMillis);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
@@ -79,9 +83,13 @@ public class CloudFrontSignedCookieService {
     }
 
     public void clearSignedCookies(HttpServletResponse response) {
-        cookieUtil.deleteCookie(response, POLICY_COOKIE);
-        cookieUtil.deleteCookie(response, SIGNATURE_COOKIE);
-        cookieUtil.deleteCookie(response, KEY_PAIR_ID_COOKIE);
+        // 로컬 테스트 시 아래껄로 변경!!!
+        cookieUtil.deleteCookie(response, POLICY_COOKIE, "openthetaste.cloud");
+        cookieUtil.deleteCookie(response, SIGNATURE_COOKIE, "openthetaste.cloud");
+        cookieUtil.deleteCookie(response, KEY_PAIR_ID_COOKIE, "openthetaste.cloud");
+//        cookieUtil.deleteCookie(response, POLICY_COOKIE);
+//        cookieUtil.deleteCookie(response, SIGNATURE_COOKIE);
+//        cookieUtil.deleteCookie(response, KEY_PAIR_ID_COOKIE);
     }
 
     private String buildPolicy(String resource, long expireEpoch) {
