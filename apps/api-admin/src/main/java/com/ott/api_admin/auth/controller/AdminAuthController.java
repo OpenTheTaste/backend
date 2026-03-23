@@ -46,6 +46,10 @@ public class AdminAuthController implements AdminAuthApi {
 
         AdminLoginResponse loginResponse = adminAuthService.login(request);
 
+        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
+        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+
         // 둘 다 쿠키로
         cookie.addCookie(response, "accessToken", loginResponse.getAccessToken(), accessTokenExpiry);
         cookie.addCookie(response, "refreshToken", loginResponse.getRefreshToken(), refreshTokenExpiry);
@@ -68,6 +72,10 @@ public class AdminAuthController implements AdminAuthApi {
 
         AdminTokenResponse tokenResponse = adminAuthService.reissue(refreshToken);
 
+        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
+        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+
         cookie.addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
         cookie.addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
         cloudFrontSignedCookieService.addSignedCookies(response);
@@ -83,6 +91,10 @@ public class AdminAuthController implements AdminAuthApi {
 
         Long memberId = (Long) authentication.getPrincipal();
         adminAuthService.logout(memberId);
+
+        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
+        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
 
         cookie.deleteCookie(response, "accessToken");
         cookie.deleteCookie(response, "refreshToken");

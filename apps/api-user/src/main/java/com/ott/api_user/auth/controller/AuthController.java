@@ -46,7 +46,10 @@ public class AuthController implements AuthApi {
         // access + refresh 재발급 -> 보안성 측면
         TokenResponse tokenResponse = authService.reissue(refreshToken);
 
-        // 쿠키에 저장
+        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
+        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+
         cookieUtil.addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
         cookieUtil.addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
         cloudFrontSignedCookieService.addSignedCookies(response);
@@ -67,6 +70,11 @@ public class AuthController implements AuthApi {
         Long memberId = (Long) authentication.getPrincipal();
         authService.logout(memberId);
 
+        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
+        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+
+        // 쿠키 삭제
         cookieUtil.deleteCookie(response, "accessToken");
         cookieUtil.deleteCookie(response, "refreshToken");
         cloudFrontSignedCookieService.clearSignedCookies(response);

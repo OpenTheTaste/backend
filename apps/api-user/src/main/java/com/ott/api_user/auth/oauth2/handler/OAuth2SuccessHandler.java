@@ -70,7 +70,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         kakaoAuthService.saveRefreshToken(memberId, refreshToken);
 
-        // 쿠키로 저장
+        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
+        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+
+        // 새 호스트 쿠키 발급
         cookieUtil.addCookie(response, "accessToken", accessToken, accessTokenExpiry);
         cookieUtil.addCookie(response, "refreshToken", refreshToken, refreshTokenExpiry);
         cloudFrontSignedCookieService.addSignedCookies(response);
