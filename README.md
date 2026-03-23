@@ -326,7 +326,8 @@ curl http://localhost:8000/health           # machine (AI)
   덕분에 놓치기 쉬운 부분도 꼼꼼하게 잡을 수 있었습니다.
   
 - **Jira 연동:** 브랜치명과 커밋에 이슈 번호 포함 (`feature/OT-123-기능명`)
-  ![지라기록](https://github.com/user-attachments/assets/6fb0ca27-f122-441c-8889-1a95139b8948)
+  ![지라기록](https://github.com/user-attachments/assets/2aa90141-44cc-4a90-a27a-63b8b7c2b7cf)
+
 
 
 - 자세한 코드 리뷰 가이드는 `coderabbit/coderabbit-guidelines.md` 참고
