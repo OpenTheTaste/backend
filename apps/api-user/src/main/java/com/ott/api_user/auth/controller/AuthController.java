@@ -32,13 +32,19 @@ public class AuthController implements AuthApi {
     @Value("${jwt.refresh-token-expiry}")
     private int refreshTokenExpiry;
 
+    @Value("${app.auth.cookie.access-name:userAccessToken}")
+    private String accessCookieName;
+
+    @Value("${app.auth.cookie.refresh-name:userRefreshToken}")
+    private String refreshCookieName;
+
     // Access Token 재발급
     @PostMapping("reissue")
     public ResponseEntity<Void> reissue(
             HttpServletRequest request,
             HttpServletResponse response) {
 
-        String refreshToken = extractCookie(request, "refreshToken");
+        String refreshToken = extractCookie(request, refreshCookieName);
         if (refreshToken == null) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
@@ -47,11 +53,11 @@ public class AuthController implements AuthApi {
         TokenResponse tokenResponse = authService.reissue(refreshToken);
 
         // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
-        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
-        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+//        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
+//        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
 
-        cookieUtil.addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
-        cookieUtil.addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
+        cookieUtil.addCookie(response, accessCookieName, tokenResponse.getAccessToken(), accessTokenExpiry);
+        cookieUtil.addCookie(response, refreshCookieName, tokenResponse.getRefreshToken(), refreshTokenExpiry);
         cloudFrontSignedCookieService.addSignedCookies(response);
 
         return ResponseEntity.noContent().build();
@@ -70,13 +76,13 @@ public class AuthController implements AuthApi {
         Long memberId = (Long) authentication.getPrincipal();
         authService.logout(memberId);
 
-        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
-        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
-        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+//        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+//        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
+//        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
 
         // 쿠키 삭제
-        cookieUtil.deleteCookie(response, "accessToken");
-        cookieUtil.deleteCookie(response, "refreshToken");
+        cookieUtil.deleteCookie(response, accessCookieName);
+        cookieUtil.deleteCookie(response, refreshCookieName);
         cloudFrontSignedCookieService.clearSignedCookies(response);
 
         return ResponseEntity.noContent().build();

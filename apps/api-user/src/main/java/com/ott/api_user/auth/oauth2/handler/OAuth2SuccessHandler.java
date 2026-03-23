@@ -45,6 +45,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Value("${jwt.refresh-token-expiry}")
     private int refreshTokenExpiry;
 
+    @Value("${app.auth.cookie.access-name:userAccessToken}")
+    private String accessCookieName;
+
+    @Value("${app.auth.cookie.refresh-name:userRefreshToken}")
+    private String refreshCookieName;
+
     // Oauth2 로그인 성공 시 해당 메소드를 스프링 스큐리티가 자동 호출
     // 이 시점에서 authenication에 로그인된 사용자 정보가 저장 user-info
     @Override
@@ -70,13 +76,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         kakaoAuthService.saveRefreshToken(memberId, refreshToken);
 
-        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
-        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
-        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+//        // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
+//        cookieUtil.deleteCookie(response, "accessToken", "openthetaste.cloud");
+//        cookieUtil.deleteCookie(response, "refreshToken", "openthetaste.cloud");
 
         // 새 호스트 쿠키 발급
-        cookieUtil.addCookie(response, "accessToken", accessToken, accessTokenExpiry);
-        cookieUtil.addCookie(response, "refreshToken", refreshToken, refreshTokenExpiry);
+        cookieUtil.addCookie(response, accessCookieName, accessToken, accessTokenExpiry);
+        cookieUtil.addCookie(response, refreshCookieName, refreshToken, refreshTokenExpiry);
         cloudFrontSignedCookieService.addSignedCookies(response);
 
         // 리다이렉트에는 isNewMember에 따라서 경로 변경
