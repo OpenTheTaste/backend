@@ -19,6 +19,15 @@
 
 ## 🛠️ 2. 기술 스택
 
+![Java](https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_3-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL_8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)
+
+
+
 | 분류 | 기술 |
 |------|------|
 | Backend | Java 21, Spring Boot 3.x, Spring Data JPA, QueryDSL, FastAPI (Python) |
@@ -318,17 +327,27 @@ curl http://localhost:8000/health           # machine (AI)
 - **브랜치 전략:** `main` / `develop` / `feature/{이슈번호}-{기능명}`
 - **커밋 컨벤션:** `feat:` / `fix:` / `refactor:` / `docs:` / `chore:` prefix 사용
 - **PR 규칙:** 최소 1인 이상 승인 후 머지, PR 템플릿 준수
-  ![깃PR기록](https://github.com/user-attachments/assets/c78f0e8a-ad17-4104-a5e8-06516549d7ba)
-
   PR은 최소 1인 이상의 승인이 있어야 머지할 수 있도록 규칙을 정했습니다. 코드리뷰는 CodeRabbit을 도입해서 AI가 1차로 리뷰하고, 팀원이 2차로 확인하는 방식으로 진행했습니다.
-  ![](https://github.com/user-attachments/assets/acfad68f-56c5-4329-a19a-aa52c69b9fc8)
-  
   덕분에 놓치기 쉬운 부분도 꼼꼼하게 잡을 수 있었습니다.
   
 - **Jira 연동:** 브랜치명과 커밋에 이슈 번호 포함 (`feature/OT-123-기능명`)
-  ![지라기록](https://github.com/user-attachments/assets/2aa90141-44cc-4a90-a27a-63b8b7c2b7cf)
 
+<div align="center">
 
+**PR 기록**  
+<img src="https://github.com/user-attachments/assets/c78f0e8a-ad17-4104-a5e8-06516549d7ba" width="600"/>
+
+<br/>
+
+**코드 리뷰 (CodeRabbit)**  
+<img src="https://github.com/user-attachments/assets/acfad68f-56c5-4329-a19a-aa52c69b9fc8" width="600"/>
+
+<br/>
+
+**Jira 기록**  
+<img src="https://github.com/user-attachments/assets/2aa90141-44cc-4a90-a27a-63b8b7c2b7cf" width="600"/>
+
+</div>
 
 - 자세한 코드 리뷰 가이드는 `coderabbit/coderabbit-guidelines.md` 참고
 
