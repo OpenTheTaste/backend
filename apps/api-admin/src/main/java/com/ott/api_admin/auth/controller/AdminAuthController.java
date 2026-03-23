@@ -38,6 +38,12 @@ public class AdminAuthController implements AdminAuthApi {
     @Value("${jwt.refresh-token-expiry}")
     private int refreshTokenExpiry;
 
+    @Value("${app.auth.cookie.access-name:adminAccessToken}")
+    private String accessCookieName;
+
+    @Value("${app.auth.cookie.refresh-name:adminRefreshToken}")
+    private String refreshCookieName;
+
     @Override
     @PostMapping("/login")
     public ResponseEntity<SuccessResponse<AdminLoginResponse>> login(
@@ -47,12 +53,12 @@ public class AdminAuthController implements AdminAuthApi {
         AdminLoginResponse loginResponse = adminAuthService.login(request);
 
         // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
-        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
-        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+//        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
+//        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
 
         // 둘 다 쿠키로
-        cookie.addCookie(response, "accessToken", loginResponse.getAccessToken(), accessTokenExpiry);
-        cookie.addCookie(response, "refreshToken", loginResponse.getRefreshToken(), refreshTokenExpiry);
+        cookie.addCookie(response, accessCookieName, loginResponse.getAccessToken(), accessTokenExpiry);
+        cookie.addCookie(response, refreshCookieName, loginResponse.getRefreshToken(), refreshTokenExpiry);
         cloudFrontSignedCookieService.addSignedCookies(response);
 
         // Body에는 memberId, role만 (토큰은 @JsonIgnore)
@@ -65,7 +71,7 @@ public class AdminAuthController implements AdminAuthApi {
             HttpServletRequest request,
             HttpServletResponse response) {
 
-        String refreshToken = extractCookie(request, "refreshToken");
+        String refreshToken = extractCookie(request, refreshCookieName);
         if (refreshToken == null) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
@@ -73,11 +79,11 @@ public class AdminAuthController implements AdminAuthApi {
         AdminTokenResponse tokenResponse = adminAuthService.reissue(refreshToken);
 
         // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
-        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
-        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+//        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
+//        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
 
-        cookie.addCookie(response, "accessToken", tokenResponse.getAccessToken(), accessTokenExpiry);
-        cookie.addCookie(response, "refreshToken", tokenResponse.getRefreshToken(), refreshTokenExpiry);
+        cookie.addCookie(response, accessCookieName, tokenResponse.getAccessToken(), accessTokenExpiry);
+        cookie.addCookie(response, refreshCookieName, tokenResponse.getRefreshToken(), refreshTokenExpiry);
         cloudFrontSignedCookieService.addSignedCookies(response);
 
         return ResponseEntity.noContent().build();
@@ -93,11 +99,11 @@ public class AdminAuthController implements AdminAuthApi {
         adminAuthService.logout(memberId);
 
         // TODO: 2026-04-06 이후 삭제 (레거시 공유 도메인 쿠키 마이그레이션 완료)
-        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
-        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
+//        cookie.deleteCookie(response, "accessToken", "openthetaste.cloud");
+//        cookie.deleteCookie(response, "refreshToken", "openthetaste.cloud");
 
-        cookie.deleteCookie(response, "accessToken");
-        cookie.deleteCookie(response, "refreshToken");
+        cookie.deleteCookie(response, accessCookieName);
+        cookie.deleteCookie(response, refreshCookieName);
         cloudFrontSignedCookieService.clearSignedCookies(response);
 
         return ResponseEntity.noContent().build();

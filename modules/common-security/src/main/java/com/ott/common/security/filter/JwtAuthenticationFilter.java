@@ -9,6 +9,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,9 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+
+    @Value("${app.auth.cookie.access-name:accessToken}")
+    private String accessCookieName;
 
     @Override
     protected void doFilterInternal(
@@ -84,7 +88,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 쿠키에서 accessToken 빼오기 시도
         if(request.getCookies() != null) {
             for(Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
+                if (accessCookieName.equals(cookie.getName())) {
                     return cookie.getValue();
                 }
             }

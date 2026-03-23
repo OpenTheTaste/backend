@@ -9,6 +9,7 @@ import com.ott.common.web.response.SuccessResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/member")
 @RequiredArgsConstructor
 public class MemberController implements MemberApi {
+
+    @Value("${app.auth.cookie.access-name:userAccessToken}")
+    private String accessCookieName;
+
+    @Value("${app.auth.cookie.refresh-name:userRefreshToken}")
+    private String refreshCookieName;
 
     private final MemberService memberService;
     private final CookieUtil cookie;
@@ -57,8 +64,8 @@ public class MemberController implements MemberApi {
             @AuthenticationPrincipal Long memberId) {
         memberService.withdraw(memberId);
 
-        cookie.deleteCookie(response, "accessToken");
-        cookie.deleteCookie(response, "refreshToken");
+        cookie.deleteCookie(response, accessCookieName);
+        cookie.deleteCookie(response, refreshCookieName);
 
         return ResponseEntity.noContent().build();
     }
