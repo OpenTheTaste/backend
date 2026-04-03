@@ -1,0 +1,75 @@
+app:
+  auth:
+    cookie:
+      access-name: adminAccessToken
+      refresh-name: adminRefreshToken
+
+server:
+  port: 8081
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/ott}
+    username: ${SPRING_DATASOURCE_USERNAME:ott}
+    password: ${SPRING_DATASOURCE_PASSWORD:ottpw}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+  # flyway 설정
+  flyway:
+    enabled: false
+
+  # JPA 설정
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    generate-ddl: false
+    hibernate:
+      ddl-auto: validate
+
+    #배포 할 때는 open-in-view false 설정
+    open-in-view: false
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET_BASE64}
+  access-token-expiry: 1800000     # 30분
+  refresh-token-expiry: 1209600000 # 14일
+
+springdoc:
+  api-docs:
+    version: OPENAPI_3_0
+    path: /back-office/v3/api-docs
+
+  swagger-ui:
+    path: /back-office/swagger-ui/index.html
+
+cloudfront:
+  signed-cookie:
+    resource-url: https://cdn.openthetaste.cloud/*
+    key-pair-id: ${CF_SIGNED_COOKIE_KEY_PAIR_ID}
+    private-key-base64: ${CF_SIGNED_COOKIE_PRIVATE_KEY_BASE64}
+    ttl-seconds: 2400000
+
+
+ai:
+  base-url: ${AI_BASE_URL:http://localhost:8000}
+  timeout-ms: 30000

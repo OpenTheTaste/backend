@@ -1,0 +1,474 @@
+name: Deploy Docker Apps To EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (default: commit SHA)"
+        required: false
+        type: string
+  pull_request:
+    types:
+      - closed
+
+env:
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  build-and-push:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop') }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: api-user
+            ecr_repo: oplust-api-user
+          - service: api-admin
+            ecr_repo: oplust-api-admin
+          - service: transcoder
+            ecr_repo: oplust-transcoder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Ensure ECR repository exists
+        run: |
+          aws ecr describe-repositories --repository-names "${{ matrix.ecr_repo }}" >/dev/null 2>&1 || \
+          aws ecr create-repository --repository-name "${{ matrix.ecr_repo }}" >/dev/null
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
+        run: |
+          IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
+          IMAGE_URI="${ECR_REGISTRY}/${{ matrix.ecr_repo }}:${IMAGE_TAG}"
+          IMAGE_URI_LATEST="${ECR_REGISTRY}/${{ matrix.ecr_repo }}:latest"
+
+          docker build \
+            -f "apps/${{ matrix.service }}/Dockerfile" \
+            -t "${IMAGE_URI}" \
+            -t "${IMAGE_URI_LATEST}" \
+            .
+
+          docker push "${IMAGE_URI}"
+          docker push "${IMAGE_URI_LATEST}"
+
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'develop') }}
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to EC2 instances via SSM
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
+          PROJECT_NAME: oplust
+          DB_NAME: oplust
+          SSM_RDS_ENDPOINT_PARAM: /oplust/common/rds-endpoint
+          SSM_DB_USERNAME_PARAM: /oplust/common/db-username
+          SSM_DB_PASSWORD_PARAM: /oplust/common/db-password
+          NODE_EXPORTER_TARGET_SSM_PARAM: /oplust/monitoring/targets/node-exporter
+          ECS_CLUSTER_NAME: fluffy-flamingo-5ag1uq
+          ECS_SERVICE_NAME: oplust-transcoder-service
+          TRANSCODER_REPOSITORY: oplust-transcoder
+          TRANSCODER_CONTAINER_NAME: oplust-transcoder
+          SCALER_LAMBDA_NAME: oplust-transcoder-scaler
+        run: |
+          set -euo pipefail
+
+          IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
+
+          MONITORING_PRIVATE_IP=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --filters "Name=tag:Name,Values=${PROJECT_NAME}-monitoring-ec2" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].PrivateIpAddress" \
+            --output text)
+
+          if [ -z "$MONITORING_PRIVATE_IP" ] || [ "$MONITORING_PRIVATE_IP" = "None" ]; then
+            echo "No running monitoring instance found for tag: ${PROJECT_NAME}-monitoring-ec2" >&2
+            exit 1
+          fi
+
+          deploy_service() {
+            local target_tag="$1"
+            local image_uri="$2"
+            local container_name="$3"
+            local env_file="$4"
+            local port="$5"
+            local service_env_param="$6"
+            local promtail_role="$7"
+
+            local instance_id
+            instance_id=$(aws ec2 describe-instances \
+              --region "$AWS_REGION" \
+              --filters "Name=tag:Name,Values=${target_tag}" "Name=instance-state-name,Values=running" \
+              --query "Reservations[0].Instances[0].InstanceId" \
+              --output text)
+
+            if [ -z "$instance_id" ] || [ "$instance_id" = "None" ]; then
+              echo "No running instance found for tag: ${target_tag}" >&2
+              exit 1
+            fi
+
+            local private_ip
+            private_ip=$(aws ec2 describe-instances \
+              --region "$AWS_REGION" \
+              --instance-ids "$instance_id" \
+              --query "Reservations[0].Instances[0].PrivateIpAddress" \
+              --output text)
+
+            if [ "$promtail_role" = "user-api" ]; then
+              if [ -n "$private_ip" ] && [ "$private_ip" != "None" ]; then
+                aws ssm put-parameter \
+                  --region "$AWS_REGION" \
+                  --name "$NODE_EXPORTER_TARGET_SSM_PARAM" \
+                  --type String \
+                  --overwrite \
+                  --value "${private_ip}:9100" >/dev/null
+              else
+                echo "::warning::user-api private IP is missing. NODE_EXPORTER_TARGET SSM parameter was not updated."
+              fi
+            fi
+
+            local run_cmd
+            if [ -n "$port" ]; then
+              run_cmd="sudo docker run -d --name ${container_name} --restart unless-stopped -p ${port}:${port} --env-file ${env_file} ${image_uri}"
+            else
+              run_cmd="sudo docker run -d --name ${container_name} --restart unless-stopped --env-file ${env_file} ${image_uri}"
+            fi
+
+            local promtail_config_b64
+            promtail_config_b64=$(printf '%s\n' \
+              'server:' \
+              '  http_listen_port: 9080' \
+              '  grpc_listen_port: 0' \
+              '' \
+              'positions:' \
+              '  filename: /tmp/positions.yaml' \
+              '' \
+              'clients:' \
+              "  - url: http://${MONITORING_PRIVATE_IP}:3100/loki/api/v1/push" \
+              '' \
+              'scrape_configs:' \
+              '  - job_name: docker' \
+              '    static_configs:' \
+              '      - targets: [localhost]' \
+              '        labels:' \
+              '          job: docker' \
+              "          role: ${promtail_role}" \
+              '          __path__: /var/lib/docker/containers/*/*-json.log' \
+              '    pipeline_stages:' \
+              '      - docker: {}' \
+              | base64 | tr -d '\n')
+
+            local params_file
+            params_file=$(mktemp)
+            commands=(
+              "set -e"
+              "sudo mkdir -p /etc/oplust"
+              "DB_HOST=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_RDS_ENDPOINT_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
+              "DB_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_USERNAME_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
+              "DB_PASS=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_PASSWORD_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
+              "SERVICE_ENV=\$(aws ssm get-parameter --region $AWS_REGION --name '${service_env_param}' --with-decryption --query 'Parameter.Value' --output text)"
+              "echo \"SPRING_DATASOURCE_URL=jdbc:mysql://\$DB_HOST:3306/${DB_NAME}\" | sudo tee ${env_file} >/dev/null"
+              "echo \"SPRING_DATASOURCE_USERNAME=\$DB_USER\" | sudo tee -a ${env_file} >/dev/null"
+              "echo \"SPRING_DATASOURCE_PASSWORD=\$DB_PASS\" | sudo tee -a ${env_file} >/dev/null"
+              "printf '%s\n' \"\$SERVICE_ENV\" | sudo tee -a ${env_file} >/dev/null"
+              "sudo chmod 600 ${env_file}"
+              "aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY"
+              "sudo docker pull ${image_uri}"
+              "sudo docker rm -f ${container_name} || true"
+              "${run_cmd}"
+              "sudo docker rm -f node-exporter || true"
+              "sudo docker pull quay.io/prometheus/node-exporter:v1.8.2"
+              "sudo docker run -d --name node-exporter --restart unless-stopped --net host --pid host -v /:/host:ro,rslave quay.io/prometheus/node-exporter:v1.8.2 --path.rootfs=/host"
+              "sudo mkdir -p /opt/oplust-promtail /opt/oplust-promtail/positions"
+              "echo '${promtail_config_b64}' | base64 -d | sudo tee /opt/oplust-promtail/promtail.yml >/dev/null"
+              "sudo docker rm -f promtail || true"
+              "sudo docker run -d --name promtail --restart unless-stopped -v /opt/oplust-promtail/promtail.yml:/etc/promtail/config.yml:ro -v /opt/oplust-promtail/positions:/tmp -v /var/lib/docker/containers:/var/lib/docker/containers:ro grafana/promtail:2.9.8 -config.file=/etc/promtail/config.yml"
+            )
+            printf '%s\n' "${commands[@]}" | jq -R . | jq -s '{commands: .}' > "$params_file"
+
+            local cmd_id
+            cmd_id=$(aws ssm send-command \
+              --region "$AWS_REGION" \
+              --instance-ids "$instance_id" \
+              --document-name "AWS-RunShellScript" \
+              --comment "Deploy ${container_name}:${IMAGE_TAG}" \
+              --parameters "file://${params_file}" \
+              --query 'Command.CommandId' \
+              --output text)
+
+            rm -f "$params_file"
+
+            echo "[$container_name] command id: $cmd_id (instance: $instance_id)"
+
+            local status
+            for _ in $(seq 1 120); do
+              status=$(aws ssm get-command-invocation \
+                --region "$AWS_REGION" \
+                --command-id "$cmd_id" \
+                --instance-id "$instance_id" \
+                --query 'Status' \
+                --output text 2>/dev/null || true)
+
+              case "$status" in
+                Success)
+                  echo "[$container_name] deployment success"
+                  return 0
+                  ;;
+                Failed|Cancelled|TimedOut)
+                  echo "[$container_name] deployment failed with status: $status" >&2
+                  aws ssm get-command-invocation --region "$AWS_REGION" --command-id "$cmd_id" --instance-id "$instance_id" --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' --output json || true
+                  exit 1
+                  ;;
+                Pending|InProgress|Delayed|"")
+                  sleep 5
+                  ;;
+                *)
+                  echo "[$container_name] unexpected status: $status" >&2
+                  sleep 5
+                  ;;
+              esac
+            done
+
+            echo "[$container_name] deployment timed out waiting for SSM command completion" >&2
+            aws ssm get-command-invocation --region "$AWS_REGION" --command-id "$cmd_id" --instance-id "$instance_id" --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' --output json || true
+            exit 1
+          }
+
+          deploy_transcoder_ecs() {
+            local image_digest
+            image_digest=$(aws ecr describe-images \
+              --region "$AWS_REGION" \
+              --repository-name "$TRANSCODER_REPOSITORY" \
+              --image-ids imageTag="$IMAGE_TAG" \
+              --query 'imageDetails[0].imageDigest' \
+              --output text)
+
+            if [ -z "$image_digest" ] || [ "$image_digest" = "None" ]; then
+              echo "Failed to resolve image digest for ${TRANSCODER_REPOSITORY}:${IMAGE_TAG}" >&2
+              exit 1
+            fi
+
+            local immutable_image_uri
+            immutable_image_uri="${ECR_REGISTRY}/${TRANSCODER_REPOSITORY}@${image_digest}"
+            echo "[transcoder] deploying immutable image: ${immutable_image_uri}"
+
+            local current_task_def_arn
+            current_task_def_arn=$(aws ecs describe-services \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --services "$ECS_SERVICE_NAME" \
+              --query 'services[0].taskDefinition' \
+              --output text)
+
+            if [ -z "$current_task_def_arn" ] || [ "$current_task_def_arn" = "None" ]; then
+              echo "Could not resolve current task definition for service ${ECS_SERVICE_NAME}" >&2
+              exit 1
+            fi
+
+            local td_file
+            local new_td_file
+            td_file=$(mktemp)
+            new_td_file=$(mktemp)
+
+            aws ecs describe-task-definition \
+              --region "$AWS_REGION" \
+              --task-definition "$current_task_def_arn" \
+              --query 'taskDefinition' \
+              --output json > "$td_file"
+
+            local matched_container_count
+            matched_container_count=$(jq --arg CONTAINER "$TRANSCODER_CONTAINER_NAME" \
+              '[.containerDefinitions[] | select(.name == $CONTAINER)] | length' "$td_file")
+
+            if [ "$matched_container_count" -ne 1 ]; then
+              echo "Expected exactly one container named '${TRANSCODER_CONTAINER_NAME}', found: ${matched_container_count}" >&2
+              echo "Available container names:" >&2
+              jq -r '.containerDefinitions[].name' "$td_file" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            jq --arg IMAGE "$immutable_image_uri" --arg CONTAINER "$TRANSCODER_CONTAINER_NAME" '
+              del(
+                .taskDefinitionArn,
+                .revision,
+                .status,
+                .requiresAttributes,
+                .compatibilities,
+                .registeredAt,
+                .registeredBy,
+                .deregisteredAt
+              )
+              | .containerDefinitions |= map(
+                  if .name == $CONTAINER then .image = $IMAGE else . end
+                )
+            ' "$td_file" > "$new_td_file"
+
+            local rendered_image
+            rendered_image=$(jq -r --arg CONTAINER "$TRANSCODER_CONTAINER_NAME" \
+              '.containerDefinitions[] | select(.name == $CONTAINER) | .image' "$new_td_file")
+
+            if [ "$rendered_image" != "$immutable_image_uri" ]; then
+              echo "Task definition rendering failed. Expected image '${immutable_image_uri}', got '${rendered_image}'" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            local new_task_def_arn
+            new_task_def_arn=$(aws ecs register-task-definition \
+              --region "$AWS_REGION" \
+              --cli-input-json "file://${new_td_file}" \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+
+            if [ -z "$new_task_def_arn" ] || [ "$new_task_def_arn" = "None" ]; then
+              echo "Failed to register new transcoder task definition" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            local new_task_def_name
+            new_task_def_name=$(echo "$new_task_def_arn" | awk -F'/' '{print $2}')
+            echo "[transcoder] new task definition: ${new_task_def_name}"
+
+            aws ecs update-service \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --service "$ECS_SERVICE_NAME" \
+              --task-definition "$new_task_def_arn" \
+              --force-new-deployment >/dev/null
+
+            local service_desired_count
+            service_desired_count=$(aws ecs describe-services \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --services "$ECS_SERVICE_NAME" \
+              --query 'services[0].desiredCount' \
+              --output text)
+
+            if [ "${service_desired_count:-0}" -gt 0 ]; then
+              if ! aws ecs wait services-stable \
+                --region "$AWS_REGION" \
+                --cluster "$ECS_CLUSTER_NAME" \
+                --services "$ECS_SERVICE_NAME"; then
+                echo "[transcoder] service did not become stable after deployment" >&2
+                aws ecs describe-services \
+                  --region "$AWS_REGION" \
+                  --cluster "$ECS_CLUSTER_NAME" \
+                  --services "$ECS_SERVICE_NAME" \
+                  --query 'services[0].events[0:10].[createdAt,message]' \
+                  --output table || true
+                rm -f "$td_file" "$new_td_file"
+                exit 1
+              fi
+            fi
+
+            local applied_task_def_arn
+            applied_task_def_arn=$(aws ecs describe-services \
+              --region "$AWS_REGION" \
+              --cluster "$ECS_CLUSTER_NAME" \
+              --services "$ECS_SERVICE_NAME" \
+              --query 'services[0].taskDefinition' \
+              --output text)
+
+            if [ "$applied_task_def_arn" != "$new_task_def_arn" ]; then
+              echo "[transcoder] service task definition mismatch. expected '${new_task_def_arn}', got '${applied_task_def_arn}'" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            local current_lambda_vars
+            local lambda_config_json
+            if ! lambda_config_json=$(aws lambda get-function-configuration \
+              --region "$AWS_REGION" \
+              --function-name "$SCALER_LAMBDA_NAME" \
+              --output json); then
+              echo "[transcoder] failed to read scaler lambda configuration: ${SCALER_LAMBDA_NAME}" >&2
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+            current_lambda_vars=$(echo "$lambda_config_json" | jq -c '.Environment.Variables // {}')
+
+            local merged_lambda_vars
+            merged_lambda_vars=$(echo "$current_lambda_vars" | jq --arg TD "$new_task_def_name" '. + {ECS_TASK_DEFINITION: $TD}')
+
+            aws lambda update-function-configuration \
+              --region "$AWS_REGION" \
+              --function-name "$SCALER_LAMBDA_NAME" \
+              --environment "{\"Variables\":$(echo "$merged_lambda_vars" | jq -c .)}" >/dev/null
+
+            local lambda_update_status
+            lambda_update_status=""
+            for _ in $(seq 1 60); do
+              lambda_update_status=$(aws lambda get-function-configuration \
+                --region "$AWS_REGION" \
+                --function-name "$SCALER_LAMBDA_NAME" \
+                --query 'LastUpdateStatus' \
+                --output text 2>/dev/null || true)
+
+              case "$lambda_update_status" in
+                Successful)
+                  break
+                  ;;
+                Failed)
+                  echo "[transcoder] scaler lambda update failed" >&2
+                  aws lambda get-function-configuration \
+                    --region "$AWS_REGION" \
+                    --function-name "$SCALER_LAMBDA_NAME" \
+                    --query '{LastUpdateStatus:LastUpdateStatus,LastUpdateStatusReason:LastUpdateStatusReason}' \
+                    --output json || true
+                  rm -f "$td_file" "$new_td_file"
+                  exit 1
+                  ;;
+                InProgress|"")
+                  sleep 2
+                  ;;
+                *)
+                  sleep 2
+                  ;;
+              esac
+            done
+
+            if [ "$lambda_update_status" != "Successful" ]; then
+              echo "[transcoder] scaler lambda update did not reach Successful state (last status: ${lambda_update_status:-unknown})" >&2
+              aws lambda get-function-configuration \
+                --region "$AWS_REGION" \
+                --function-name "$SCALER_LAMBDA_NAME" \
+                --query '{LastUpdateStatus:LastUpdateStatus,LastUpdateStatusReason:LastUpdateStatusReason}' \
+                --output json || true
+              rm -f "$td_file" "$new_td_file"
+              exit 1
+            fi
+
+            echo "[transcoder] updated scaler lambda ${SCALER_LAMBDA_NAME} ECS_TASK_DEFINITION=${new_task_def_name}"
+
+            rm -f "$td_file" "$new_td_file"
+          }
+
+          deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/api-user/env" "user-api"
+          deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/api-admin/env" "admin-api"
+          deploy_transcoder_ecs

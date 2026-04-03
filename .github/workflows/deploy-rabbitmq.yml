@@ -1,0 +1,131 @@
+name: Deploy RabbitMQ
+
+on:
+  workflow_dispatch:
+    inputs:
+      rabbitmq_instance_tag:
+        description: "EC2 Name tag for RabbitMQ server"
+        required: true
+        default: "oplust-rabbitmq-ec2"
+        type: string
+      rabbitmq_image_tag:
+        description: "RabbitMQ image tag"
+        required: true
+        default: "3.13-management"
+        type: string
+      rabbitmq_user_ssm_param:
+        description: "SSM SecureString parameter for RabbitMQ default user"
+        required: true
+        default: "/oplust/rabbitmq/default-user"
+        type: string
+      rabbitmq_password_ssm_param:
+        description: "SSM SecureString parameter for RabbitMQ default password"
+        required: true
+        default: "/oplust/rabbitmq/default-password"
+        type: string
+      rabbitmq_vhost_ssm_param:
+        description: "SSM parameter for RabbitMQ default vhost"
+        required: true
+        default: "/oplust/rabbitmq/default-vhost"
+        type: string
+
+env:
+  AWS_REGION: ap-northeast-2
+  RABBITMQ_ROOT: /opt/oplust-rabbitmq
+  RABBITMQ_CONTAINER_NAME: oplust-rabbitmq
+  RABBITMQ_DATA_VOLUME: oplust-rabbitmq-data
+
+jobs:
+  deploy-rabbitmq:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy RabbitMQ via SSM
+        env:
+          INSTANCE_TAG: ${{ github.event.inputs.rabbitmq_instance_tag }}
+          RABBITMQ_IMAGE_TAG: ${{ github.event.inputs.rabbitmq_image_tag }}
+          RABBITMQ_USER_SSM_PARAM: ${{ github.event.inputs.rabbitmq_user_ssm_param }}
+          RABBITMQ_PASSWORD_SSM_PARAM: ${{ github.event.inputs.rabbitmq_password_ssm_param }}
+          RABBITMQ_VHOST_SSM_PARAM: ${{ github.event.inputs.rabbitmq_vhost_ssm_param }}
+        run: |
+          set -euo pipefail
+
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --region "$AWS_REGION" \
+            --filters "Name=tag:Name,Values=${INSTANCE_TAG}" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
+
+          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+            echo "No running RabbitMQ instance found for tag: $INSTANCE_TAG" >&2
+            exit 1
+          fi
+
+          PARAMS=$(jq -nc \
+            --arg c1 "set -euo pipefail" \
+            --arg c2 "sudo mkdir -p ${RABBITMQ_ROOT}" \
+            --arg c3 "RABBITMQ_DEFAULT_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '${RABBITMQ_USER_SSM_PARAM}' --with-decryption --query 'Parameter.Value' --output text)" \
+            --arg c4 "RABBITMQ_DEFAULT_PASS=\$(aws ssm get-parameter --region $AWS_REGION --name '${RABBITMQ_PASSWORD_SSM_PARAM}' --with-decryption --query 'Parameter.Value' --output text)" \
+            --arg c5 "RABBITMQ_DEFAULT_VHOST=\$(aws ssm get-parameter --region $AWS_REGION --name '${RABBITMQ_VHOST_SSM_PARAM}' --with-decryption --query 'Parameter.Value' --output text)" \
+            --arg c6 "if [ -z \\\"\$RABBITMQ_DEFAULT_USER\\\" ] || [ \\\"\$RABBITMQ_DEFAULT_USER\\\" = \\\"None\\\" ] || [ -z \\\"\$RABBITMQ_DEFAULT_PASS\\\" ] || [ \\\"\$RABBITMQ_DEFAULT_PASS\\\" = \\\"None\\\" ] || [ -z \\\"\$RABBITMQ_DEFAULT_VHOST\\\" ] || [ \\\"\$RABBITMQ_DEFAULT_VHOST\\\" = \\\"None\\\" ]; then echo 'RabbitMQ env values are empty from SSM' >&2; exit 1; fi" \
+            --arg c7 "printf '%s\n' \\\"RABBITMQ_DEFAULT_USER=\$RABBITMQ_DEFAULT_USER\\\" \\\"RABBITMQ_DEFAULT_PASS=\$RABBITMQ_DEFAULT_PASS\\\" \\\"RABBITMQ_DEFAULT_VHOST=\$RABBITMQ_DEFAULT_VHOST\\\" | sudo tee ${RABBITMQ_ROOT}/.env >/dev/null" \
+            --arg c8 "sudo chmod 600 ${RABBITMQ_ROOT}/.env" \
+            --arg c9 "sudo docker pull rabbitmq:${RABBITMQ_IMAGE_TAG}" \
+            --arg c10 "sudo docker rm -f ${RABBITMQ_CONTAINER_NAME} || true" \
+            --arg c11 "sudo docker volume create ${RABBITMQ_DATA_VOLUME} >/dev/null" \
+            --arg c12 "sudo docker run -d --name ${RABBITMQ_CONTAINER_NAME} --restart unless-stopped -p 5672:5672 -p 15672:15672 --env-file ${RABBITMQ_ROOT}/.env -v ${RABBITMQ_DATA_VOLUME}:/var/lib/rabbitmq rabbitmq:${RABBITMQ_IMAGE_TAG}" \
+            --arg c13 "for i in \$(seq 1 30); do if sudo docker exec ${RABBITMQ_CONTAINER_NAME} rabbitmq-diagnostics -q ping >/dev/null 2>&1; then echo 'RabbitMQ is healthy'; exit 0; fi; sleep 2; done; echo 'RabbitMQ health check failed' >&2; exit 1" \
+            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c7,$c8,$c9,$c10,$c11,$c12,$c13]}')
+
+          CMD_ID=$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy RabbitMQ" \
+            --parameters "$PARAMS" \
+            --query 'Command.CommandId' \
+            --output text)
+
+          echo "command_id=$CMD_ID instance_id=$INSTANCE_ID"
+
+          for _ in $(seq 1 120); do
+            STATUS=$(aws ssm get-command-invocation \
+              --region "$AWS_REGION" \
+              --command-id "$CMD_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query 'Status' \
+              --output text 2>/dev/null || true)
+
+            case "$STATUS" in
+              Success)
+                echo "RabbitMQ deployment success"
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut)
+                echo "RabbitMQ deployment failed: $STATUS" >&2
+                aws ssm get-command-invocation \
+                  --region "$AWS_REGION" \
+                  --command-id "$CMD_ID" \
+                  --instance-id "$INSTANCE_ID" \
+                  --query '{StdOut:StandardOutputContent,StdErr:StandardErrorContent}' \
+                  --output json || true
+                exit 1
+                ;;
+              Pending|InProgress|Delayed|"")
+                sleep 5
+                ;;
+              *)
+                sleep 5
+                ;;
+            esac
+          done
+
+          echo "RabbitMQ deployment timed out" >&2
+          exit 1

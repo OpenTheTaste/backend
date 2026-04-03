@@ -1,0 +1,78 @@
+server:
+  port: 8082
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/ott}
+    username: ${SPRING_DATASOURCE_USERNAME:ott}
+    password: ${SPRING_DATASOURCE_PASSWORD:ottpw}
+
+  # flyway 설정
+  flyway:
+    enabled: false
+
+  # JPA 설정
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    generate-ddl: false
+    hibernate:
+      ddl-auto: validate
+
+    #배포 할 때는 open-in-view false 설정
+    open-in-view: false
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+
+transcoder:
+  messaging:
+    provider: ${TRANSCODER_MESSAGING_PROVIDER}
+    rabbit:
+      consumer-timeout-ms: ${TRANSCODER_RABBIT_CONSUMER_TIMEOUT_MS:14400000}
+  worker:
+    scale-in-protection:
+      enabled: ${TRANSCODER_ASG_PROTECTION_ENABLED:false}
+      asg-name: ${TRANSCODER_ASG_NAME:}
+      instance-id: ${TRANSCODER_INSTANCE_ID:}
+  ffmpeg:
+    engine: ${TRANSCODER_FFMPEG_ENGINE}
+    path: ${FFMPEG_PATH}
+    temp-dir: ${TRANSCODER_TEMP_DIR}
+    segment-duration: ${TRANSCODER_SEGMENT_DURATION}
+  ffprobe:
+    engine: ${TRANSCODER_FFPROBE_ENGINE}
+    path: ${FFPROBE_PATH}
+  thumbnail:
+    brightness-threshold: ${TRANSCODER_THUMBNAIL_BRIGHTNESS_THRESHOLD:30}
+    height: ${TRANSCODER_THUMBNAIL_HEIGHT:720}
+    quality: ${TRANSCODER_THUMBNAIL_QUALITY:2}
+
+storage:
+  provider: ${STORAGE_PROVIDER}
+  local:
+    output-dir: ${STORAGE_OUTPUT_DIR}
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  s3:
+    public-base-url: ${AWS_S3_PUBLIC_BASE_URL:}  #https://cdn.openthetaste.cloud
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

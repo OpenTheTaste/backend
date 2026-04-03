@@ -1,0 +1,16 @@
+rootProject.name = 'backend'
+
+include(
+        // Apps
+        ":apps:api-user",
+        ":apps:api-admin",
+        ":apps:transcoder",
+
+        // Modules
+        ":modules:domain",
+        ":modules:infra-db",
+        ":modules:infra-mq",
+        ":modules:infra-s3",
+        ":modules:common-web",
+        ":modules:common-security"
+)

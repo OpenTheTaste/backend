@@ -1,0 +1,62 @@
+HELP.md
+.env
+.gradle
+.gradle-local/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+
+# Python cache
+__pycache__/
+*.pyc
+
+# ML artifacts
+apps/machine/models/
+
+
+### Node ###
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+
+modules/infra/src/main/resources/db/seed/
+
+private_docs/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+**/application-local.yml

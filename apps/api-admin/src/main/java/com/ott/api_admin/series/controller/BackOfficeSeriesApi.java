@@ -1,0 +1,143 @@
+package com.ott.api_admin.series.controller;
+
+import com.ott.api_admin.series.dto.request.SeriesUpdateRequest;
+import com.ott.api_admin.series.dto.request.SeriesUploadRequest;
+import com.ott.api_admin.series.dto.response.SeriesDetailResponse;
+import com.ott.api_admin.series.dto.response.SeriesListResponse;
+import com.ott.api_admin.series.dto.response.SeriesTitleListResponse;
+import com.ott.api_admin.series.dto.response.SeriesUpdateResponse;
+import com.ott.api_admin.series.dto.response.SeriesUploadResponse;
+import com.ott.common.web.exception.ErrorResponse;
+import com.ott.common.web.response.PageResponse;
+import com.ott.common.web.response.SuccessResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+@Tag(name = "BackOffice Series API", description = "[백오피스] 시리즈 관리 API")
+public interface BackOfficeSeriesApi {
+
+    @Operation(summary = "시리즈 목록 조회", description = "시리즈 목록을 페이징으로 조회합니다. - ADMIN 권한 필요.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "0", description = "조회 성공 - 페이징 dataList 구성",
+                    content = {@Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = SeriesListResponse.class)))}
+            ),
+            @ApiResponse(
+                    responseCode = "200", description = "시리즈 목록 조회 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "시리즈 목록 조회 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<PageResponse<SeriesListResponse>>> getSeries(
+            @Parameter(description = "조회할 페이지의 번호를 입력해주세요. **page는 0부터 시작합니다**", required = true) @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @Parameter(description = "한 페이지 당 최대 항목 개수를 입력해주세요. 기본값은 10입니다.", required = true) @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @Parameter(description = "제목 부분일치 검색어. 미입력 시 전체 목록을 조회합니다.", required = false) @RequestParam(value = "searchWord", required = false) String searchWord
+    );
+
+    @Operation(summary = "시리즈 제목 목록 조회 (콘텐츠 업로드 페이지)", description = "시리즈 목록을 페이징으로 조회합니다. - ADMIN 권한 필요.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "0", description = "조회 성공 - 페이징 dataList 구성",
+                    content = {@Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = SeriesTitleListResponse.class)))}
+            ),
+            @ApiResponse(
+                    responseCode = "200", description = "시리즈 제목 목록 조회 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = PageResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "시리즈 제목 목록 조회 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<PageResponse<SeriesTitleListResponse>>> getSeriesTitle(
+            @Parameter(description = "조회할 페이지의 번호를 입력해주세요. **page는 0부터 시작합니다**", required = true) @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @Parameter(description = "한 페이지 당 최대 항목 개수를 입력해주세요. 기본값은 10입니다.", required = true) @RequestParam(value = "size", defaultValue = "10") Integer size,
+            @Parameter(description = "제목 부분일치 검색어. 미입력 시 전체 목록을 조회합니다.", required = false) @RequestParam(value = "searchWord", required = false) String searchWord
+    );
+
+    @Operation(summary = "시리즈 상세 조회", description = "시리즈의 상세 정보를 조회합니다. - ADMIN 권한 필요.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "시리즈 상세 조회 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = SeriesDetailResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "시리즈 상세 조회 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<SeriesDetailResponse>> getSeriesDetail(
+            @Parameter(description = "미디어 ID", required = true, example = "1") @PathVariable("mediaId") Long mediaId
+    );
+
+    @Operation(summary = "시리즈 메타데이터 업로드", description = "시리즈 메타데이터를 생성하고 S3 업로드용 Presigned URL을 반환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "시리즈 메타데이터 업로드 및 Presigned URL 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = SeriesUploadResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "시리즈 메타데이터 업로드 및 Presigned URL 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<SeriesUploadResponse>> createSeriesUpload(
+            @Parameter(description = "SeriesUploadRequest를 참고해주세요.", required = true)
+            @RequestBody SeriesUploadRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal Long memberId
+    );
+
+    @Operation(summary = "시리즈 수정", description = "시리즈 메타데이터를 수정하고 필요 시 포스터/썸네일 교체용 Presigned URL을 발급합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200", description = "시리즈 수정 성공",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = SeriesUpdateResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "400", description = "시리즈 수정 실패",
+                    content = {@Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))}
+            ),
+            @ApiResponse(
+                    responseCode = "403", description = "접근 권한 없음 (ADMIN만 접근 가능)",
+                    content = {@Content(mediaType = "application/json")}
+            )
+    })
+    ResponseEntity<SuccessResponse<SeriesUpdateResponse>> updateSeriesUpload(
+            @Parameter(description = "수정 대상 시리즈 ID", required = true, example = "1")
+            @PathVariable("seriesId") Long seriesId,
+
+            @Parameter(description = "SeriesUpdateRequest를 참고해주세요.", required = true)
+            @Valid @RequestBody SeriesUpdateRequest request
+    );
+}
