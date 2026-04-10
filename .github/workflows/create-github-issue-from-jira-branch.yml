@@ -1,0 +1,173 @@
+name: Create GitHub Issue from Jira Branch
+
+on:
+  create:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-github-issue:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract Jira key from branch name
+        id: extract
+        shell: bash
+        run: |
+          BRANCH_NAME="${{ github.event.ref }}"
+          if [[ "$BRANCH_NAME" =~ ([A-Z][A-Z0-9]+-[0-9]+) ]]; then
+            echo "jira_key=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "No Jira key found in branch: $BRANCH_NAME"
+            echo "jira_key=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop when branch has no Jira key
+        if: steps.extract.outputs.jira_key == ''
+        run: echo "Skip - branch name does not include Jira issue key."
+
+      - name: Fetch Jira issue summary and description
+        if: steps.extract.outputs.jira_key != ''
+        id: jira
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          RESPONSE=$(curl -sS --fail \
+            -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            -H "Accept: application/json" \
+            "${JIRA_BASE_URL}/rest/api/3/issue/${JIRA_KEY}?fields=summary,description&expand=renderedFields")
+
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.fields.summary // empty')
+          DESCRIPTION_HTML=$(echo "$RESPONSE" | jq -r '.renderedFields.description // ""')
+
+          if [[ -z "$SUMMARY" ]]; then
+            echo "Jira issue summary is empty for key: $JIRA_KEY"
+            exit 1
+          fi
+
+          {
+            echo "summary=$SUMMARY"
+            echo "description_html<<EOF"
+            echo "$DESCRIPTION_HTML"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check existing GitHub issue for Jira key
+        if: steps.extract.outputs.jira_key != ''
+        id: dedup
+        uses: actions/github-script@v7
+        env:
+          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+        with:
+          script: |
+            const jiraKey = process.env.JIRA_KEY;
+            const repo = `${context.repo.owner}/${context.repo.repo}`;
+            const q = `repo:${repo} in:body "JIRA_KEY: ${jiraKey}"`;
+            const result = await github.rest.search.issuesAndPullRequests({
+              q,
+              per_page: 10,
+            });
+
+            const existing = result.data.items.find((item) => !item.pull_request);
+            if (existing) {
+              core.info(`Issue already exists: #${existing.number}`);
+              core.setOutput('exists', 'true');
+              core.setOutput('number', String(existing.number));
+            } else {
+              core.setOutput('exists', 'false');
+            }
+
+      - name: Create GitHub issue
+        if: steps.extract.outputs.jira_key != '' && steps.dedup.outputs.exists != 'true'
+        id: create_issue
+        uses: actions/github-script@v7
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+          JIRA_SUMMARY: ${{ steps.jira.outputs.summary }}
+          JIRA_DESCRIPTION_HTML: ${{ steps.jira.outputs.description_html }}
+          BRANCH_NAME: ${{ steps.extract.outputs.branch_name }}
+        with:
+          script: |
+            const jiraKey = process.env.JIRA_KEY;
+            const title = `[${jiraKey}] ${process.env.JIRA_SUMMARY}`;
+            const body = [
+              `JIRA_KEY: ${jiraKey}`,
+              '',
+              `Jira: ${process.env.JIRA_BASE_URL}/browse/${jiraKey}`,
+              `Branch: \`${process.env.BRANCH_NAME}\``,
+              '',
+              '### Jira Description',
+              process.env.JIRA_DESCRIPTION_HTML || '(no description)',
+            ].join('\n');
+
+            const created = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+            });
+
+            core.setOutput('number', String(created.data.number));
+
+      - name: Comment GitHub issue link back to Jira
+        if: steps.extract.outputs.jira_key != '' && steps.dedup.outputs.exists != 'true'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+          GH_ISSUE_NUMBER: ${{ steps.create_issue.outputs.number }}
+          GH_REPO: ${{ github.repository }}
+          GH_SERVER_URL: ${{ github.server_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          GH_ISSUE_URL="${GH_SERVER_URL}/${GH_REPO}/issues/${GH_ISSUE_NUMBER}"
+
+          COMMENT_JSON=$(jq -n \
+            --arg url "$GH_ISSUE_URL" \
+            --arg no "$GH_ISSUE_NUMBER" \
+            '{
+              body: {
+                type: "doc",
+                version: 1,
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [
+                      { type: "text", text: "GitHub issue created: " },
+                      {
+                        type: "text",
+                        text: ("#" + $no),
+                        marks: [
+                          {
+                            type: "link",
+                            attrs: { href: $url }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }')
+
+          curl -sS --fail \
+            -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            --data "$COMMENT_JSON" \
+            "${JIRA_BASE_URL}/rest/api/3/issue/${JIRA_KEY}/comment" > /dev/null
