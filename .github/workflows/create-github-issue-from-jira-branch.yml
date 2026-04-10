@@ -49,17 +49,20 @@ jobs:
 
           SUMMARY=$(echo "$RESPONSE" | jq -r '.fields.summary // empty')
           DESCRIPTION_HTML=$(echo "$RESPONSE" | jq -r '.renderedFields.description // ""')
+          PARENT_KEY=$(echo "$RESPONSE" | jq -r '.fields.parent.key // ""')
 
           if [[ -z "$SUMMARY" ]]; then
             echo "Jira issue summary is empty for key: $JIRA_KEY"
             exit 1
           fi
 
+          DELIMITER="EOF_$(date +%s)_$RANDOM"
           {
             echo "summary=$SUMMARY"
-            echo "description_html<<EOF"
+            echo "parent_key=$PARENT_KEY"
+            echo "description_html<<$DELIMITER"
             echo "$DESCRIPTION_HTML"
-            echo "EOF"
+            echo "$DELIMITER"
           } >> "$GITHUB_OUTPUT"
 
       - name: Check existing GitHub issue for Jira key
@@ -72,13 +75,17 @@ jobs:
           script: |
             const jiraKey = process.env.JIRA_KEY;
             const repo = `${context.repo.owner}/${context.repo.repo}`;
-            const q = `repo:${repo} in:body "JIRA_KEY: ${jiraKey}"`;
+            const marker = `JIRA_KEY: ${jiraKey}`;
+            const q = `repo:${repo} "${jiraKey}"`;
             const result = await github.rest.search.issuesAndPullRequests({
               q,
-              per_page: 10,
+              per_page: 20,
             });
 
-            const existing = result.data.items.find((item) => !item.pull_request);
+            const existing = result.data.items.find((item) =>
+              !item.pull_request &&
+              (item.title.startsWith(`[${jiraKey}]`) || item.body?.includes(marker))
+            );
             if (existing) {
               core.info(`Issue already exists: #${existing.number}`);
               core.setOutput('exists', 'true');
@@ -95,20 +102,33 @@ jobs:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
           JIRA_SUMMARY: ${{ steps.jira.outputs.summary }}
+          JIRA_PARENT_KEY: ${{ steps.jira.outputs.parent_key }}
           JIRA_DESCRIPTION_HTML: ${{ steps.jira.outputs.description_html }}
           BRANCH_NAME: ${{ steps.extract.outputs.branch_name }}
         with:
           script: |
             const jiraKey = process.env.JIRA_KEY;
             const title = `[${jiraKey}] ${process.env.JIRA_SUMMARY}`;
+            const summaryForBranch = (process.env.JIRA_SUMMARY || '')
+              .trim()
+              .replace(/\s+/g, '-')
+              .replace(/[^a-zA-Z0-9/_-]/g, '-')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '');
+            const recommendedBranch = `${jiraKey}-${summaryForBranch || 'task'}`;
+            const parentKey = process.env.JIRA_PARENT_KEY || '없음';
             const body = [
               `JIRA_KEY: ${jiraKey}`,
               '',
-              `Jira: ${process.env.JIRA_BASE_URL}/browse/${jiraKey}`,
-              `Branch: \`${process.env.BRANCH_NAME}\``,
+              '### ️ 상위 작업 (Ticket Number)',
+              parentKey,
               '',
-              '### Jira Description',
+              '### 브랜치명 (Branch)',
+              `\`${recommendedBranch}\``,
+              '',
+              '### 상세 내용 (Description)',
               process.env.JIRA_DESCRIPTION_HTML || '(no description)',
+              '',
             ].join('\n');
 
             const created = await github.rest.issues.create({
