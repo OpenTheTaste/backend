@@ -45,7 +45,7 @@ jobs:
           RESPONSE=$(curl -sS --fail \
             -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
             -H "Accept: application/json" \
-            "${JIRA_BASE_URL}/rest/api/3/issue/${JIRA_KEY}?fields=summary,description&expand=renderedFields")
+            "${JIRA_BASE_URL}/rest/api/3/issue/${JIRA_KEY}?fields=summary,description,parent&expand=renderedFields")
 
           SUMMARY=$(echo "$RESPONSE" | jq -r '.fields.summary // empty')
           DESCRIPTION_HTML=$(echo "$RESPONSE" | jq -r '.renderedFields.description // ""')
@@ -117,6 +117,7 @@ jobs:
               .replace(/^-|-$/g, '');
             const recommendedBranch = `${jiraKey}-${summaryForBranch || 'task'}`;
             const parentKey = process.env.JIRA_PARENT_KEY || '없음';
+            const actualBranch = process.env.BRANCH_NAME || recommendedBranch;
             const body = [
               `JIRA_KEY: ${jiraKey}`,
               '',
@@ -124,7 +125,7 @@ jobs:
               parentKey,
               '',
               '### 브랜치명 (Branch)',
-              `\`${recommendedBranch}\``,
+              `\`${actualBranch}\``,
               '',
               '### 상세 내용 (Description)',
               process.env.JIRA_DESCRIPTION_HTML || '(no description)',
