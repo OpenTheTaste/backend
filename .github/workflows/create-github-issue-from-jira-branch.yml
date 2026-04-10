@@ -8,10 +8,12 @@ permissions:
   issues: write
 
 jobs:
-  create-github-issue:
+  extract-jira-key:
     if: github.event.ref_type == 'branch'
     runs-on: ubuntu-latest
-
+    outputs:
+      jira_key: ${{ steps.extract.outputs.jira_key }}
+      branch_name: ${{ steps.extract.outputs.branch_name }}
     steps:
       - name: Extract Jira key from branch name
         id: extract
@@ -24,25 +26,35 @@ jobs:
           else
             echo "No Jira key found in branch: $BRANCH_NAME"
             echo "jira_key=" >> "$GITHUB_OUTPUT"
+            echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Stop when branch has no Jira key
-        if: steps.extract.outputs.jira_key == ''
-        run: echo "Skip - branch name does not include Jira issue key."
+  create-github-issue:
+    needs: extract-jira-key
+    if: needs.extract-jira-key.outputs.jira_key != ''
+    runs-on: ubuntu-latest
+    concurrency:
+      group: jira-gh-issue-${{ github.repository }}-${{ needs.extract-jira-key.outputs.jira_key }}
+      cancel-in-progress: false
 
+    steps:
       - name: Fetch Jira issue summary and description
-        if: steps.extract.outputs.jira_key != ''
         id: jira
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+          JIRA_KEY: ${{ needs.extract-jira-key.outputs.jira_key }}
         shell: bash
         run: |
           set -euo pipefail
 
           RESPONSE=$(curl -sS --fail \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 2 \
+            --retry-all-errors \
             -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
             -H "Accept: application/json" \
             "${JIRA_BASE_URL}/rest/api/3/issue/${JIRA_KEY}?fields=summary,description,parent&expand=renderedFields")
@@ -66,11 +78,10 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Check existing GitHub issue for Jira key
-        if: steps.extract.outputs.jira_key != ''
         id: dedup
         uses: actions/github-script@v7
         env:
-          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+          JIRA_KEY: ${{ needs.extract-jira-key.outputs.jira_key }}
         with:
           script: |
             const jiraKey = process.env.JIRA_KEY;
@@ -95,16 +106,16 @@ jobs:
             }
 
       - name: Create GitHub issue
-        if: steps.extract.outputs.jira_key != '' && steps.dedup.outputs.exists != 'true'
+        if: steps.dedup.outputs.exists != 'true'
         id: create_issue
         uses: actions/github-script@v7
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+          JIRA_KEY: ${{ needs.extract-jira-key.outputs.jira_key }}
           JIRA_SUMMARY: ${{ steps.jira.outputs.summary }}
           JIRA_PARENT_KEY: ${{ steps.jira.outputs.parent_key }}
           JIRA_DESCRIPTION_HTML: ${{ steps.jira.outputs.description_html }}
-          BRANCH_NAME: ${{ steps.extract.outputs.branch_name }}
+          BRANCH_NAME: ${{ needs.extract-jira-key.outputs.branch_name }}
         with:
           script: |
             const jiraKey = process.env.JIRA_KEY;
@@ -116,18 +127,18 @@ jobs:
               .replace(/-+/g, '-')
               .replace(/^-|-$/g, '');
             const recommendedBranch = `${jiraKey}-${summaryForBranch || 'task'}`;
-            const parentKey = process.env.JIRA_PARENT_KEY || '없음';
+            const parentKey = process.env.JIRA_PARENT_KEY || 'none';
             const actualBranch = process.env.BRANCH_NAME || recommendedBranch;
             const body = [
               `JIRA_KEY: ${jiraKey}`,
               '',
-              '### ️ 상위 작업 (Ticket Number)',
+              '### Parent Ticket Number',
               parentKey,
               '',
-              '### 브랜치명 (Branch)',
+              '### Branch',
               `\`${actualBranch}\``,
               '',
-              '### 상세 내용 (Description)',
+              '### Description',
               process.env.JIRA_DESCRIPTION_HTML || '(no description)',
               '',
             ].join('\n');
@@ -142,12 +153,12 @@ jobs:
             core.setOutput('number', String(created.data.number));
 
       - name: Comment GitHub issue link back to Jira
-        if: steps.extract.outputs.jira_key != '' && steps.dedup.outputs.exists != 'true'
+        if: steps.dedup.outputs.exists != 'true'
         env:
           JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_KEY: ${{ steps.extract.outputs.jira_key }}
+          JIRA_KEY: ${{ needs.extract-jira-key.outputs.jira_key }}
           GH_ISSUE_NUMBER: ${{ steps.create_issue.outputs.number }}
           GH_REPO: ${{ github.repository }}
           GH_SERVER_URL: ${{ github.server_url }}
@@ -186,6 +197,11 @@ jobs:
             }')
 
           curl -sS --fail \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 2 \
+            --retry-all-errors \
             -u "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
             -H "Accept: application/json" \
             -H "Content-Type: application/json" \
