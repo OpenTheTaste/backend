@@ -1,6 +1,7 @@
 package com.ott.transcoder.config;
 
 import com.ott.infra.mq.TranscodeConstants;
+import com.ott.transcoder.constant.IngestJobConstant.HeartbeatConstant;
 import com.ott.transcoder.exception.fatal.FatalException;
 import com.ott.transcoder.exception.retryable.RetryableException;
 import org.springframework.amqp.core.*;
@@ -34,6 +35,10 @@ public class RabbitConsumerConfig {
     public static final String DEAD_LETTER_EXCHANGE = "transcode.dead.exchange";
     public static final String DEAD_LETTER_QUEUE = "transcode.dead.queue";
     public static final String DEAD_LETTER_ROUTING_KEY = "transcode.dead.key";
+
+    public static final String DELAY_EXCHANGE = "transcode.delay.exchange";
+    public static final String DELAY_QUEUE = "transcode.delay.queue";
+    public static final String DELAY_ROUTING_KEY = "transcode.delay";
 
     @Value("${transcoder.messaging.rabbit.consumer-timeout-ms:14400000}")
     private long consumerTimeoutMs;
@@ -81,6 +86,31 @@ public class RabbitConsumerConfig {
         return BindingBuilder.bind(transcodeQueue)
                 .to(transcodeExchange)
                 .with(TranscodeConstants.ROUTING_KEY);
+    }
+
+    // ── Delay Queue (TTL 만료 시 메인 큐로 복귀) ──
+
+    @Bean
+    public DirectExchange transcodeDelayExchange() {
+        return ExchangeBuilder.directExchange(DELAY_EXCHANGE)
+                .durable(true)
+                .build();
+    }
+
+    @Bean
+    public Queue transcodeDelayQueue() {
+        return QueueBuilder.durable(DELAY_QUEUE)
+                .withArgument("x-message-ttl", HeartbeatConstant.DELAY_QUEUE_TTL_MS)
+                .withArgument("x-dead-letter-exchange", TranscodeConstants.EXCHANGE_NAME)
+                .withArgument("x-dead-letter-routing-key", TranscodeConstants.ROUTING_KEY)
+                .build();
+    }
+
+    @Bean
+    public Binding transcodeDelayBinding() {
+        return BindingBuilder.bind(transcodeDelayQueue())
+                .to(transcodeDelayExchange())
+                .with(DELAY_ROUTING_KEY);
     }
 
     /** 예외를 분석하여 '재시도'할지 '즉시 포기'할지 결정 */
