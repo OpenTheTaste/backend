@@ -19,6 +19,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -38,6 +40,9 @@ public class IngestJob extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "ingest_status", nullable = false)
     private IngestStatus ingestStatus;
+
+    @Column(name = "heartbeat_at")
+    private LocalDateTime heartbeatAt;
 
     public void updateIngestStatus(IngestStatus ingestStatus) {
         this.ingestStatus = ingestStatus;
