@@ -7,6 +7,8 @@ import com.ott.transcoder.command.CommandExtractor;
 import com.ott.transcoder.command.TranscodeCommand;
 import com.ott.transcoder.exception.TranscodeErrorCode;
 import com.ott.transcoder.exception.retryable.StorageException;
+import com.ott.transcoder.heartbeat.Heartbeat;
+import com.ott.transcoder.heartbeat.HeartbeatScheduler;
 import com.ott.transcoder.inspection.DiskSpaceGuard;
 import com.ott.transcoder.inspection.Inspector;
 import com.ott.transcoder.inspection.probe.ProbeResult;
@@ -47,6 +49,7 @@ public class JobOrchestrator {
     private final MasterPlaylistGenerator masterPlaylistGenerator;
 
     private final IngestJobStatusManager statusManager;
+    private final HeartbeatScheduler heartbeatScheduler;
 
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
@@ -65,7 +68,7 @@ public class JobOrchestrator {
             return;
         }
 
-        try {
+        try (Heartbeat heartbeat = heartbeatScheduler.start(ingestJobId)) {
             // 1. 작업 디렉토리 생성 (공간 체크를 위해 디렉토리가 존재해야 함)
             createWorkDir(workDir);
 
