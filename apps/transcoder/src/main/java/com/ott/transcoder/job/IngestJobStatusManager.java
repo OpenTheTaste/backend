@@ -39,6 +39,19 @@ public class IngestJobStatusManager {
     private final IngestCommandRepository ingestCommandRepository;
     private final S3PresignService s3PresignService;
 
+    /**
+     * Layer 1: 종료 상태 조기 탈출 (최적화)
+     * CAS만으로도 정확성은 보장되지만, SUCCESS/FAILED에 대해
+     * 불필요한 UPDATE(행 잠금)를 피하기 위한 SELECT 기반 사전 체크
+     */
+    @Transactional(readOnly = true)
+    public boolean isTerminal(Long ingestJobId) {
+        return ingestJobRepository.findById(ingestJobId)
+                .map(job -> job.getIngestStatus() == IngestStatus.SUCCESS
+                         || job.getIngestStatus() == IngestStatus.FAILED)
+                .orElse(true);
+    }
+
     /** CP-3: CAS 선점 → 작업 시작 */
     @Transactional
     public boolean startProcessing(Long ingestJobId) {

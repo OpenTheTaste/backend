@@ -15,6 +15,7 @@ import com.ott.transcoder.inspection.probe.ProbeResult;
 import com.ott.transcoder.pipeline.CommandPipelineExecutor;
 import com.ott.transcoder.pipeline.hls.MasterPlaylistGenerator;
 import com.ott.infra.mq.TranscodeMessage;
+import com.ott.transcoder.queue.rabbit.DelayQueuePublisher;
 import com.ott.transcoder.storage.VideoStorage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,23 +51,48 @@ public class JobOrchestrator {
 
     private final IngestJobStatusManager statusManager;
     private final HeartbeatScheduler heartbeatScheduler;
+    private final DelayQueuePublisher delayQueuePublisher;
 
     @Value("${transcoder.ffmpeg.temp-dir:#{systemProperties['java.io.tmpdir'] + '/ott-transcode'}}")
     private String tempDir;
 
     /**
-     * 트랜스코딩 작업 실행
+     * 메시지 수신 진입점 — 4계층 방어 분기
      * 모든 예외는 밖으로 던져지며, RabbitConfig에 따라 재시도 여부 결정
      */
-    public void handle(TranscodeMessage message) {
+    public void handle(TranscodeMessage message, boolean delayed) {
+        Long ingestJobId = message.ingestJobId();
+
+        // ── Layer 1: 종료 상태 조기 탈출 (최적화용, CAS만으로도 정확성 보장됨) ──
+        if (statusManager.isTerminal(ingestJobId)) {
+            log.info("종료 상태 IngestJob 재수신 - ingestJobId: {} (ACK skip)", ingestJobId);
+            return;
+        }
+
+        // ── Layer 2: CAS 선점 시도 ──
+        if (statusManager.startProcessing(ingestJobId)) {
+            executeTranscoding(message);
+            return;
+        }
+
+        // ── CAS 실패: Layer 3 or 4 ──
+        if (!delayed) {
+            // Layer 3: 최초 수신 → Delay Queue로 1회 발행
+            log.info("CAS 실패 (점유 중) → Delay Queue 발행 - ingestJobId: {}", ingestJobId);
+            delayQueuePublisher.publishToDelay(message);
+        } else {
+            // Layer 4: Delay 복귀인데 여전히 점유 중 → 포기
+            log.info("CAS 실패 (Delay 복귀 후에도 점유 중) → ACK drop - ingestJobId: {}", ingestJobId);
+        }
+    }
+
+    /**
+     * 트랜스코딩 실행 (CAS 선점 성공 후 호출)
+     */
+    private void executeTranscoding(TranscodeMessage message) {
         Long mediaId = message.mediaId();
         Long ingestJobId = message.ingestJobId();
         Path workDir = Path.of(tempDir, PREFIX_WORK_DIR + mediaId + SUFFIX_WORK_DIR + ingestJobId);
-        // CP-3: 작업 시작 processing 중복 최소화
-        if (!statusManager.startProcessing(ingestJobId)) {
-            log.info("종료 상태 IngestJob 재수신 - ingestJobId: {} (스킵)", ingestJobId);
-            return;
-        }
 
         try (Heartbeat heartbeat = heartbeatScheduler.start(ingestJobId)) {
             // 1. 작업 디렉토리 생성 (공간 체크를 위해 디렉토리가 존재해야 함)
