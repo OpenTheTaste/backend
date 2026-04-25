@@ -1,6 +1,7 @@
 package com.ott.transcoder.job;
 
 import com.ott.common.web.exception.BusinessException;
+import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.ingest_command.domain.CommandStatus;
 import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.domain.ingest_command.domain.IngestCommand;
@@ -46,10 +47,11 @@ public class IngestJobStatusManager {
      */
     @Transactional(readOnly = true)
     public boolean isTerminal(Long ingestJobId) {
-        return ingestJobRepository.findById(ingestJobId)
-                .map(job -> job.getIngestStatus() == IngestStatus.SUCCESS
-                         || job.getIngestStatus() == IngestStatus.FAILED)
-                .orElse(true);
+        IngestJob ingestJob = ingestJobRepository.findById(ingestJobId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INGEST_JOB_NOT_FOUND));
+
+        return ingestJob.getIngestStatus() == IngestStatus.SUCCESS
+                || ingestJob.getIngestStatus() == IngestStatus.FAILED;
     }
 
     /** CP-3: CAS 선점 → 작업 시작 */
