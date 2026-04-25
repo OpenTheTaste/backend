@@ -15,12 +15,16 @@ public class RabbitTranscodePublisher {
     private final RabbitTemplate rabbitTemplate;
 
     public void publish(TranscodeMessage message) {
-        rabbitTemplate.convertAndSend(
-                TranscodeConstants.EXCHANGE_NAME,
-                TranscodeConstants.ROUTING_KEY,
-                message
-        );
-        log.info("트랜스코딩 요청 발행 - mediaId: {}, ingestJobId: {}",
+        rabbitTemplate.invoke(operations -> {
+            operations.convertAndSend(
+                    TranscodeConstants.EXCHANGE_NAME,
+                    TranscodeConstants.ROUTING_KEY,
+                    message
+            );
+            operations.waitForConfirmsOrDie(5_000);
+            return null;
+        });
+        log.info("트랜스코딩 요청 발행 확인 - mediaId: {}, ingestJobId: {}",
                 message.mediaId(), message.ingestJobId());
     }
 }

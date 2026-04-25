@@ -1,6 +1,7 @@
 package com.ott.transcoder.job;
 
 import com.ott.common.web.exception.BusinessException;
+import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.ingest_command.domain.CommandStatus;
 import com.ott.domain.ingest_command.domain.CommandType;
 import com.ott.domain.ingest_command.domain.IngestCommand;
@@ -13,6 +14,8 @@ import com.ott.domain.media.domain.MediaStatus;
 import com.ott.infra.s3.service.S3PresignService;
 import com.ott.transcoder.command.Command;
 import com.ott.transcoder.ffmpeg.Resolution;
+
+import static com.ott.transcoder.constant.IngestJobConstant.HeartbeatConstant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,22 +40,33 @@ public class IngestJobStatusManager {
     private final IngestCommandRepository ingestCommandRepository;
     private final S3PresignService s3PresignService;
 
-    /** CP-3: 메시지 컨슘 → 작업 시작 */
+    /**
+     * Layer 1: 종료 상태 조기 탈출 (최적화)
+     * CAS만으로도 정확성은 보장되지만, SUCCESS/FAILED에 대해
+     * 불필요한 UPDATE(행 잠금)를 피하기 위한 SELECT 기반 사전 체크
+     */
+    @Transactional(readOnly = true)
+    public boolean isTerminal(Long ingestJobId) {
+        IngestJob ingestJob = ingestJobRepository.findById(ingestJobId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INGEST_JOB_NOT_FOUND));
+
+        return ingestJob.getIngestStatus() == IngestStatus.SUCCESS
+                || ingestJob.getIngestStatus() == IngestStatus.FAILED;
+    }
+
+    /** CP-3: CAS 선점 → 작업 시작 */
     @Transactional
     public boolean startProcessing(Long ingestJobId) {
-        // 비관적 락
-        IngestJob ingestJob = ingestJobRepository.findByIdForUpdate(ingestJobId)
-                .orElseThrow(() -> new BusinessException(INGEST_JOB_NOT_FOUND));
+        int affected = ingestJobRepository.tryPreempt(
+                ingestJobId, HeartbeatConstant.HEARTBEAT_TIMEOUT_SEC);
 
-        if (ingestJob.getIngestStatus().equals(IngestStatus.FAILED) || ingestJob.getIngestStatus().equals(IngestStatus.SUCCESS)) {
-            return false;
+        if (affected == 1) {
+            log.info("CAS 선점 성공 - ingestJobId: {}", ingestJobId);
+            return true;
         }
 
-        if (ingestJob.getIngestStatus().equals(IngestStatus.PENDING)) {
-            ingestJob.updateIngestStatus(IngestStatus.PROCESSING);
-            log.info("IngestJob 상태 전이 - ingestJobId: {}, PENDING → PROCESSING", ingestJobId);
-        }
-        return true;
+        log.info("CAS 선점 실패 (이미 점유 중 또는 완료) - ingestJobId: {}", ingestJobId);
+        return false;
     }
 
     /** 완료된 트랜스코드 해상도 목록 조회 (재시도 시 master.m3u8 복원용) */

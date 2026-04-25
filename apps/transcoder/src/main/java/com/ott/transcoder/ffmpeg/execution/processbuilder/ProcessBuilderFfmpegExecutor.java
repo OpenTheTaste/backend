@@ -74,7 +74,7 @@ public class ProcessBuilderFfmpegExecutor implements FfmpegExecutor {
                 }
             }
 
-            boolean finished = process.waitFor(30, TimeUnit.MINUTES);
+            boolean finished = process.waitFor(1, TimeUnit.HOURS);
             if (!finished) {
                 process.destroyForcibly();
                 throw new FfmpegException(TranscodeErrorCode.FFMPEG_TIMEOUT,

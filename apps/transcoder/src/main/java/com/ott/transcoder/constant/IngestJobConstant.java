@@ -48,6 +48,20 @@ public final class IngestJobConstant {
         public static final String AAC = "aac";
     }
 
+    public static final class HeartbeatConstant {
+        private HeartbeatConstant() {
+        }
+
+        /** 워커가 heartbeat_at을 갱신하는 주기 (초) */
+        public static final int HEARTBEAT_INTERVAL_SEC = 10;
+
+        /** heartbeat_at이 이 시간보다 오래되면 만료 판정 (INTERVAL * 3) */
+        public static final int HEARTBEAT_TIMEOUT_SEC = 30;
+
+        /** Delay Queue TTL (밀리초). HEARTBEAT_TIMEOUT보다 커야 함 */
+        public static final int DELAY_QUEUE_TTL_MS = 40_000;
+    }
+
     public static final class S3VideoStorageConstant {
         public S3VideoStorageConstant() {
         }
