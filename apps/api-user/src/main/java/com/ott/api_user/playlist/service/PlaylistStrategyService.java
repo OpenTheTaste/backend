@@ -7,8 +7,8 @@ import com.ott.api_user.playlist.dto.response.TopTagPlaylistResponse;
 import com.ott.api_user.playlist.service.strategy.PlaylistStrategy;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
-import com.ott.common.web.response.PageInfo;
-import com.ott.common.web.response.PageResponse;
+import com.ott.common.web.response.SliceInfo;
+import com.ott.common.web.response.SliceResponse;
 import com.ott.domain.common.MediaType;
 import com.ott.domain.media.domain.MediaStatus;
 import com.ott.domain.common.PublicStatus;
@@ -22,6 +22,7 @@ import com.ott.domain.watch_history.repository.WatchHistoryRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,15 +45,15 @@ public class PlaylistStrategyService {
     private final ContentsRepository contentsRepository;
     private final PlaybackRepository playbackRepository;
 
-    public PageResponse<PlaylistResponse> getPlaylists(PlaylistCondition condition, Pageable pageable) {
-        
+    public SliceResponse<PlaylistResponse> getPlaylists(PlaylistCondition condition, Pageable pageable) {
+
         if (condition.getContentSource() == null) {
-             throw new BusinessException(ErrorCode.INVALID_PLAYLIST_SOURCE); 
+             throw new BusinessException(ErrorCode.INVALID_PLAYLIST_SOURCE);
         }
 
         // 1. 전략 선택 및 1차 데이터 조회
         PlaylistStrategy strategy = getStrategy(condition);
-        Page<Media> mediaPage = strategy.getPlaylist(condition, pageable);
+        Slice<Media> mediaPage = strategy.getPlaylist(condition, pageable);
         Long memberId = condition.getMemberId();
 
         Map<Long, Long> mediaToTargetIdMap = new HashMap<>();
@@ -107,14 +108,14 @@ public class PlaylistStrategyService {
                 .toList();
 
 
-        // 4. PageInfo 생성 
-        PageInfo pageInfo = PageInfo.toPageInfo(
-                mediaPage.getNumber(), 
-                mediaPage.getTotalPages(), 
-                (int) mediaPage.getTotalElements()
-        );
+        // 4. SliceInfo 생성
+        SliceInfo sliceInfo = SliceInfo.builder()
+                .currentPage(mediaPage.getNumber())
+                .pageSize(mediaPage.getSize())
+                .hasNext(mediaPage.hasNext())
+                .build();
 
-        return PageResponse.toPageResponse(pageInfo, contentList);
+        return SliceResponse.toSliceResponse(sliceInfo, contentList);
     }
 
 
@@ -148,13 +149,13 @@ public class PlaylistStrategyService {
         }
 
         // 상위태그가 조립된 상태로 플레이리스트 조회
-        PageResponse<PlaylistResponse> mediaPage = getPlaylists(condition, pageable);
+        SliceResponse<PlaylistResponse> mediaPage = getPlaylists(condition, pageable);
 
 
         return TopTagPlaylistResponse.builder()
                     .category(categoryInfo)
                     .tag(tagInfo)
-                    .medias(mediaPage) // 위에서 가져온 PageResponse를 그대로 넣음
+                    .medias(mediaPage)
                     .build();
     }
 
