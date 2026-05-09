@@ -519,15 +519,19 @@ public class MediaRepositoryImpl implements MediaRepositoryCustom {
                 return excludeMediaId != null ? media.id.ne(excludeMediaId) : null;
         }
 
+        // private BooleanExpression isDisplayable() {
+        //         return media.mediaType.eq(MediaType.SERIES)
+        //                 .or(media.mediaType.eq(MediaType.CONTENTS)
+        //                         .and(JPAExpressions.selectOne()
+        //                                 .from(contents)
+        //                                 .where(contents.media.id.eq(media.id)
+        //                                         .and(contents.series.isNotNull()))
+        //                                 .notExists()));
+        // }
+
         private BooleanExpression isDisplayable() {
-                return media.mediaType.eq(MediaType.SERIES)
-                        .or(media.mediaType.eq(MediaType.CONTENTS)
-                                .and(JPAExpressions.selectOne()
-                                        .from(contents)
-                                        .where(contents.media.id.eq(media.id)
-                                                .and(contents.series.isNotNull()))
-                                        .notExists()));
-       }
+                return media.isStandalone.isTrue();
+        }
 
         private BooleanExpression mediaStatusEq(MediaStatus mediaStatus) {
                 if (mediaStatus != null)
