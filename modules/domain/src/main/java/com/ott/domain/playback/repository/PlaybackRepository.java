@@ -58,7 +58,7 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long>, Playb
                 @Param("mediaId") Long mediaId);
         
         
-        // mysql 전용 문법 사용
+        // legacy: contentsId를 이미 조회한 뒤 upsert하는 기존 방식
         @Modifying
         @Query(value = """
                 INSERT INTO playback (member_id, contents_id, position_sec, created_date, modified_date, status)
@@ -70,5 +70,25 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long>, Playb
         void upsertPlayback(
                 @Param("memberId") Long memberId, 
                 @Param("contentsId") Long contentsId, 
+                @Param("positionSec") int positionSec);
+
+        // new: mediaId 기반 단일 SQL 경로. affected rows를 반환해 fallback 판단에 사용
+        @Modifying
+        @Query(value = """
+                INSERT INTO playback (member_id, contents_id, position_sec, created_date, modified_date, status)
+                SELECT :memberId, c.id, :positionSec, NOW(), NOW(), 'ACTIVE'
+                FROM contents c
+                JOIN media m ON m.id = c.media_id
+                WHERE m.id = :mediaId
+                  AND c.status = 'ACTIVE'
+                  AND m.public_status = 'PUBLIC'
+                  AND m.media_status = 'COMPLETED'
+                ON DUPLICATE KEY UPDATE
+                    position_sec = :positionSec,
+                    modified_date = NOW()
+                """, nativeQuery = true)
+        int upsertPlaybackByMediaId(
+                @Param("memberId") Long memberId,
+                @Param("mediaId") Long mediaId,
                 @Param("positionSec") int positionSec);
 }
