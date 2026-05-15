@@ -51,6 +51,11 @@ jobs:
         run: |
           set -euo pipefail
 
+          if [[ "$RABBITMQ_VHOST" == *"'"* ]] || [[ "$RABBITMQ_VHOST" == *$'\n'* ]] || [[ "$RABBITMQ_VHOST" == *$'\r'* ]]; then
+            echo "Invalid rabbitmq_vhost input. Single quote and newlines are not allowed." >&2
+            exit 1
+          fi
+
           INSTANCE_ID=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
             --filters "Name=tag:Name,Values=${INSTANCE_TAG}" "Name=instance-state-name,Values=running" \

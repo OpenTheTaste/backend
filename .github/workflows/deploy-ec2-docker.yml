@@ -89,6 +89,7 @@ jobs:
           PROJECT_NAME: oplust
           DB_NAME: oplust
           RDS_INSTANCE_IDENTIFIER: oplust-dev-db
+          MONITORING_INSTANCE_TAG: monitoring
           NODE_EXPORTER_TARGET_SSM_PARAM: /oplust/monitoring/targets/node-exporter
           SSM_ECS_CLUSTER_NAME_PARAM: /oplust/dev/lambda/worker/ecs_cluster_name
           SSM_ECS_SERVICE_NAME_PARAM: /oplust/dev/lambda/worker/ecs_service_name
@@ -110,27 +111,19 @@ jobs:
           fi
 
           DB_HOST=$(aws rds describe-db-instances --region "$AWS_REGION" --db-instance-identifier "$RDS_INSTANCE_IDENTIFIER" --query 'DBInstances[0].Endpoint.Address' --output text)
-          DB_SECRET_ARN=$(aws rds describe-db-instances --region "$AWS_REGION" --db-instance-identifier "$RDS_INSTANCE_IDENTIFIER" --query 'DBInstances[0].MasterUserSecret.SecretArn' --output text)
-          DB_SECRET_JSON=$(aws secretsmanager get-secret-value --region "$AWS_REGION" --secret-id "$DB_SECRET_ARN" --query 'SecretString' --output text)
-          DB_USER=$(echo "$DB_SECRET_JSON" | jq -r '.username')
-          DB_PASS=$(echo "$DB_SECRET_JSON" | jq -r '.password')
-
-          if [ -z "$DB_HOST" ] || [ "$DB_HOST" = "None" ] || [ -z "$DB_USER" ] || [ "$DB_USER" = "null" ] || [ -z "$DB_PASS" ] || [ "$DB_PASS" = "null" ]; then
-            echo "Failed to resolve DB connection values from RDS/SecretsManager" >&2
+          if [ -z "$DB_HOST" ] || [ "$DB_HOST" = "None" ]; then
+            echo "Failed to resolve DB host from RDS" >&2
             exit 1
           fi
 
-          DB_USER_B64=$(printf '%s' "$DB_USER" | base64 | tr -d '\n')
-          DB_PASS_B64=$(printf '%s' "$DB_PASS" | base64 | tr -d '\n')
-
           MONITORING_PRIVATE_IP=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
-            --filters "Name=tag:Name,Values=monitoring" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=${MONITORING_INSTANCE_TAG}" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].PrivateIpAddress" \
             --output text)
 
           if [ -z "$MONITORING_PRIVATE_IP" ] || [ "$MONITORING_PRIVATE_IP" = "None" ]; then
-            echo "No running monitoring instance found for tag: monitoring" >&2
+            echo "No running monitoring instance found for tag: ${MONITORING_INSTANCE_TAG}" >&2
             exit 1
           fi
 
@@ -212,9 +205,15 @@ jobs:
               "set -e"
               "sudo mkdir -p /etc/oplust"
               "SERVICE_ENV=\$(aws ssm get-parameter --region $AWS_REGION --name '${service_env_param}' --with-decryption --query 'Parameter.Value' --output text)"
+              "if ! command -v jq >/dev/null 2>&1; then if command -v dnf >/dev/null 2>&1; then sudo dnf -y install jq; elif command -v yum >/dev/null 2>&1; then sudo yum -y install jq; elif command -v apt-get >/dev/null 2>&1; then sudo apt-get update -y && sudo apt-get install -y jq; else echo 'jq not found and no supported package manager to install it' >&2; exit 1; fi; fi"
+              "DB_SECRET_ARN=\$(aws rds describe-db-instances --region $AWS_REGION --db-instance-identifier '$RDS_INSTANCE_IDENTIFIER' --query 'DBInstances[0].MasterUserSecret.SecretArn' --output text)"
+              "DB_SECRET_JSON=\$(aws secretsmanager get-secret-value --region $AWS_REGION --secret-id \"\$DB_SECRET_ARN\" --query 'SecretString' --output text)"
+              "DB_USER=\$(echo \"\$DB_SECRET_JSON\" | jq -r '.username')"
+              "DB_PASS=\$(echo \"\$DB_SECRET_JSON\" | jq -r '.password')"
+              "if [ -z \"\$DB_USER\" ] || [ \"\$DB_USER\" = \"null\" ] || [ -z \"\$DB_PASS\" ] || [ \"\$DB_PASS\" = \"null\" ]; then echo 'Failed to resolve DB credentials from Secrets Manager' >&2; exit 1; fi"
               "echo \"SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:3306/${DB_NAME}\" | sudo tee ${env_file} >/dev/null"
-              "echo \"SPRING_DATASOURCE_USERNAME=\$(echo '${DB_USER_B64}' | base64 -d)\" | sudo tee -a ${env_file} >/dev/null"
-              "echo \"SPRING_DATASOURCE_PASSWORD=\$(echo '${DB_PASS_B64}' | base64 -d)\" | sudo tee -a ${env_file} >/dev/null"
+              "echo \"SPRING_DATASOURCE_USERNAME=\$DB_USER\" | sudo tee -a ${env_file} >/dev/null"
+              "echo \"SPRING_DATASOURCE_PASSWORD=\$DB_PASS\" | sudo tee -a ${env_file} >/dev/null"
               "printf '%s\n' \"\$SERVICE_ENV\" | sudo tee -a ${env_file} >/dev/null"
               "sudo chmod 600 ${env_file}"
               "aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $ECR_REGISTRY"

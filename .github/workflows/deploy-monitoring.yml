@@ -89,18 +89,18 @@ jobs:
             exit 1
           fi
 
-          TASK_ARNS=$(aws ecs list-tasks --region "$AWS_REGION" --cluster "$ECS_CLUSTER_NAME" --service-name "$ECS_SERVICE_NAME" --desired-status RUNNING --query 'taskArns' --output text || true)
+          TASK_ARNS=$(aws ecs list-tasks --region "$AWS_REGION" --cluster "$ECS_CLUSTER_NAME" --service-name "$ECS_SERVICE_NAME" --desired-status RUNNING --query 'taskArns' --output text | tr '\t' ' ' || true)
           TRANSCODER_TARGETS_YAML=""
 
           if [ -n "${TASK_ARNS:-}" ]; then
             ENI_IDS=$(aws ecs describe-tasks --region "$AWS_REGION" --cluster "$ECS_CLUSTER_NAME" --tasks $TASK_ARNS \
-              --query 'tasks[].attachments[].details[?name==`networkInterfaceId`].value' --output text || true)
+              --query 'tasks[].attachments[].details[?name==`networkInterfaceId`].value' --output text | tr '\t' ' ' || true)
 
             if [ -n "${ENI_IDS:-}" ]; then
               TRANSCODER_IPS=$(aws ec2 describe-network-interfaces --region "$AWS_REGION" --network-interface-ids $ENI_IDS \
                 --query 'NetworkInterfaces[].PrivateIpAddress' --output text || true)
               if [ -n "${TRANSCODER_IPS:-}" ]; then
-                TRANSCODER_TARGETS_YAML=$(printf '%s\n' $TRANSCODER_IPS | sed '/^$/d' | sort -u | awk '{printf "\"%s:8080\",", $0}' | sed 's/,$//')
+                TRANSCODER_TARGETS_YAML=$(printf '%s\n' $TRANSCODER_IPS | sed '/^$/d' | sort -u | awk '{printf "\"%s:8082\",", $0}' | sed 's/,$//')
               fi
             fi
           fi

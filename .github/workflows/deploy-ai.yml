@@ -98,12 +98,12 @@ jobs:
 
           MONITORING_PRIVATE_IP=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
-            --filters "Name=tag:Name,Values=${PROJECT_NAME}-monitoring-ec2" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=monitoring" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].PrivateIpAddress" \
             --output text)
 
           if [ -z "$MONITORING_PRIVATE_IP" ] || [ "$MONITORING_PRIVATE_IP" = "None" ]; then
-            echo "No running monitoring instance found for tag: ${PROJECT_NAME}-monitoring-ec2" >&2
+            echo "No running monitoring instance found for tag: monitoring" >&2
             exit 1
           fi
 
@@ -126,7 +126,7 @@ jobs:
 
           MONITORING_SG_ID=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
-            --filters "Name=tag:Name,Values=${PROJECT_NAME}-monitoring-ec2" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=monitoring" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" \
             --output text)
 
