@@ -85,7 +85,7 @@ jobs:
           IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
           PROJECT_NAME: oplust
           ENV_NAME: dev
-          SSM_MACHINE_ENV_PARAM: /oplust/machine/env
+          SSM_MACHINE_ENV_PARAM: /oplust/dev/machine/env
           SSM_MACHINE_NODE_EXPORTER_TARGET_PARAM: /oplust/monitoring/targets/machine-node-exporter
         run: |
           set -euo pipefail
