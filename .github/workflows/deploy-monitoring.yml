@@ -161,6 +161,26 @@ jobs:
             exit 1
           fi
 
+          wait_for_ssm_online() {
+            local iid="$1"
+            for _ in $(seq 1 30); do
+              ping_status=$(aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${iid}" \
+                --query 'InstanceInformationList[0].PingStatus' \
+                --output text 2>/dev/null || true)
+              if [ "$ping_status" = "Online" ]; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          if ! wait_for_ssm_online "$INSTANCE_ID"; then
+            echo "Instance is running but not SSM Online: $INSTANCE_ID" >&2
+            exit 1
+          fi
           COMPOSE_B64=$(base64 -w 0 apps/monitoring/docker-compose.yml)
           COMPOSE_PROD_B64=$(base64 -w 0 apps/monitoring/docker-compose.prod.yml)
           PROM_PROD_B64=$(base64 -w 0 apps/monitoring/prometheus/prometheus.prod.yml)

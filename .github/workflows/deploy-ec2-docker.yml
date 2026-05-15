@@ -127,6 +127,21 @@ jobs:
             exit 1
           fi
 
+          wait_for_ssm_online() {
+            local iid="$1"
+            for _ in $(seq 1 30); do
+              ping_status=$(aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${iid}" \
+                --query 'InstanceInformationList[0].PingStatus' \
+                --output text 2>/dev/null || true)
+              if [ "$ping_status" = "Online" ]; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
           deploy_service() {
             local target_tag="$1"
             local image_uri="$2"
