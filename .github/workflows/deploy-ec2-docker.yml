@@ -37,11 +37,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate OIDC inputs
+        env:
+          ROLE_ARN: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ROLE_ARN:-}" ]; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN is empty or not injected." >&2
+            exit 1
+          fi
+          if ! echo "$ROLE_ARN" | grep -Eq '^arn:aws:iam::[0-9]{12}:role/.+'; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN format is invalid: expected role ARN." >&2
+            exit 1
+          fi
+          echo "GitHub ref: ${GITHUB_REF}"
+          echo "GitHub ref_name: ${GITHUB_REF_NAME}"
+          echo "Role ARN format check passed."
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify assumed identity
+        run: aws sts get-caller-identity
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -76,11 +96,31 @@ jobs:
     needs: build-and-push
 
     steps:
+      - name: Validate OIDC inputs
+        env:
+          ROLE_ARN: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ROLE_ARN:-}" ]; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN is empty or not injected." >&2
+            exit 1
+          fi
+          if ! echo "$ROLE_ARN" | grep -Eq '^arn:aws:iam::[0-9]{12}:role/.+'; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN format is invalid: expected role ARN." >&2
+            exit 1
+          fi
+          echo "GitHub ref: ${GITHUB_REF}"
+          echo "GitHub ref_name: ${GITHUB_REF_NAME}"
+          echo "Role ARN format check passed."
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify assumed identity
+        run: aws sts get-caller-identity
 
       - name: Deploy to EC2 instances via SSM
         env:
