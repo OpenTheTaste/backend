@@ -1,4 +1,4 @@
-name: Deploy Docker Apps To EC2
+﻿name: Deploy Docker Apps To EC2
 
 on:
   workflow_dispatch:
@@ -200,6 +200,26 @@ jobs:
 
             if [ -z "$instance_id" ] || [ "$instance_id" = "None" ]; then
               echo "No running instance found for tag: ${target_tag}" >&2
+              exit 1
+            fi
+            local instance_state
+            instance_state=$(aws ec2 describe-instances \
+              --region "$AWS_REGION" \
+              --instance-ids "$instance_id" \
+              --query "Reservations[0].Instances[0].State.Name" \
+              --output text)
+
+            if [ "$instance_state" != "running" ]; then
+              echo "Instance is not running for tag ${target_tag}: ${instance_id} (${instance_state})" >&2
+              exit 1
+            fi
+
+            if ! wait_for_ssm_online "$instance_id"; then
+              echo "Instance is not SSM online for tag ${target_tag}: ${instance_id}" >&2
+              aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${instance_id}" \
+                --output table || true
               exit 1
             fi
 
