@@ -1,4 +1,4 @@
-name: Deploy Docker Apps To EC2
+﻿name: Deploy Docker Apps To EC2
 
 on:
   workflow_dispatch:
@@ -10,6 +10,10 @@ on:
   pull_request:
     types:
       - closed
+
+permissions:
+  id-token: write
+  contents: read
 
 env:
   AWS_REGION: ap-northeast-2
@@ -33,12 +37,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate OIDC inputs
+        env:
+          ROLE_ARN: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ROLE_ARN:-}" ]; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN is empty or not injected." >&2
+            exit 1
+          fi
+          if ! echo "$ROLE_ARN" | grep -Eq '^arn:aws:iam::[0-9]{12}:role/.+'; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN format is invalid: expected role ARN." >&2
+            exit 1
+          fi
+          echo "GitHub ref: ${GITHUB_REF}"
+          echo "GitHub ref_name: ${GITHUB_REF_NAME}"
+          echo "Role ARN format check passed."
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify assumed identity
+        run: aws sts get-caller-identity
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -55,6 +78,7 @@ jobs:
         run: |
           IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
           IMAGE_URI="${ECR_REGISTRY}/${{ matrix.ecr_repo }}:${IMAGE_TAG}"
+
           IMAGE_URI_LATEST="${ECR_REGISTRY}/${{ matrix.ecr_repo }}:latest"
 
           docker build \
@@ -72,12 +96,31 @@ jobs:
     needs: build-and-push
 
     steps:
+      - name: Validate OIDC inputs
+        env:
+          ROLE_ARN: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ROLE_ARN:-}" ]; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN is empty or not injected." >&2
+            exit 1
+          fi
+          if ! echo "$ROLE_ARN" | grep -Eq '^arn:aws:iam::[0-9]{12}:role/.+'; then
+            echo "AWS_GITHUB_ACTIONS_ROLE_ARN format is invalid: expected role ARN." >&2
+            exit 1
+          fi
+          echo "GitHub ref: ${GITHUB_REF}"
+          echo "GitHub ref_name: ${GITHUB_REF_NAME}"
+          echo "Role ARN format check passed."
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify assumed identity
+        run: aws sts get-caller-identity
 
       - name: Deploy to EC2 instances via SSM
         env:
@@ -85,31 +128,60 @@ jobs:
           IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
           PROJECT_NAME: oplust
           DB_NAME: oplust
-          SSM_RDS_ENDPOINT_PARAM: /oplust/common/rds-endpoint
-          SSM_DB_USERNAME_PARAM: /oplust/common/db-username
-          SSM_DB_PASSWORD_PARAM: /oplust/common/db-password
+          RDS_INSTANCE_IDENTIFIER: oplust-dev-db
+          MONITORING_INSTANCE_TAG: monitoring
           NODE_EXPORTER_TARGET_SSM_PARAM: /oplust/monitoring/targets/node-exporter
-          ECS_CLUSTER_NAME: fluffy-flamingo-5ag1uq
-          ECS_SERVICE_NAME: oplust-transcoder-service
+          SSM_ECS_CLUSTER_NAME_PARAM: /oplust/dev/lambda/worker/ecs_cluster_name
+          SSM_ECS_SERVICE_NAME_PARAM: /oplust/dev/lambda/worker/ecs_service_name
           TRANSCODER_REPOSITORY: oplust-transcoder
           TRANSCODER_CONTAINER_NAME: oplust-transcoder
-          SCALER_LAMBDA_NAME: oplust-transcoder-scaler
+          ENV_NAME: dev
         run: |
           set -euo pipefail
 
           IMAGE_TAG="${IMAGE_TAG_INPUT:-${GITHUB_SHA}}"
 
+          ECS_CLUSTER_NAME=$(aws ssm get-parameter --region "$AWS_REGION" --name "$SSM_ECS_CLUSTER_NAME_PARAM" --with-decryption --query 'Parameter.Value' --output text)
+          ECS_SERVICE_NAME=$(aws ssm get-parameter --region "$AWS_REGION" --name "$SSM_ECS_SERVICE_NAME_PARAM" --with-decryption --query 'Parameter.Value' --output text)
+          SCALER_LAMBDA_NAME="${PROJECT_NAME}-${ENV_NAME}-worker"
+
+          if [ -z "$ECS_CLUSTER_NAME" ] || [ "$ECS_CLUSTER_NAME" = "None" ] || [ -z "$ECS_SERVICE_NAME" ] || [ "$ECS_SERVICE_NAME" = "None" ]; then
+            echo "Failed to resolve ECS cluster/service from SSM parameters" >&2
+            exit 1
+          fi
+
+          DB_HOST=$(aws rds describe-db-instances --region "$AWS_REGION" --db-instance-identifier "$RDS_INSTANCE_IDENTIFIER" --query 'DBInstances[0].Endpoint.Address' --output text)
+          if [ -z "$DB_HOST" ] || [ "$DB_HOST" = "None" ]; then
+            echo "Failed to resolve DB host from RDS" >&2
+            exit 1
+          fi
+
           MONITORING_PRIVATE_IP=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
-            --filters "Name=tag:Name,Values=${PROJECT_NAME}-monitoring-ec2" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=${MONITORING_INSTANCE_TAG}" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].PrivateIpAddress" \
             --output text)
 
           if [ -z "$MONITORING_PRIVATE_IP" ] || [ "$MONITORING_PRIVATE_IP" = "None" ]; then
-            echo "No running monitoring instance found for tag: ${PROJECT_NAME}-monitoring-ec2" >&2
+            echo "No running monitoring instance found for tag: ${MONITORING_INSTANCE_TAG}" >&2
             exit 1
           fi
 
+          wait_for_ssm_online() {
+            local iid="$1"
+            for _ in $(seq 1 30); do
+              ping_status=$(aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${iid}" \
+                --query 'InstanceInformationList[0].PingStatus' \
+                --output text 2>/dev/null || true)
+              if [ "$ping_status" = "Online" ]; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
           deploy_service() {
             local target_tag="$1"
             local image_uri="$2"
@@ -128,6 +200,26 @@ jobs:
 
             if [ -z "$instance_id" ] || [ "$instance_id" = "None" ]; then
               echo "No running instance found for tag: ${target_tag}" >&2
+              exit 1
+            fi
+            local instance_state
+            instance_state=$(aws ec2 describe-instances \
+              --region "$AWS_REGION" \
+              --instance-ids "$instance_id" \
+              --query "Reservations[0].Instances[0].State.Name" \
+              --output text)
+
+            if [ "$instance_state" != "running" ]; then
+              echo "Instance is not running for tag ${target_tag}: ${instance_id} (${instance_state})" >&2
+              exit 1
+            fi
+
+            if ! wait_for_ssm_online "$instance_id"; then
+              echo "Instance is not SSM online for tag ${target_tag}: ${instance_id}" >&2
+              aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${instance_id}" \
+                --output table || true
               exit 1
             fi
 
@@ -187,11 +279,14 @@ jobs:
             commands=(
               "set -e"
               "sudo mkdir -p /etc/oplust"
-              "DB_HOST=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_RDS_ENDPOINT_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
-              "DB_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_USERNAME_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
-              "DB_PASS=\$(aws ssm get-parameter --region $AWS_REGION --name '$SSM_DB_PASSWORD_PARAM' --with-decryption --query 'Parameter.Value' --output text)"
               "SERVICE_ENV=\$(aws ssm get-parameter --region $AWS_REGION --name '${service_env_param}' --with-decryption --query 'Parameter.Value' --output text)"
-              "echo \"SPRING_DATASOURCE_URL=jdbc:mysql://\$DB_HOST:3306/${DB_NAME}\" | sudo tee ${env_file} >/dev/null"
+              "if ! command -v jq >/dev/null 2>&1; then if command -v dnf >/dev/null 2>&1; then sudo dnf -y install jq; elif command -v yum >/dev/null 2>&1; then sudo yum -y install jq; elif command -v apt-get >/dev/null 2>&1; then sudo apt-get update -y && sudo apt-get install -y jq; else echo 'jq not found and no supported package manager to install it' >&2; exit 1; fi; fi"
+              "DB_SECRET_ARN=\$(aws rds describe-db-instances --region $AWS_REGION --db-instance-identifier '$RDS_INSTANCE_IDENTIFIER' --query 'DBInstances[0].MasterUserSecret.SecretArn' --output text)"
+              "DB_SECRET_JSON=\$(aws secretsmanager get-secret-value --region $AWS_REGION --secret-id \"\$DB_SECRET_ARN\" --query 'SecretString' --output text)"
+              "DB_USER=\$(echo \"\$DB_SECRET_JSON\" | jq -r '.username')"
+              "DB_PASS=\$(echo \"\$DB_SECRET_JSON\" | jq -r '.password')"
+              "if [ -z \"\$DB_USER\" ] || [ \"\$DB_USER\" = \"null\" ] || [ -z \"\$DB_PASS\" ] || [ \"\$DB_PASS\" = \"null\" ]; then echo 'Failed to resolve DB credentials from Secrets Manager' >&2; exit 1; fi"
+              "echo \"SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:3306/${DB_NAME}\" | sudo tee ${env_file} >/dev/null"
               "echo \"SPRING_DATASOURCE_USERNAME=\$DB_USER\" | sudo tee -a ${env_file} >/dev/null"
               "echo \"SPRING_DATASOURCE_PASSWORD=\$DB_PASS\" | sudo tee -a ${env_file} >/dev/null"
               "printf '%s\n' \"\$SERVICE_ENV\" | sudo tee -a ${env_file} >/dev/null"
@@ -469,6 +564,11 @@ jobs:
             rm -f "$td_file" "$new_td_file"
           }
 
-          deploy_service "${PROJECT_NAME}-user-ec2" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/api-user/env" "user-api"
-          deploy_service "${PROJECT_NAME}-admin-ec2" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/api-admin/env" "admin-api"
+          deploy_service "user" "${ECR_REGISTRY}/oplust-api-user:${IMAGE_TAG}" "oplust-api-user" "/etc/oplust/api-user.env" "8080" "/oplust/${ENV_NAME}/api-user/env" "user-api"
+          deploy_service "admin" "${ECR_REGISTRY}/oplust-api-admin:${IMAGE_TAG}" "oplust-api-admin" "/etc/oplust/api-admin.env" "8081" "/oplust/${ENV_NAME}/api-admin/env" "admin-api"
           deploy_transcoder_ecs
+
+
+
+
+

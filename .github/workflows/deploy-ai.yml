@@ -11,6 +11,10 @@ on:
     types:
       - closed
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   AWS_REGION: ap-northeast-2
   SERVICE_NAME: machine
@@ -28,8 +32,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
@@ -73,8 +76,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy AI service to EC2 via SSM
@@ -82,7 +84,8 @@ jobs:
           ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
           IMAGE_TAG_INPUT: ${{ github.event.inputs.image_tag }}
           PROJECT_NAME: oplust
-          SSM_MACHINE_ENV_PARAM: /oplust/machine/env
+          ENV_NAME: dev
+          SSM_MACHINE_ENV_PARAM: /oplust/dev/machine/env
           SSM_MACHINE_NODE_EXPORTER_TARGET_PARAM: /oplust/monitoring/targets/machine-node-exporter
         run: |
           set -euo pipefail
@@ -96,12 +99,12 @@ jobs:
 
           MONITORING_PRIVATE_IP=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
-            --filters "Name=tag:Name,Values=${PROJECT_NAME}-monitoring-ec2" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=monitoring" "Name=tag:Project,Values=${PROJECT_NAME}" "Name=tag:Env,Values=${ENV_NAME}" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].PrivateIpAddress" \
             --output text)
 
           if [ -z "$MONITORING_PRIVATE_IP" ] || [ "$MONITORING_PRIVATE_IP" = "None" ]; then
-            echo "No running monitoring instance found for tag: ${PROJECT_NAME}-monitoring-ec2" >&2
+            echo "No running monitoring instance found for Name=monitoring, Project=${PROJECT_NAME}, Env=${ENV_NAME}" >&2
             exit 1
           fi
 
@@ -116,6 +119,26 @@ jobs:
             exit 1
           fi
 
+          wait_for_ssm_online() {
+            local iid="$1"
+            for _ in $(seq 1 30); do
+              ping_status=$(aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${iid}" \
+                --query 'InstanceInformationList[0].PingStatus' \
+                --output text 2>/dev/null || true)
+              if [ "$ping_status" = "Online" ]; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          if ! wait_for_ssm_online "$INSTANCE_ID"; then
+            echo "Instance is running but not SSM Online: $INSTANCE_ID" >&2
+            exit 1
+          fi
           MACHINE_PRIVATE_IP=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
             --instance-ids "$INSTANCE_ID" \
@@ -124,7 +147,7 @@ jobs:
 
           MONITORING_SG_ID=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
-            --filters "Name=tag:Name,Values=${PROJECT_NAME}-monitoring-ec2" "Name=instance-state-name,Values=running" \
+            --filters "Name=tag:Name,Values=monitoring" "Name=tag:Project,Values=${PROJECT_NAME}" "Name=tag:Env,Values=${ENV_NAME}" "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" \
             --output text)
 

@@ -6,34 +6,30 @@ on:
       rabbitmq_instance_tag:
         description: "EC2 Name tag for RabbitMQ server"
         required: true
-        default: "oplust-rabbitmq-ec2"
+        default: "rabbitmq"
         type: string
-      rabbitmq_image_tag:
-        description: "RabbitMQ image tag"
+      rabbitmq_admin_secret_id:
+        description: "Secrets Manager secret id/arn for RabbitMQ admin credentials"
         required: true
-        default: "3.13-management"
+        default: "oplust/dev/rabbitmq/admin-credentials"
         type: string
-      rabbitmq_user_ssm_param:
-        description: "SSM SecureString parameter for RabbitMQ default user"
+      rabbitmq_app_secret_id:
+        description: "Secrets Manager secret id/arn for RabbitMQ app credentials"
         required: true
-        default: "/oplust/rabbitmq/default-user"
+        default: "oplust/dev/rabbitmq/credentials"
         type: string
-      rabbitmq_password_ssm_param:
-        description: "SSM SecureString parameter for RabbitMQ default password"
+      rabbitmq_vhost:
+        description: "RabbitMQ vhost"
         required: true
-        default: "/oplust/rabbitmq/default-password"
+        default: "/"
         type: string
-      rabbitmq_vhost_ssm_param:
-        description: "SSM parameter for RabbitMQ default vhost"
-        required: true
-        default: "/oplust/rabbitmq/default-vhost"
-        type: string
+
+permissions:
+  id-token: write
+  contents: read
 
 env:
   AWS_REGION: ap-northeast-2
-  RABBITMQ_ROOT: /opt/oplust-rabbitmq
-  RABBITMQ_CONTAINER_NAME: oplust-rabbitmq
-  RABBITMQ_DATA_VOLUME: oplust-rabbitmq-data
 
 jobs:
   deploy-rabbitmq:
@@ -43,19 +39,22 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy RabbitMQ via SSM
+      - name: Sync RabbitMQ users from Secrets Manager via SSM
         env:
           INSTANCE_TAG: ${{ github.event.inputs.rabbitmq_instance_tag }}
-          RABBITMQ_IMAGE_TAG: ${{ github.event.inputs.rabbitmq_image_tag }}
-          RABBITMQ_USER_SSM_PARAM: ${{ github.event.inputs.rabbitmq_user_ssm_param }}
-          RABBITMQ_PASSWORD_SSM_PARAM: ${{ github.event.inputs.rabbitmq_password_ssm_param }}
-          RABBITMQ_VHOST_SSM_PARAM: ${{ github.event.inputs.rabbitmq_vhost_ssm_param }}
+          RABBITMQ_ADMIN_SECRET_ID: ${{ github.event.inputs.rabbitmq_admin_secret_id }}
+          RABBITMQ_APP_SECRET_ID: ${{ github.event.inputs.rabbitmq_app_secret_id }}
+          RABBITMQ_VHOST: ${{ github.event.inputs.rabbitmq_vhost }}
         run: |
           set -euo pipefail
+
+          if [[ "$RABBITMQ_VHOST" == *"'"* ]] || [[ "$RABBITMQ_VHOST" == *$'\n'* ]] || [[ "$RABBITMQ_VHOST" == *$'\r'* ]]; then
+            echo "Invalid rabbitmq_vhost input. Single quote and newlines are not allowed." >&2
+            exit 1
+          fi
 
           INSTANCE_ID=$(aws ec2 describe-instances \
             --region "$AWS_REGION" \
@@ -68,27 +67,54 @@ jobs:
             exit 1
           fi
 
+          wait_for_ssm_online() {
+            local iid="$1"
+            for _ in $(seq 1 30); do
+              ping_status=$(aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${iid}" \
+                --query 'InstanceInformationList[0].PingStatus' \
+                --output text 2>/dev/null || true)
+              if [ "$ping_status" = "Online" ]; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          if ! wait_for_ssm_online "$INSTANCE_ID"; then
+            echo "Instance is running but not SSM Online: $INSTANCE_ID" >&2
+            exit 1
+          fi
           PARAMS=$(jq -nc \
             --arg c1 "set -euo pipefail" \
-            --arg c2 "sudo mkdir -p ${RABBITMQ_ROOT}" \
-            --arg c3 "RABBITMQ_DEFAULT_USER=\$(aws ssm get-parameter --region $AWS_REGION --name '${RABBITMQ_USER_SSM_PARAM}' --with-decryption --query 'Parameter.Value' --output text)" \
-            --arg c4 "RABBITMQ_DEFAULT_PASS=\$(aws ssm get-parameter --region $AWS_REGION --name '${RABBITMQ_PASSWORD_SSM_PARAM}' --with-decryption --query 'Parameter.Value' --output text)" \
-            --arg c5 "RABBITMQ_DEFAULT_VHOST=\$(aws ssm get-parameter --region $AWS_REGION --name '${RABBITMQ_VHOST_SSM_PARAM}' --with-decryption --query 'Parameter.Value' --output text)" \
-            --arg c6 "if [ -z \\\"\$RABBITMQ_DEFAULT_USER\\\" ] || [ \\\"\$RABBITMQ_DEFAULT_USER\\\" = \\\"None\\\" ] || [ -z \\\"\$RABBITMQ_DEFAULT_PASS\\\" ] || [ \\\"\$RABBITMQ_DEFAULT_PASS\\\" = \\\"None\\\" ] || [ -z \\\"\$RABBITMQ_DEFAULT_VHOST\\\" ] || [ \\\"\$RABBITMQ_DEFAULT_VHOST\\\" = \\\"None\\\" ]; then echo 'RabbitMQ env values are empty from SSM' >&2; exit 1; fi" \
-            --arg c7 "printf '%s\n' \\\"RABBITMQ_DEFAULT_USER=\$RABBITMQ_DEFAULT_USER\\\" \\\"RABBITMQ_DEFAULT_PASS=\$RABBITMQ_DEFAULT_PASS\\\" \\\"RABBITMQ_DEFAULT_VHOST=\$RABBITMQ_DEFAULT_VHOST\\\" | sudo tee ${RABBITMQ_ROOT}/.env >/dev/null" \
-            --arg c8 "sudo chmod 600 ${RABBITMQ_ROOT}/.env" \
-            --arg c9 "sudo docker pull rabbitmq:${RABBITMQ_IMAGE_TAG}" \
-            --arg c10 "sudo docker rm -f ${RABBITMQ_CONTAINER_NAME} || true" \
-            --arg c11 "sudo docker volume create ${RABBITMQ_DATA_VOLUME} >/dev/null" \
-            --arg c12 "sudo docker run -d --name ${RABBITMQ_CONTAINER_NAME} --restart unless-stopped -p 5672:5672 -p 15672:15672 --env-file ${RABBITMQ_ROOT}/.env -v ${RABBITMQ_DATA_VOLUME}:/var/lib/rabbitmq rabbitmq:${RABBITMQ_IMAGE_TAG}" \
-            --arg c13 "for i in \$(seq 1 30); do if sudo docker exec ${RABBITMQ_CONTAINER_NAME} rabbitmq-diagnostics -q ping >/dev/null 2>&1; then echo 'RabbitMQ is healthy'; exit 0; fi; sleep 2; done; echo 'RabbitMQ health check failed' >&2; exit 1" \
-            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c7,$c8,$c9,$c10,$c11,$c12,$c13]}')
+            --arg c2 "command -v jq >/dev/null 2>&1 || sudo dnf -y install jq" \
+            --arg c3 "command -v aws >/dev/null 2>&1 || sudo dnf -y install awscli" \
+            --arg c4 "sudo systemctl enable --now rabbitmq-server" \
+            --arg c5 "sudo rabbitmq-plugins enable rabbitmq_management" \
+            --arg c6 "ADMIN_JSON=\$(aws secretsmanager get-secret-value --region $AWS_REGION --secret-id '${RABBITMQ_ADMIN_SECRET_ID}' --query SecretString --output text)" \
+            --arg c7 "APP_JSON=\$(aws secretsmanager get-secret-value --region $AWS_REGION --secret-id '${RABBITMQ_APP_SECRET_ID}' --query SecretString --output text)" \
+            --arg c8 "ADMIN_USER=\$(echo \"\$ADMIN_JSON\" | jq -r '.username')" \
+            --arg c9 "ADMIN_PASS=\$(echo \"\$ADMIN_JSON\" | jq -r '.password')" \
+            --arg c10 "APP_USER=\$(echo \"\$APP_JSON\" | jq -r '.username')" \
+            --arg c11 "APP_PASS=\$(echo \"\$APP_JSON\" | jq -r '.password')" \
+            --arg c12 "if [ -z \"\$ADMIN_USER\" ] || [ \"\$ADMIN_USER\" = \"null\" ] || [ -z \"\$ADMIN_PASS\" ] || [ \"\$ADMIN_PASS\" = \"null\" ] || [ -z \"\$APP_USER\" ] || [ \"\$APP_USER\" = \"null\" ] || [ -z \"\$APP_PASS\" ] || [ \"\$APP_PASS\" = \"null\" ]; then echo 'Secret payload invalid (username/password missing)' >&2; exit 1; fi" \
+            --arg c13 "if sudo rabbitmqctl list_users | awk '{print \$1}' | grep -qx \"\$ADMIN_USER\"; then sudo rabbitmqctl change_password \"\$ADMIN_USER\" \"\$ADMIN_PASS\"; else sudo rabbitmqctl add_user \"\$ADMIN_USER\" \"\$ADMIN_PASS\"; fi" \
+            --arg c14 "sudo rabbitmqctl set_user_tags \"\$ADMIN_USER\" administrator" \
+            --arg c15 "sudo rabbitmqctl set_permissions -p '${RABBITMQ_VHOST}' \"\$ADMIN_USER\" '.*' '.*' '.*'" \
+            --arg c16 "if sudo rabbitmqctl list_users | awk '{print \$1}' | grep -qx \"\$APP_USER\"; then sudo rabbitmqctl change_password \"\$APP_USER\" \"\$APP_PASS\"; else sudo rabbitmqctl add_user \"\$APP_USER\" \"\$APP_PASS\"; fi" \
+            --arg c17 "sudo rabbitmqctl set_user_tags \"\$APP_USER\" management" \
+            --arg c18 "sudo rabbitmqctl set_permissions -p '${RABBITMQ_VHOST}' \"\$APP_USER\" '.*' '.*' '.*'" \
+            --arg c19 "if sudo rabbitmqctl list_users | awk '{print \$1}' | grep -qx guest; then sudo rabbitmqctl delete_user guest || true; fi" \
+            --arg c20 "sudo rabbitmq-diagnostics -q ping" \
+            '{commands:[$c1,$c2,$c3,$c4,$c5,$c6,$c7,$c8,$c9,$c10,$c11,$c12,$c13,$c14,$c15,$c16,$c17,$c18,$c19,$c20]}')
 
           CMD_ID=$(aws ssm send-command \
             --region "$AWS_REGION" \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploy RabbitMQ" \
+            --comment "Sync RabbitMQ users from Secrets Manager" \
             --parameters "$PARAMS" \
             --query 'Command.CommandId' \
             --output text)
@@ -105,11 +131,11 @@ jobs:
 
             case "$STATUS" in
               Success)
-                echo "RabbitMQ deployment success"
+                echo "RabbitMQ sync success"
                 exit 0
                 ;;
               Failed|Cancelled|TimedOut)
-                echo "RabbitMQ deployment failed: $STATUS" >&2
+                echo "RabbitMQ sync failed: $STATUS" >&2
                 aws ssm get-command-invocation \
                   --region "$AWS_REGION" \
                   --command-id "$CMD_ID" \
@@ -127,5 +153,5 @@ jobs:
             esac
           done
 
-          echo "RabbitMQ deployment timed out" >&2
+          echo "RabbitMQ sync timed out" >&2
           exit 1

@@ -6,42 +6,27 @@ on:
       monitoring_instance_tag:
         description: "EC2 Name tag for monitoring server"
         required: true
-        default: "oplust-monitoring-ec2"
+        default: "monitoring"
         type: string
-      user_api_target_ssm_param:
-        description: "SSM parameter name for user-api target (host:port)"
+      project_name:
+        description: "Project name"
         required: true
-        default: "/oplust/monitoring/targets/user-api"
+        default: "oplust"
         type: string
-      admin_api_target_ssm_param:
-        description: "SSM parameter name for admin-api target (host:port)"
+      environment:
+        description: "Environment name"
         required: true
-        default: "/oplust/monitoring/targets/admin-api"
+        default: "dev"
         type: string
-      transcoder_target_ssm_param:
-        description: "SSM parameter name for transcoder target (host:port)"
+      grafana_admin_secret_id:
+        description: "Secrets Manager secret id/arn for Grafana admin credentials"
         required: true
-        default: "/oplust/monitoring/targets/transcoder"
+        default: "oplust/dev/monitoring/grafana-admin-credentials"
         type: string
-      node_exporter_target_ssm_param:
-        description: "SSM parameter name for node-exporter target (host:port)"
-        required: true
-        default: "/oplust/monitoring/targets/node-exporter"
-        type: string
-      machine_node_exporter_target_ssm_param:
-        description: "SSM parameter name for machine node-exporter target (host:port)"
-        required: true
-        default: "/oplust/monitoring/targets/machine-node-exporter"
-        type: string
-      grafana_password_ssm_param:
-        description: "SSM SecureString parameter name for Grafana admin password"
-        required: true
-        default: "/oplust/monitoring/grafana-admin-password"
-        type: string
-      grafana_admin_password:
-        description: "Optional override password (leave blank to use SSM)"
-        required: false
-        type: string
+
+permissions:
+  id-token: write
+  contents: read
 
 env:
   AWS_REGION: ap-northeast-2
@@ -58,82 +43,66 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Resolve scrape targets from SSM
+      - name: Resolve targets from Terraform naming convention
         env:
-          USER_API_TARGET_SSM_PARAM: ${{ github.event.inputs.user_api_target_ssm_param }}
-          ADMIN_API_TARGET_SSM_PARAM: ${{ github.event.inputs.admin_api_target_ssm_param }}
-          TRANSCODER_TARGET_SSM_PARAM: ${{ github.event.inputs.transcoder_target_ssm_param }}
-          NODE_EXPORTER_TARGET_SSM_PARAM: ${{ github.event.inputs.node_exporter_target_ssm_param }}
-          MACHINE_NODE_EXPORTER_TARGET_SSM_PARAM: ${{ github.event.inputs.machine_node_exporter_target_ssm_param }}
+          PROJECT_NAME: ${{ github.event.inputs.project_name }}
+          ENV_NAME: ${{ github.event.inputs.environment }}
+          INSTANCE_TAG: ${{ github.event.inputs.monitoring_instance_tag }}
         run: |
           set -euo pipefail
 
-          USER_API_TARGET=$(aws ssm get-parameter \
-            --region "$AWS_REGION" \
-            --name "$USER_API_TARGET_SSM_PARAM" \
-            --with-decryption \
-            --query 'Parameter.Value' \
-            --output text)
+          get_private_ip_by_name() {
+            local name_tag="$1"
+            aws ec2 describe-instances \
+              --region "$AWS_REGION" \
+              --filters "Name=tag:Name,Values=${name_tag}" "Name=instance-state-name,Values=running" \
+              --query "Reservations[0].Instances[0].PrivateIpAddress" \
+              --output text
+          }
 
-          ADMIN_API_TARGET=$(aws ssm get-parameter \
-            --region "$AWS_REGION" \
-            --name "$ADMIN_API_TARGET_SSM_PARAM" \
-            --with-decryption \
-            --query 'Parameter.Value' \
-            --output text)
+          USER_API_IP=$(get_private_ip_by_name "user")
+          ADMIN_API_IP=$(get_private_ip_by_name "admin")
+          MONITORING_IP=$(get_private_ip_by_name "${INSTANCE_TAG}")
 
-          TRANSCODER_TARGET=$(aws ssm get-parameter \
-            --region "$AWS_REGION" \
-            --name "$TRANSCODER_TARGET_SSM_PARAM" \
-            --with-decryption \
-            --query 'Parameter.Value' \
-            --output text)
-
-          NODE_EXPORTER_TARGET=$(aws ssm get-parameter \
-            --region "$AWS_REGION" \
-            --name "$NODE_EXPORTER_TARGET_SSM_PARAM" \
-            --with-decryption \
-            --query 'Parameter.Value' \
-            --output text)
-
-          MACHINE_NODE_EXPORTER_TARGET=$(aws ssm get-parameter \
-            --region "$AWS_REGION" \
-            --name "$MACHINE_NODE_EXPORTER_TARGET_SSM_PARAM" \
-            --with-decryption \
-            --query 'Parameter.Value' \
-            --output text)
-
-          if [ -z "$USER_API_TARGET" ] || [ "$USER_API_TARGET" = "None" ] || \
-             [ -z "$ADMIN_API_TARGET" ] || [ "$ADMIN_API_TARGET" = "None" ] || \
-             [ -z "$TRANSCODER_TARGET" ] || [ "$TRANSCODER_TARGET" = "None" ] || \
-             [ -z "$NODE_EXPORTER_TARGET" ] || [ "$NODE_EXPORTER_TARGET" = "None" ] || \
-             [ -z "$MACHINE_NODE_EXPORTER_TARGET" ] || [ "$MACHINE_NODE_EXPORTER_TARGET" = "None" ]; then
-            echo "One or more scrape targets are empty. Check SSM parameter values." >&2
+          if [ -z "$USER_API_IP" ] || [ "$USER_API_IP" = "None" ] || [ -z "$ADMIN_API_IP" ] || [ "$ADMIN_API_IP" = "None" ] || [ -z "$MONITORING_IP" ] || [ "$MONITORING_IP" = "None" ]; then
+            echo "Failed to resolve required EC2 private IPs (user/admin/monitoring)." >&2
             exit 1
           fi
 
-          normalize_targets() {
-            # Accept comma/newline/space separated values and render a YAML inline list payload:
-            # "host1:port","host2:port"
-            printf '%s' "$1" \
-              | tr ',\r\n\t' '    ' \
-              | xargs -n1 \
-              | sed '/^$/d' \
-              | sort -u \
-              | awk '{printf "\"%s\",", $0}' \
-              | sed 's/,$//'
-          }
+          USER_API_TARGET="${USER_API_IP}:8080"
+          ADMIN_API_TARGET="${ADMIN_API_IP}:8081"
+          MACHINE_NODE_EXPORTER_TARGET="${MONITORING_IP}:9100"
 
-          TRANSCODER_TARGETS_YAML=$(normalize_targets "$TRANSCODER_TARGET")
-          NODE_EXPORTER_TARGETS_YAML=$(normalize_targets "$NODE_EXPORTER_TARGET")
+          NODE_EXPORTER_TARGETS_YAML="\"${USER_API_IP}:9100\",\"${ADMIN_API_IP}:9100\",\"${MONITORING_IP}:9100\""
 
-          if [ -z "$TRANSCODER_TARGETS_YAML" ] || [ -z "$NODE_EXPORTER_TARGETS_YAML" ]; then
-            echo "Rendered target list is empty. Check SSM parameter values." >&2
+          ECS_CLUSTER_PARAM="/${PROJECT_NAME}/${ENV_NAME}/lambda/worker/ecs_cluster_name"
+          ECS_SERVICE_PARAM="/${PROJECT_NAME}/${ENV_NAME}/lambda/worker/ecs_service_name"
+
+          ECS_CLUSTER_NAME=$(aws ssm get-parameter --region "$AWS_REGION" --name "$ECS_CLUSTER_PARAM" --with-decryption --query 'Parameter.Value' --output text)
+          ECS_SERVICE_NAME=$(aws ssm get-parameter --region "$AWS_REGION" --name "$ECS_SERVICE_PARAM" --with-decryption --query 'Parameter.Value' --output text)
+
+          if [ -z "$ECS_CLUSTER_NAME" ] || [ "$ECS_CLUSTER_NAME" = "None" ] || [ -z "$ECS_SERVICE_NAME" ] || [ "$ECS_SERVICE_NAME" = "None" ]; then
+            echo "Failed to resolve ECS cluster/service from SSM." >&2
             exit 1
+          fi
+
+          TASK_ARNS=$(aws ecs list-tasks --region "$AWS_REGION" --cluster "$ECS_CLUSTER_NAME" --service-name "$ECS_SERVICE_NAME" --desired-status RUNNING --query 'taskArns' --output text | tr '\t' ' ' || true)
+          TRANSCODER_TARGETS_YAML=""
+
+          if [ -n "${TASK_ARNS:-}" ]; then
+            ENI_IDS=$(aws ecs describe-tasks --region "$AWS_REGION" --cluster "$ECS_CLUSTER_NAME" --tasks $TASK_ARNS \
+              --query 'tasks[].attachments[].details[?name==`networkInterfaceId`].value' --output text | tr '\t' ' ' || true)
+
+            if [ -n "${ENI_IDS:-}" ]; then
+              TRANSCODER_IPS=$(aws ec2 describe-network-interfaces --region "$AWS_REGION" --network-interface-ids $ENI_IDS \
+                --query 'NetworkInterfaces[].PrivateIpAddress' --output text || true)
+              if [ -n "${TRANSCODER_IPS:-}" ]; then
+                TRANSCODER_TARGETS_YAML=$(printf '%s\n' $TRANSCODER_IPS | sed '/^$/d' | sort -u | awk '{printf "\"%s:8082\",", $0}' | sed 's/,$//')
+              fi
+            fi
           fi
 
           echo "USER_API_TARGET=$USER_API_TARGET" >> "$GITHUB_ENV"
@@ -154,26 +123,22 @@ jobs:
             -e "s|__MACHINE_NODE_EXPORTER_TARGET__|${MACHINE_NODE_EXPORTER_TARGET}|g" \
             apps/monitoring/prometheus/prometheus.prod.yml.tpl > apps/monitoring/prometheus/prometheus.prod.yml
 
-      - name: Resolve Grafana admin password
+      - name: Resolve Grafana admin password from Secrets Manager
         env:
-          GRAFANA_ADMIN_PASSWORD_INPUT: ${{ github.event.inputs.grafana_admin_password }}
-          GRAFANA_PASSWORD_SSM_PARAM: ${{ github.event.inputs.grafana_password_ssm_param }}
+          GRAFANA_ADMIN_SECRET_ID: ${{ github.event.inputs.grafana_admin_secret_id }}
         run: |
           set -euo pipefail
 
-          if [ -n "$GRAFANA_ADMIN_PASSWORD_INPUT" ]; then
-            GRAFANA_PASSWORD="$GRAFANA_ADMIN_PASSWORD_INPUT"
-          else
-            GRAFANA_PASSWORD=$(aws ssm get-parameter \
-              --region "$AWS_REGION" \
-              --name "$GRAFANA_PASSWORD_SSM_PARAM" \
-              --with-decryption \
-              --query 'Parameter.Value' \
-              --output text)
-          fi
+          SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --region "$AWS_REGION" \
+            --secret-id "$GRAFANA_ADMIN_SECRET_ID" \
+            --query 'SecretString' \
+            --output text)
 
-          if [ -z "$GRAFANA_PASSWORD" ] || [ "$GRAFANA_PASSWORD" = "None" ]; then
-            echo "Grafana admin password is empty. Check input or SSM parameter." >&2
+          GRAFANA_PASSWORD=$(echo "$SECRET_JSON" | jq -r '.password')
+
+          if [ -z "$GRAFANA_PASSWORD" ] || [ "$GRAFANA_PASSWORD" = "null" ]; then
+            echo "Grafana admin password is empty in secret: $GRAFANA_ADMIN_SECRET_ID" >&2
             exit 1
           fi
 
@@ -196,6 +161,26 @@ jobs:
             exit 1
           fi
 
+          wait_for_ssm_online() {
+            local iid="$1"
+            for _ in $(seq 1 30); do
+              ping_status=$(aws ssm describe-instance-information \
+                --region "$AWS_REGION" \
+                --filters "Key=InstanceIds,Values=${iid}" \
+                --query 'InstanceInformationList[0].PingStatus' \
+                --output text 2>/dev/null || true)
+              if [ "$ping_status" = "Online" ]; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          if ! wait_for_ssm_online "$INSTANCE_ID"; then
+            echo "Instance is running but not SSM Online: $INSTANCE_ID" >&2
+            exit 1
+          fi
           COMPOSE_B64=$(base64 -w 0 apps/monitoring/docker-compose.yml)
           COMPOSE_PROD_B64=$(base64 -w 0 apps/monitoring/docker-compose.prod.yml)
           PROM_PROD_B64=$(base64 -w 0 apps/monitoring/prometheus/prometheus.prod.yml)
@@ -265,5 +250,3 @@ jobs:
 
           echo "Monitoring deployment timed out" >&2
           exit 1
-
-
