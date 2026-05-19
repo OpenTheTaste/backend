@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -21,7 +22,8 @@ public class CacheConfig {
     public static final String PLAYBACK_PLAYABLE_MEDIA_CACHE = "playbackPlayableMedia";
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    @Primary
+    public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
 
         // 기본 캐시 설정 (이름별 설정이 없는 캐시에 적용)
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
