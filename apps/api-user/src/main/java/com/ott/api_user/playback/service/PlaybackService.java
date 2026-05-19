@@ -3,6 +3,7 @@ package com.ott.api_user.playback.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ott.api_user.playback.cache.PlayableMediaCacheValue;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
 import com.ott.domain.contents.repository.ContentsRepository;
@@ -15,21 +16,27 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class PlaybackService {
     private final PlaybackRepository playbackRepository;
+    private final PlaybackValidationCacheService playbackValidationCacheService;
     private final ContentsRepository contentsRepository;
 
-    public void upsertPlayback(Long memberId, Long mediaId, Integer positionSec){
+    public void initPlayback(Long memberId, Long mediaId) {
+        Long contentsId = contentsRepository.findPlayableContentsIdByMediaId(mediaId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
-        if(positionSec == null || positionSec < 0){
-            positionSec =0;
+        playbackRepository.insertIgnorePlayback(memberId, contentsId);
+    }
+
+    public void updatePlayback(Long memberId, Long mediaId, Integer positionSec) {
+
+        if (positionSec == null || positionSec < 0) {
+            positionSec = 0;
         }
 
-        int affectedRows = playbackRepository.upsertPlaybackByMediaId(memberId, mediaId, positionSec);
-        if (affectedRows > 0) {
-            return;
-        }
-
-        if (!contentsRepository.existsPlayableByMediaId(mediaId)) {
+        PlayableMediaCacheValue playableMedia = playbackValidationCacheService.getPlayableMedia(mediaId);
+        if (!playableMedia.playable()) {
             throw new BusinessException(ErrorCode.CONTENTS_NOT_FOUND);
         }
+
+        playbackRepository.updatePlayback(memberId, playableMedia.contentsId(), positionSec);
     }
 }
