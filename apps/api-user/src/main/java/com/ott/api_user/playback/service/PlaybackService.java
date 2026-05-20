@@ -1,5 +1,7 @@
 package com.ott.api_user.playback.service;
 
+import com.ott.api_user.playback.dto.request.PlaybackInitRequest;
+import com.ott.api_user.playback.dto.request.PlaybackUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,24 +21,19 @@ public class PlaybackService {
     private final PlaybackValidationCacheService playbackValidationCacheService;
     private final ContentsRepository contentsRepository;
 
-    public void initPlayback(Long memberId, Long mediaId) {
-        Long contentsId = contentsRepository.findPlayableContentsIdByMediaId(mediaId)
+    public void initPlayback(Long memberId, PlaybackInitRequest playbackInitRequest) {
+        Long contentsId = contentsRepository.findPlayableContentsIdByMediaId(playbackInitRequest.getMediaId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
 
         playbackRepository.insertIgnorePlayback(memberId, contentsId);
     }
 
-    public void updatePlayback(Long memberId, Long mediaId, Integer positionSec) {
-
-        if (positionSec == null || positionSec < 0) {
-            positionSec = 0;
-        }
-
-        PlayableMediaCacheValue playableMedia = playbackValidationCacheService.getPlayableMedia(mediaId);
+    public void updatePlayback(Long memberId, PlaybackUpdateRequest playbackUpdateRequest) {
+        PlayableMediaCacheValue playableMedia = playbackValidationCacheService.getPlayableMedia(playbackUpdateRequest.getMediaId());
         if (!playableMedia.playable()) {
             throw new BusinessException(ErrorCode.CONTENTS_NOT_FOUND);
         }
 
-        playbackRepository.updatePlayback(memberId, playableMedia.contentsId(), positionSec);
+        playbackRepository.updatePlayback(memberId, playableMedia.contentsId(), playbackUpdateRequest.getPositionSec());
     }
 }

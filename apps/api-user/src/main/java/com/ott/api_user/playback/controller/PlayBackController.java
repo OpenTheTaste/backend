@@ -24,10 +24,8 @@ public class PlayBackController implements PlayBackApi {
     @PostMapping
     public ResponseEntity<Void> initPlayback(
         @AuthenticationPrincipal Long memberId,
-        @Valid @RequestBody PlaybackInitRequest request) {
-
-            playbackService.initPlayback(memberId, request.getMediaId());
-
+        @Valid @RequestBody PlaybackInitRequest playbackInitRequest) {
+            playbackService.initPlayback(memberId, playbackInitRequest);
             return ResponseEntity.noContent().build();
     }
 
@@ -35,10 +33,8 @@ public class PlayBackController implements PlayBackApi {
     @PutMapping
     public ResponseEntity<Void> updatePlayBack(
         @AuthenticationPrincipal Long memberId,
-        @Valid @RequestBody PlaybackUpdateRequest request){
-
-            playbackService.updatePlayback(memberId, request.getMediaId(), request.getPositionSec());
-
+        @Valid @RequestBody PlaybackUpdateRequest playbackUpdateRequest){
+            playbackService.updatePlayback(memberId, playbackUpdateRequest);
             return ResponseEntity.noContent().build();
     }
 }
