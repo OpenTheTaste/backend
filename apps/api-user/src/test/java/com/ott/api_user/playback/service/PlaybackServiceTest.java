@@ -1,9 +1,13 @@
 package com.ott.api_user.playback.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.ott.api_user.playback.buffer.PlaybackCommandQueue;
 import com.ott.api_user.playback.cache.PlayableMediaCacheValue;
 import com.ott.api_user.playback.dto.request.PlaybackInitRequest;
 import com.ott.api_user.playback.dto.request.PlaybackUpdateRequest;
@@ -31,6 +35,9 @@ class PlaybackServiceTest {
     @Mock
     private ContentsRepository contentsRepository;
 
+    @Mock
+    private PlaybackCommandQueue playbackCommandQueue;
+
     @InjectMocks
     private PlaybackService playbackService;
 
@@ -56,27 +63,30 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void updatePlayback_passesNegativePositionAsIs() {
-        Long memberId = 10L;
-        Long mediaId = 20L;
+    void updatePlayback_offersToQueueWhenPlayableContentExists() {
+        Long memberId = 2L;
+        Long mediaId = 6L;
         when(playbackValidationCacheService.getPlayableMedia(mediaId))
-                .thenReturn(PlayableMediaCacheValue.valid(30L));
+                .thenReturn(PlayableMediaCacheValue.valid(200L));
+        when(playbackCommandQueue.offer(memberId, 200L, 15)).thenReturn(true);
 
-        playbackService.updatePlayback(memberId, createUpdateRequest(mediaId, -5));
+        playbackService.updatePlayback(memberId, createUpdateRequest(mediaId, 15));
 
-        verify(playbackRepository).updatePlayback(memberId, 30L, -5);
+        verify(playbackCommandQueue).offer(memberId, 200L, 15);
+        verify(playbackRepository, never()).updatePlayback(anyLong(), anyLong(), anyInt());
     }
 
     @Test
-    void updatePlayback_usesContentsIdResolvedByValidationCache() {
-        Long memberId = 1L;
-        Long mediaId = 5L;
+    void updatePlayback_offersToOverflowWhenQueueFull() {
+        Long memberId = 2L;
+        Long mediaId = 6L;
         when(playbackValidationCacheService.getPlayableMedia(mediaId))
-                .thenReturn(PlayableMediaCacheValue.valid(100L));
+                .thenReturn(PlayableMediaCacheValue.valid(200L));
+        when(playbackCommandQueue.offer(memberId, 200L, 15)).thenReturn(false);
 
-        playbackService.updatePlayback(memberId, createUpdateRequest(mediaId, 10));
+        playbackService.updatePlayback(memberId, createUpdateRequest(mediaId, 15));
 
-        verify(playbackRepository).updatePlayback(memberId, 100L, 10);
+        verify(playbackCommandQueue).offerToOverflow(memberId, 200L, 15);
     }
 
     @Test
@@ -87,18 +97,6 @@ class PlaybackServiceTest {
         assertThatThrownBy(() -> playbackService.updatePlayback(1L, createUpdateRequest(5L, 10)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CONTENTS_NOT_FOUND);
-    }
-
-    @Test
-    void updatePlayback_updatesPlaybackWhenPlayableContentExists() {
-        Long memberId = 2L;
-        Long mediaId = 6L;
-        when(playbackValidationCacheService.getPlayableMedia(mediaId))
-                .thenReturn(PlayableMediaCacheValue.valid(200L));
-
-        playbackService.updatePlayback(memberId, createUpdateRequest(mediaId, 15));
-
-        verify(playbackRepository).updatePlayback(memberId, 200L, 15);
     }
 
     private PlaybackInitRequest createInitRequest(Long mediaId) {
