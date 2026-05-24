@@ -1,5 +1,6 @@
 package com.ott.api_user.playback.service;
 
+import com.ott.api_user.playback.buffer.PlaybackCommandQueue;
 import com.ott.api_user.playback.dto.request.PlaybackInitRequest;
 import com.ott.api_user.playback.dto.request.PlaybackUpdateRequest;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Transactional
 public class PlaybackService {
+
     private final PlaybackRepository playbackRepository;
     private final PlaybackValidationCacheService playbackValidationCacheService;
     private final ContentsRepository contentsRepository;
+    private final PlaybackCommandQueue playbackCommandQueue;
 
     public void initPlayback(Long memberId, PlaybackInitRequest playbackInitRequest) {
         Long contentsId = contentsRepository.findPlayableContentsIdByMediaId(playbackInitRequest.getMediaId())
@@ -34,6 +37,12 @@ public class PlaybackService {
             throw new BusinessException(ErrorCode.CONTENTS_NOT_FOUND);
         }
 
-        playbackRepository.updatePlayback(memberId, playableMedia.contentsId(), playbackUpdateRequest.getPositionSec());
+        boolean offered = playbackCommandQueue.offer(
+            memberId, playableMedia.contentsId(), playbackUpdateRequest.getPositionSec());
+
+        if (!offered) {
+            playbackCommandQueue.offerToOverflow(
+                memberId, playableMedia.contentsId(), playbackUpdateRequest.getPositionSec());
+        }
     }
 }
