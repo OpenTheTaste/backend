@@ -183,12 +183,30 @@ private void flush() throws InterruptedException {
 
 `@JdbcTest` + `@Import(PlaybackBatchRepository.class)` + `@Sql`로 H2 인메모리 DB에서 실행.
 
-## 이 단계의 한계 (다음 Step에서 해결)
+## 이후 변경사항
+
+### 이중 트리거 drain (구현 완료)
+
+`PlaybackCommandQueue.drain()`을 이중 트리거 방식으로 변경:
+- **bulkSize 트리거**: 큐에 1000건 이상 → 즉시 반환
+- **timeout 트리거**: 5초 동안 모아서 반환
+
+설정값 확정:
+
+| 설정 | 값 | 근거 |
+|------|-----|------|
+| queue-capacity | 10,000 | WPS 378 기준 26초 버퍼. 장애 시 유실 범위와 overflow 빈도의 타협 |
+| bulk-size | 1,000 | vu2000(WPS 378)에서 ~2.6초에 트리거. 저부하에서는 timeout이 커버 |
+| flush-timeout-ms | 5,000 | 이어보기 특성상 5초 지연 허용. 저부하 배치 효과 확보 |
+
+### Coalescing 불필요 (제외)
+
+클라이언트가 5초 주기로 전송, flush는 최대 5초 주기 → 같은 key가 큐에 중복 적재될 가능성 없음. 상세: `problem/coalescing-necessity.md`
+
+## 남은 한계 (다음 Step에서 해결)
 
 | 한계 | 해결 Step |
 |------|-----------|
 | SQL N개 실행 (commit만 1번) | 단일 SQL 전환 검토 (`problem/batchUpdate-vs-single-sql.md`) |
-| 중복 key 제거 없음 | Step 3: Coalescing |
 | event_time 정합성 없음 | Step 4: 조건부 UPDATE |
-| timeout만으로 drain | Step 5: 이중 트리거 (bulkSize OR timeout) |
 | 실패 시 전체 rollback, 재시도 없음 | Step 5: retryBuffer |
