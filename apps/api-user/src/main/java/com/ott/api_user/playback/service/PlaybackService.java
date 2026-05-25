@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PlaybackService {
 
     private final PlaybackRepository playbackRepository;
@@ -24,6 +23,7 @@ public class PlaybackService {
     private final ContentsRepository contentsRepository;
     private final PlaybackCommandQueue playbackCommandQueue;
 
+    @Transactional
     public void initPlayback(Long memberId, PlaybackInitRequest playbackInitRequest) {
         Long contentsId = contentsRepository.findPlayableContentsIdByMediaId(playbackInitRequest.getMediaId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONTENTS_NOT_FOUND));
