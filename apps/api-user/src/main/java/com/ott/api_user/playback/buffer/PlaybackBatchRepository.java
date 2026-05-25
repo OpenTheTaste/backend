@@ -1,5 +1,6 @@
 package com.ott.api_user.playback.buffer;
 
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -19,10 +20,12 @@ public class PlaybackBatchRepository {
     private static final String UPDATE_SQL = """
             UPDATE playback
             SET position_sec = ?,
-                modified_date = NOW()
+                modified_date = NOW(),
+                event_time = ?
             WHERE member_id = ?
               AND contents_id = ?
               AND status = 'ACTIVE'
+              AND event_time < ?
             """;
 
     @Transactional
@@ -37,9 +40,12 @@ public class PlaybackBatchRepository {
             sorted,
             sorted.size(),
             (ps, cmd) -> {
+                Timestamp eventTime = Timestamp.from(cmd.requestedAt());
                 ps.setInt(1, cmd.positionSec());
-                ps.setLong(2, cmd.memberId());
-                ps.setLong(3, cmd.contentsId());
+                ps.setTimestamp(2, eventTime);
+                ps.setLong(3, cmd.memberId());
+                ps.setLong(4, cmd.contentsId());
+                ps.setTimestamp(5, eventTime);
             });
     }
 }

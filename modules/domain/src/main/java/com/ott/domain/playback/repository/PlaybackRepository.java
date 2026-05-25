@@ -92,8 +92,8 @@ public interface PlaybackRepository extends JpaRepository<Playback, Long>, Playb
 
         @Modifying
         @Query(value = """
-                INSERT IGNORE INTO playback (member_id, contents_id, position_sec, created_date, modified_date, status)
-                VALUES (:memberId, :contentsId, 0, NOW(), NOW(), 'ACTIVE')
+                INSERT IGNORE INTO playback (member_id, contents_id, position_sec, event_time, created_date, modified_date, status)
+                VALUES (:memberId, :contentsId, 0, NOW(), NOW(), NOW(), 'ACTIVE')
                 """, nativeQuery = true)
         int insertIgnorePlayback(
                 @Param("memberId") Long memberId,
