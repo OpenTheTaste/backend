@@ -47,17 +47,23 @@ public class PlaybackCommandQueue {
     }
 
     /**
-     * Worker가 호출. Step 1에서는 단순 drain.
-     * Step 5에서 이중 트리거(bulkSize OR timeout)로 개선.
+     * bulkSize 도달 시 혹은 timeout까지 모아서 반환.
      */
     public List<PlaybackCommand> drain(int bulkSize, long timeoutMs) throws InterruptedException {
         List<PlaybackCommand> batch = new ArrayList<>(bulkSize);
+        long deadline = System.currentTimeMillis() + timeoutMs;
 
-        PlaybackCommand first = queue.poll(timeoutMs, TimeUnit.MILLISECONDS);
-        if (first != null) {
-            batch.add(first);
-            queue.drainTo(batch, bulkSize - 1);
+        while (batch.size() < bulkSize) {
+            long remaining = deadline - System.currentTimeMillis();
+            if (remaining <= 0) break;
+
+            PlaybackCommand cmd = queue.poll(remaining, TimeUnit.MILLISECONDS);
+            if (cmd == null) break;
+
+            batch.add(cmd);
+            queue.drainTo(batch, bulkSize - batch.size());
         }
+
         return batch;
     }
 

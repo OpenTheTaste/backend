@@ -22,7 +22,7 @@ public class PlaybackFlushWorker {
     @Value("${playback.buffer.bulk-size:1000}")
     private int bulkSize;
 
-    @Value("${playback.buffer.flush-timeout-ms:1000}")
+    @Value("${playback.buffer.flush-timeout-ms:5000}")
     private long flushTimeoutMs;
 
     private volatile boolean running = true;

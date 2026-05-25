@@ -102,9 +102,9 @@ gemini:
 # Playback write-behind buffer 설정
 playback:
   buffer:
-    queue-capacity: 100000
+    queue-capacity: 10000
     bulk-size: 1000
-    flush-timeout-ms: 1000
+    flush-timeout-ms: 5000
 
 # p6spy SQL 로깅 (개발/테스트 전용)
 decorator:
