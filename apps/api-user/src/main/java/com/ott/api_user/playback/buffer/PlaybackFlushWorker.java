@@ -8,8 +8,6 @@ import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.ott.domain.playback.repository.PlaybackRepository;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PlaybackFlushWorker {
 
     private final PlaybackCommandQueue commandQueue;
-    private final PlaybackRepository playbackRepository;
+    private final PlaybackBatchRepository batchRepository;
 
     @Value("${playback.buffer.bulk-size:1000}")
     private int bulkSize;
@@ -54,16 +52,7 @@ public class PlaybackFlushWorker {
         List<PlaybackCommand> drained = commandQueue.drain(bulkSize, flushTimeoutMs);
         if (drained.isEmpty()) return;
 
-        // Step 1: 단건 UPDATE loop (Step 2에서 batchUpdate로 교체)
-        for (PlaybackCommand cmd : drained) {
-            try {
-                playbackRepository.updatePlayback(
-                    cmd.memberId(), cmd.contentsId(), cmd.positionSec());
-            } catch (Exception e) {
-                log.error("Single update failed: key=({}, {})",
-                    cmd.memberId(), cmd.contentsId(), e);
-            }
-        }
+        batchRepository.batchUpdate(drained);
     }
 
     @PreDestroy
