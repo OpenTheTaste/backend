@@ -22,13 +22,14 @@ import org.springframework.test.context.jdbc.Sql;
         + "member_id BIGINT NOT NULL,"
         + "contents_id BIGINT NOT NULL,"
         + "position_sec INT NOT NULL DEFAULT 0,"
+        + "event_time DATETIME(3) NOT NULL DEFAULT NOW(),"
         + "created_date DATETIME NOT NULL,"
         + "modified_date DATETIME NOT NULL,"
         + "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',"
         + "UNIQUE KEY uk_member_contents (member_id, contents_id))",
-    "INSERT INTO playback (member_id, contents_id, position_sec, created_date, modified_date, status) VALUES (1, 10, 0, NOW(), NOW(), 'ACTIVE')",
-    "INSERT INTO playback (member_id, contents_id, position_sec, created_date, modified_date, status) VALUES (2, 20, 0, NOW(), NOW(), 'ACTIVE')",
-    "INSERT INTO playback (member_id, contents_id, position_sec, created_date, modified_date, status) VALUES (3, 30, 0, NOW(), NOW(), 'ACTIVE')"
+    "INSERT INTO playback (member_id, contents_id, position_sec, event_time, created_date, modified_date, status) VALUES (1, 10, 0, '2026-01-01 00:00:00', NOW(), NOW(), 'ACTIVE')",
+    "INSERT INTO playback (member_id, contents_id, position_sec, event_time, created_date, modified_date, status) VALUES (2, 20, 0, '2026-01-01 00:00:00', NOW(), NOW(), 'ACTIVE')",
+    "INSERT INTO playback (member_id, contents_id, position_sec, event_time, created_date, modified_date, status) VALUES (3, 30, 0, '2026-01-01 00:00:00', NOW(), NOW(), 'ACTIVE')"
 })
 class PlaybackBatchRepositoryTest {
 
@@ -65,6 +66,23 @@ class PlaybackBatchRepositoryTest {
     @Test
     void batchUpdate_emptyCollection() {
         assertThatNoException().isThrownBy(() -> batchRepository.batchUpdate(List.of()));
+    }
+
+    @Test
+    void batchUpdate_ignoresOlderEventTime() {
+        // 먼저 최신 event_time으로 갱신
+        Instant newer = Instant.parse("2026-06-01T00:00:00Z");
+        batchRepository.batchUpdate(List.of(
+            new PlaybackCommand(1L, 10L, 200, newer)
+        ));
+        assertThat(getPositionSec(1L, 10L)).isEqualTo(200);
+
+        // 과거 event_time으로 갱신 시도 → 무시되어야 함
+        Instant older = Instant.parse("2026-05-01T00:00:00Z");
+        batchRepository.batchUpdate(List.of(
+            new PlaybackCommand(1L, 10L, 100, older)
+        ));
+        assertThat(getPositionSec(1L, 10L)).isEqualTo(200);
     }
 
     private int getPositionSec(long memberId, long contentsId) {
