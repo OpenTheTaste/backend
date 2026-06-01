@@ -16,6 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PlaybackFlushWorker {
 
+    private static final long SHUTDOWN_JOIN_TIMEOUT_MS = 3000L;
+    private static final int SHUTDOWN_DRAIN_MAX_ROUNDS = 10;
+    private static final long SHUTDOWN_DRAIN_TIMEOUT_MS = 100L;
+
     private final PlaybackCommandQueue commandQueue;
     private final PlaybackBatchRepository batchRepository;
 
@@ -43,7 +47,7 @@ public class PlaybackFlushWorker {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception e) {
-                log.error("Flush failed", e);
+                log.error("Playback flush loop failed", e);
             }
         }
     }
@@ -52,16 +56,66 @@ public class PlaybackFlushWorker {
         List<PlaybackCommand> drained = commandQueue.drain(bulkSize, flushTimeoutMs);
         if (drained.isEmpty()) return;
 
-        batchRepository.batchUpdate(drained);
+        flushBatch(drained, "flush");
+    }
+
+    private boolean flushBatch(List<PlaybackCommand> commands, String operation) {
+        try {
+            batchRepository.batchUpdate(commands);
+            return true;
+        } catch (Exception e) {
+            log.warn("Playback {} failed, dropping commands: size={}", operation, commands.size(), e);
+            return false;
+        }
     }
 
     @PreDestroy
     void shutdown() {
+        log.info("Playback flush worker shutting down. queueSize={}", commandQueue.size());
         running = false;
-        leaderThread.interrupt();
+        waitForLeaderToStop();
+        drainRemainingQueue();
+    }
+
+    private void waitForLeaderToStop() {
+        Thread thread = leaderThread;
+        if (thread == null) return;
+
+        thread.interrupt();
         try {
-            flush();
-        } catch (Exception ignored) {
+            thread.join(SHUTDOWN_JOIN_TIMEOUT_MS);
+            if (thread.isAlive()) {
+                log.warn("Playback flush leader did not stop within {}ms", SHUTDOWN_JOIN_TIMEOUT_MS);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Interrupted while waiting for playback flush leader to stop");
         }
+    }
+
+    private void drainRemainingQueue() {
+        for (int round = 1; round <= SHUTDOWN_DRAIN_MAX_ROUNDS; round++) {
+            List<PlaybackCommand> remaining;
+            try {
+                remaining = commandQueue.drain(bulkSize, SHUTDOWN_DRAIN_TIMEOUT_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("Interrupted while draining playback queue during shutdown. remainingQueueSize={}",
+                    commandQueue.size());
+                return;
+            }
+
+            if (remaining.isEmpty()) break;
+
+            boolean success = flushBatch(remaining, "shutdown flush #" + round);
+            if (!success) break;
+        }
+
+        int remainingQueueSize = commandQueue.size();
+        if (remainingQueueSize > 0) {
+            log.warn("Playback flush worker stopped with remaining queued commands: size={}", remainingQueueSize);
+            return;
+        }
+        log.info("Playback flush worker stopped with empty queue");
     }
 }
