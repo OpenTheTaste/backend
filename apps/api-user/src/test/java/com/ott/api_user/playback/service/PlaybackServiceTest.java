@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.ott.api_user.playback.buffer.PlaybackCommandQueue;
@@ -77,7 +78,7 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void updatePlayback_offersToOverflowWhenQueueFull() {
+    void updatePlayback_dropsWhenQueueFull() {
         Long memberId = 2L;
         Long mediaId = 6L;
         when(playbackValidationCacheService.getPlayableMedia(mediaId))
@@ -86,7 +87,9 @@ class PlaybackServiceTest {
 
         playbackService.updatePlayback(memberId, createUpdateRequest(mediaId, 15));
 
-        verify(playbackCommandQueue).offerToOverflow(memberId, 200L, 15);
+        verify(playbackCommandQueue).offer(memberId, 200L, 15);
+        verifyNoMoreInteractions(playbackCommandQueue);
+        verify(playbackRepository, never()).updatePlayback(anyLong(), anyLong(), anyInt());
     }
 
     @Test
