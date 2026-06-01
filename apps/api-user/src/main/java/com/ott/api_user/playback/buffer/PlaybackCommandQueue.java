@@ -3,9 +3,7 @@ package com.ott.api_user.playback.buffer;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -16,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class PlaybackCommandQueue {
 
     private final BlockingQueue<PlaybackCommand> queue;
-    private final ConcurrentHashMap<PlaybackKey, PlaybackCommand> overflowMap = new ConcurrentHashMap<>();
 
     public PlaybackCommandQueue(
             @Value("${playback.buffer.queue-capacity:100000}") int capacity) {
@@ -24,8 +21,9 @@ public class PlaybackCommandQueue {
     }
 
     /**
-     * API thread가 호출. non-blocking.
-     * @return true=queue에 들어감, false=queue full
+     * Called by API threads. This is non-blocking.
+     *
+     * @return true when the command is queued, false when the queue is full
      */
     public boolean offer(long memberId, long contentsId, int positionSec) {
         PlaybackCommand command = new PlaybackCommand(
@@ -35,19 +33,7 @@ public class PlaybackCommandQueue {
     }
 
     /**
-     * Queue full 시 overflow map에 key별 최신값만 유지.
-     * ConcurrentHashMap이므로 API thread 간 경합에 안전.
-     */
-    public void offerToOverflow(long memberId, long contentsId, int positionSec) {
-        PlaybackCommand command = new PlaybackCommand(
-            memberId, contentsId, positionSec, Instant.now()
-        );
-        overflowMap.merge(command.key(), command, (old, incoming) ->
-            incoming.requestedAt().isAfter(old.requestedAt()) ? incoming : old);
-    }
-
-    /**
-     * bulkSize 도달 시 혹은 timeout까지 모아서 반환.
+     * Returns when either bulkSize is reached or the timeout expires.
      */
     public List<PlaybackCommand> drain(int bulkSize, long timeoutMs) throws InterruptedException {
         List<PlaybackCommand> batch = new ArrayList<>(bulkSize);
@@ -67,23 +53,7 @@ public class PlaybackCommandQueue {
         return batch;
     }
 
-    /**
-     * Worker가 flush 시 overflow map을 비우고 반환.
-     */
-    public Map<PlaybackKey, PlaybackCommand> drainOverflow() {
-        if (overflowMap.isEmpty()) {
-            return Map.of();
-        }
-        Map<PlaybackKey, PlaybackCommand> snapshot = new ConcurrentHashMap<>(overflowMap);
-        overflowMap.keySet().removeAll(snapshot.keySet());
-        return snapshot;
-    }
-
     public int size() {
         return queue.size();
-    }
-
-    public int overflowSize() {
-        return overflowMap.size();
     }
 }

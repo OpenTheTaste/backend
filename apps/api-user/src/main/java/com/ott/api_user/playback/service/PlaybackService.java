@@ -13,7 +13,9 @@ import com.ott.domain.contents.repository.ContentsRepository;
 import com.ott.domain.playback.repository.PlaybackRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlaybackService {
@@ -41,8 +43,8 @@ public class PlaybackService {
             memberId, playableMedia.contentsId(), playbackUpdateRequest.getPositionSec());
 
         if (!offered) {
-            playbackCommandQueue.offerToOverflow(
-                memberId, playableMedia.contentsId(), playbackUpdateRequest.getPositionSec());
+            log.warn("Playback queue full, dropping command: memberId={}, contentsId={}",
+                memberId, playableMedia.contentsId());
         }
     }
 }
