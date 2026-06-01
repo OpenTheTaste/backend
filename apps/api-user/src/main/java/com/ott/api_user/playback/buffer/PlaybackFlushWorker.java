@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PlaybackFlushWorker {
 
     private static final long SHUTDOWN_JOIN_TIMEOUT_MS = 3000L;
-    private static final int SHUTDOWN_DRAIN_MAX_ROUNDS = 10;
     private static final long SHUTDOWN_DRAIN_TIMEOUT_MS = 100L;
 
     private final PlaybackCommandQueue commandQueue;
@@ -94,7 +93,8 @@ public class PlaybackFlushWorker {
     }
 
     private void drainRemainingQueue() {
-        for (int round = 1; round <= SHUTDOWN_DRAIN_MAX_ROUNDS; round++) {
+        int round = 1;
+        while (true) {
             List<PlaybackCommand> remaining;
             try {
                 remaining = commandQueue.drain(bulkSize, SHUTDOWN_DRAIN_TIMEOUT_MS);
@@ -109,6 +109,7 @@ public class PlaybackFlushWorker {
 
             boolean success = flushBatch(remaining, "shutdown flush #" + round);
             if (!success) break;
+            round++;
         }
 
         int remainingQueueSize = commandQueue.size();
