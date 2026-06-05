@@ -14,8 +14,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 @ExtendWith(MockitoExtension.class)
 class PlaybackFlushWorkerTest {
@@ -25,6 +28,9 @@ class PlaybackFlushWorkerTest {
 
     @Mock
     private PlaybackBatchRepository batchRepository;
+
+    @Spy
+    private PlaybackMetrics playbackMetrics = new PlaybackMetrics(new SimpleMeterRegistry());
 
     @InjectMocks
     private PlaybackFlushWorker worker;

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.ott.api_user.playback.buffer.PlaybackCommandQueue;
+import com.ott.api_user.playback.buffer.PlaybackMetrics;
 import com.ott.api_user.playback.cache.PlayableMediaCacheValue;
 import com.ott.api_user.playback.dto.request.PlaybackInitRequest;
 import com.ott.api_user.playback.dto.request.PlaybackUpdateRequest;
@@ -38,6 +39,9 @@ class PlaybackServiceTest {
 
     @Mock
     private PlaybackCommandQueue playbackCommandQueue;
+
+    @Mock
+    private PlaybackMetrics playbackMetrics;
 
     @InjectMocks
     private PlaybackService playbackService;
