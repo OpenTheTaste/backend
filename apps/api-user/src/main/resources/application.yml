@@ -19,7 +19,7 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/ott}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/ott?rewriteBatchedStatements=true}
     username: ${SPRING_DATASOURCE_USERNAME:ott}
     password: ${SPRING_DATASOURCE_PASSWORD:ottpw}
 
@@ -110,9 +110,15 @@ playback:
     bulk-size: 1000
     flush-timeout-ms: 5000
 
+# 부하 테스트용: 우리 코드(com.ott)는 WARN 이상만 로깅
+# → PerformanceLoggingAspect의 요청당 INFO 폭증 차단, playback의 queue full / flush 실패 warn은 유지
+logging:
+  level:
+    com.ott: WARN
+
 # p6spy SQL 로깅 (개발/테스트 전용)
 decorator:
   datasource:
     p6spy:
-      enable-logging: true
+      enable-logging: false
       logging: slf4j

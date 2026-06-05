@@ -16,8 +16,10 @@ public class PlaybackCommandQueue {
     private final BlockingQueue<PlaybackCommand> queue;
 
     public PlaybackCommandQueue(
-            @Value("${playback.buffer.queue-capacity:100000}") int capacity) {
+            @Value("${playback.buffer.queue-capacity:100000}") int capacity,
+            PlaybackMetrics playbackMetrics) {
         this.queue = new LinkedBlockingQueue<>(capacity);
+        playbackMetrics.bindQueueSize(queue);
     }
 
     /**

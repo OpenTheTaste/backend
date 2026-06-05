@@ -21,6 +21,7 @@ public class PlaybackFlushWorker {
 
     private final PlaybackCommandQueue commandQueue;
     private final PlaybackBatchRepository batchRepository;
+    private final PlaybackMetrics playbackMetrics;
 
     @Value("${playback.buffer.bulk-size:1000}")
     private int bulkSize;
@@ -60,9 +61,11 @@ public class PlaybackFlushWorker {
 
     private boolean flushBatch(List<PlaybackCommand> commands, String operation) {
         try {
-            batchRepository.batchUpdate(commands);
+            playbackMetrics.recordFlush(() -> batchRepository.batchUpdate(commands));
+            playbackMetrics.recordFlushBatchSize(commands.size());
             return true;
         } catch (Exception e) {
+            playbackMetrics.incrementFlushFailureDrop(commands.size());
             log.warn("Playback {} failed, dropping commands: size={}", operation, commands.size(), e);
             return false;
         }

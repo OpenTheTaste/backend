@@ -6,6 +6,7 @@ import com.ott.api_user.playback.dto.request.PlaybackUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ott.api_user.playback.buffer.PlaybackMetrics;
 import com.ott.api_user.playback.cache.PlayableMediaCacheValue;
 import com.ott.common.web.exception.BusinessException;
 import com.ott.common.web.exception.ErrorCode;
@@ -24,6 +25,7 @@ public class PlaybackService {
     private final PlaybackValidationCacheService playbackValidationCacheService;
     private final ContentsRepository contentsRepository;
     private final PlaybackCommandQueue playbackCommandQueue;
+    private final PlaybackMetrics playbackMetrics;
 
     @Transactional
     public void initPlayback(Long memberId, PlaybackInitRequest playbackInitRequest) {
@@ -43,6 +45,7 @@ public class PlaybackService {
             memberId, playableMedia.contentsId(), playbackUpdateRequest.getPositionSec());
 
         if (!offered) {
+            playbackMetrics.incrementQueueFullDrop();
             log.warn("Playback queue full, dropping command: memberId={}, contentsId={}",
                 memberId, playableMedia.contentsId());
         }
